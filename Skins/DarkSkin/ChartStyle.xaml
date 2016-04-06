@@ -1,0 +1,55 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+										xmlns:c="clr-namespace:WpfChartLibrary;assembly=WpfChartLibrary">
+	
+	<Geometry x:Key="ChartDataMarker">M 4,0 A 3,3 0 0 0 -4,0 A 3,3 0 0 0 4,0</Geometry>
+
+	<DataTemplate x:Key="ChartLegendSeriesTemplate">
+		<Grid Width="Auto" Height="Auto">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="30"/>
+				<ColumnDefinition Width="*"/>
+			</Grid.ColumnDefinitions>
+			<Path Grid.Column="0" Data="M 0,12 L20,8" Stroke="{Binding DisplayColor}" StrokeThickness="3"/>
+			<TextBlock HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Center" Grid.Column="1" FontSize="14" TextWrapping="Wrap" Text="{Binding DisplayName}"/>
+		</Grid>
+	</DataTemplate>
+
+	<DataTemplate x:Key="ChartRetrieveSeriesTemplate">
+		<StackPanel Orientation="Horizontal" Visibility="{Binding MarkerVisibility}">
+			<Path Data="{StaticResource ChartDataMarker}" Stroke="{Binding DisplayColor}" Fill="{Binding DisplayColor}" VerticalAlignment="Center" Margin="8,5,0,0"/>
+			<TextBlock HorizontalAlignment="Left" Margin="2,0,0,0" VerticalAlignment="Center" TextWrapping="Wrap" Text="{Binding DisplayName}"/>
+			<TextBlock HorizontalAlignment="Left" VerticalAlignment="Center" TextWrapping="Wrap" Text=":"/>
+			<TextBlock HorizontalAlignment="Right" Width="80" Margin="0,0,0,0" VerticalAlignment="Center" TextWrapping="Wrap" Text="{Binding CurrentYValue, StringFormat=N2}"/>
+		</StackPanel>
+	</DataTemplate>
+
+	<DataTemplate x:Key="ChartSeriesMarker">
+		<Path Data="{StaticResource ChartDataMarker}" Stroke="{Binding DisplayColor}" Fill="{Binding DisplayColor}" HorizontalAlignment="Center" VerticalAlignment="Center" Canvas.Top="{Binding ScreenDataValue}" Canvas.Left="{Binding ScreenXValue}" Visibility="{Binding MarkerVisibility}"/>
+	</DataTemplate>
+
+	<Style TargetType="c:ChartHorizontalAxis">
+		<Setter Property="FontColor" Value="{DynamicResource Foreground}"/>
+		<Setter Property="LineColor" Value="{DynamicResource ChartAxisColor}"/>
+	</Style>
+	<Style TargetType="c:ChartVerticalAxis">
+		<Setter Property="FontColor" Value="{DynamicResource Foreground}"	 />
+		<Setter Property="LineColor" Value="{DynamicResource ChartAxisColor}"/>
+	</Style>
+	
+	<Style TargetType="c:ChartContainer">
+		<Setter Property="Background" Value="{DynamicResource ChartBackground}"/>
+	</Style>
+
+	<Style TargetType="c:ChartGrid">
+		<Setter Property="HorizontalGridColor" Value="{DynamicResource ChartGridLineColor}"/>
+		<Setter Property="AlternateHorizontalGridColor" Value="{DynamicResource ChartGridLineAlternateColor}"/>
+		<Setter Property="HorizontalGridStyle" Value="AlternateBar"/>
+		<Setter Property="VerticalGridStyle" Value="DottedLine"/>
+		<Setter Property="VerticalGridColor" Value="{DynamicResource ChartGridVerticalLineColor}"/>
+	</Style>
+	
+	<Style TargetType="c:ChartXYValueRetriever">
+		<Setter Property="CursorLineColor" Value="{DynamicResource ChartValueRetrieverCursorLineColor}"/>
+	</Style>
+</ResourceDictionary>

@@ -1,0 +1,572 @@
+﻿<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+        xmlns:c ="clr-namespace:CygnusControls;assembly=CygnusControls"
+	      mc:Ignorable="d" 
+        d:DesignHeight="500" d:DesignWidth="1000"
+        Background="Black">
+	<UserControl.Resources>
+		<LinearGradientBrush x:Key="InstrumentBackground" StartPoint="0,0" EndPoint="1,1" >
+			<GradientStop Color="#ff505050" Offset="0" />
+			<GradientStop Color="Black" Offset="1.0" />
+		</LinearGradientBrush>
+
+		<Path x:Key="Screw" Stroke="#111111" Fill="#262626" StrokeThickness="1.5" Data="M 2,7 L 12,7 M7,2 L7,12 M 0,7 A 7,7 0 1 1 14,7 A 7,7 0 1 1 0,7 Z" />
+
+		<c:LinearMappingConverter x:Key="SpeedMapper" InputMin="0" InputMax="15" OutputMin="-220" OutputMax="40"/>
+		<c:LinearMappingConverter x:Key="VBatMapper" InputMin="6" InputMax="9" OutputMin="110" OutputMax="250"/>
+		<c:LinearMappingConverter x:Key="IBatMapper" InputMin="0" InputMax="10" OutputMin="70" OutputMax="-70"/>
+		<c:LinearMappingConverter x:Key="ThrottleMapper" InputMin="0" InputMax="100" OutputMin="160" OutputMax="20"/>
+		<c:LinearMappingConverter x:Key="SteeringMapper" InputMin="-12" InputMax="12" OutputMin="-130" OutputMax="-50"/>
+
+	</UserControl.Resources>
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="*"/>
+			<RowDefinition Height="190"/>
+		</Grid.RowDefinitions>
+		
+		<!-- Video & Map grid-->
+		<Grid Grid.Row="0">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="50*"/>
+				<ColumnDefinition Width="50*"/>
+			</Grid.ColumnDefinitions>
+			
+			<!-- Video -->
+			<Grid Grid.Column="0">
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="33"/>
+					<ColumnDefinition Width="*"/>
+					<ColumnDefinition Width="33"/>
+				</Grid.ColumnDefinitions>
+				<Grid.RowDefinitions>
+					<RowDefinition Height="33"/>
+					<RowDefinition Height="*"/>
+					<RowDefinition Height="33"/>
+				</Grid.RowDefinitions>
+				
+				<!-- Frame -->
+				<Rectangle Grid.ColumnSpan="3" Grid.RowSpan="3" RadiusX="30" RadiusY="30" Stroke="#ff191919" StrokeThickness="2" Fill="#ff191919" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5"/>
+
+				<!-- Screws -->
+				<ContentControl Content="{Binding Source={StaticResource Screw}}" Grid.Column="0" Grid.Row="0" HorizontalAlignment="Right" VerticalAlignment="Bottom"/>
+				<ContentControl Content="{Binding Source={StaticResource Screw}}" Grid.Column="2" Grid.Row="0" HorizontalAlignment="Left" VerticalAlignment="Bottom"/>
+				<ContentControl Content="{Binding Source={StaticResource Screw}}" Grid.Column="0" Grid.Row="2" HorizontalAlignment="Right" VerticalAlignment="Top"/>
+				<ContentControl Content="{Binding Source={StaticResource Screw}}" Grid.Column="2" Grid.Row="2" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+
+			</Grid>
+			
+			<!-- Video -->
+			<Grid Grid.Column="1">
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="33"/>
+					<ColumnDefinition Width="*"/>
+					<ColumnDefinition Width="33"/>
+				</Grid.ColumnDefinitions>
+				<Grid.RowDefinitions>
+					<RowDefinition Height="33"/>
+					<RowDefinition Height="*"/>
+					<RowDefinition Height="33"/>
+				</Grid.RowDefinitions>
+
+				<!-- Frame -->
+				<Rectangle Grid.ColumnSpan="3" Grid.RowSpan="3" RadiusX="30" RadiusY="30" Stroke="#ff191919" StrokeThickness="2" Fill="#ff191919" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5"/>
+
+				<!-- Screws -->
+				<ContentControl Content="{Binding Source={StaticResource Screw}}" Grid.Column="0" Grid.Row="0" HorizontalAlignment="Right" VerticalAlignment="Bottom"/>
+				<ContentControl Content="{Binding Source={StaticResource Screw}}" Grid.Column="2" Grid.Row="0" HorizontalAlignment="Left" VerticalAlignment="Bottom"/>
+				<ContentControl Content="{Binding Source={StaticResource Screw}}" Grid.Column="0" Grid.Row="2" HorizontalAlignment="Right" VerticalAlignment="Top"/>
+				<ContentControl Content="{Binding Source={StaticResource Screw}}" Grid.Column="2" Grid.Row="2" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+
+			</Grid>
+
+		</Grid>
+		
+		<!-- Instruments grid -->
+		<Grid Grid.Row="1">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="190"/>
+				<ColumnDefinition Width="190"/>
+				<ColumnDefinition Width="190"/>
+				<ColumnDefinition Width="190"/>
+				<ColumnDefinition Width="*"/>
+			</Grid.ColumnDefinitions>
+
+			<!-- SPEED -->
+			<Canvas Grid.Column="0" Background="Black" Width="180" Height="180" Margin="0">
+				<!-- Frame -->
+				<Rectangle RadiusX="30" RadiusY="30" Stroke="#ff191919" StrokeThickness="2" Fill="#ff191919" Width="180" Height="180" />
+
+				<!-- Screws -->
+				<ContentControl Content="{Binding Source={StaticResource Screw}}" Canvas.Left="13" Canvas.Top="13"/>
+				<ContentControl Content="{Binding Source={StaticResource Screw}}" Canvas.Left="153" Canvas.Top="13"/>
+				<ContentControl Content="{Binding Source={StaticResource Screw}}" Canvas.Left="13" Canvas.Top="153"/>
+				<ContentControl Content="{Binding Source={StaticResource Screw}}" Canvas.Left="153" Canvas.Top="153"/>
+
+				<!-- Background -->
+				<Ellipse Canvas.Top="5" Canvas.Left="5" Fill="Black" Height="170" Width="170"/>
+				<Ellipse Canvas.Top="8" Canvas.Left="8" Height="164" Width="164" Stroke="#808080" StrokeThickness="1.5"/>
+
+				<!-- Scale -->
+				<c:CircularScale Canvas.Top="12" Canvas.Left="12"
+											 StartAngle="140" EndAngle="400" 
+											 MajorTickColor="White" MajorTickThickness="3" MajorTickCount="15" Width="156" Height="156"
+											 MinorTickCount="5" MinorTickThickness="1.5" MinorTickLength="5"
+											 ScaleMin="0" ScaleMax="15"
+											 Font="Century"/>
+
+				<TextBlock Text="km/h" Foreground="White" FontFamily="Century" Canvas.Left="78" Canvas.Top="50" FontSize="10" />
+				<TextBlock Text="m" Foreground="White" FontFamily="Century" Canvas.Left="85" Canvas.Top="152" FontSize="10" />
+
+				<!-- Distance digital display -->
+				<StackPanel Canvas.Left="56" Canvas.Top="131" Orientation="Horizontal" Background="#FFCFCFCF">
+					<c:SevenSegmentDigit Height="16" Width="11" SegmentColor="Black" Margin="2,2,0,2" Value="{Binding Value, ElementName=altitude_slider, Mode=OneWay}" DigitIndex="4"/>
+					<c:SevenSegmentDigit Height="16" Width="11" SegmentColor="Black" Margin="2,2,0,2" Value="{Binding Value, ElementName=altitude_slider, Mode=OneWay}" DigitIndex="3" DisableZeroBlanking="True"/>
+					<c:SevenSegmentDigit Height="16" Width="11" SegmentColor="Black" Margin="2,2,0,2" Value="{Binding Value, ElementName=altitude_slider, Mode=OneWay}" DigitIndex="2" DisableZeroBlanking="True"/>
+					<c:SevenSegmentDigit Height="16" Width="11" SegmentColor="Black" Margin="2,2,0,2" Value="{Binding Value, ElementName=altitude_slider, Mode=OneWay}" DigitIndex="1" DisableZeroBlanking="True"/>
+					<c:SevenSegmentDigit Height="12" Width="9" SegmentColor="Black" Margin="4,4,2,0" Value="{Binding Value, ElementName=altitude_slider, Mode=OneWay}" DigitIndex="0" />
+				</StackPanel>
+				<Ellipse Canvas.Left ="109" Canvas.Top="146" Width="3" Height="3" Fill="Black"/>
+
+				<Rectangle Canvas.Left="55" Canvas.Top="130" Stroke="#202020" StrokeThickness="1" Width="69" Height="21" RadiusX="2" RadiusY="2">
+					<Rectangle.Effect>
+						<DropShadowEffect BlurRadius="2" ShadowDepth="1" />
+					</Rectangle.Effect>
+				</Rectangle>
+
+				<!-- Needle -->
+				<Polygon Canvas.Left="90" Canvas.Top="90" StrokeThickness="0" Points="-15,-3,-15,3,63,2,68,0,63,-2" >
+					<Polygon.Fill>
+						<LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+							<GradientStop Color="#FFFF3D0D" Offset="0.462"/>
+							<GradientStop Color="#FFCD3700" Offset="0.552"/>
+						</LinearGradientBrush>
+					</Polygon.Fill>
+					<Polygon.RenderTransform>
+						<RotateTransform Angle="{Binding Value, ElementName=speed_slider, Mode=OneWay, Converter={StaticResource SpeedMapper}}"/>
+					</Polygon.RenderTransform>
+					<Polygon.Effect>
+						<DropShadowEffect Direction="{Binding Value, ElementName=airspeed_slider, Mode=OneWay, Converter={StaticResource SpeedMapper}}" ShadowDepth="3" />
+					</Polygon.Effect>
+				</Polygon>
+
+				<!--Shaft  -->
+				<Ellipse Canvas.Left="83" Canvas.Top="83" Width="14" Height="14" Stroke="Silver">
+					<Ellipse.Fill>
+						<LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+							<GradientStop Color="#FFCFCFCF" Offset="0.462"/>
+							<GradientStop Color="#FFB2B2B2" Offset="0.552"/>
+						</LinearGradientBrush>
+					</Ellipse.Fill>
+				</Ellipse>
+
+				<Ellipse Canvas.Left="85" Canvas.Top="85" Width="10" Height="10" Stroke="#FFAAAAAA">
+					<Ellipse.Fill>
+						<LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+							<GradientStop Color="White" Offset="0"/>
+							<GradientStop Color="#FF959595" Offset="1"/>
+						</LinearGradientBrush>
+					</Ellipse.Fill>
+				</Ellipse>
+
+				<!-- Glow  -->
+				<Path Canvas.Left="90" Canvas.Top="90" Stroke="{x:Null}" Opacity="0.2" Data="M-74,-27 A 80,80 0 0 1 74,-27 A80,25 0 0 1 -74,-27 z" >
+					<Path.Fill>
+						<LinearGradientBrush StartPoint="0,0" EndPoint="0.8,1">
+							<GradientStop Color="#FFFFFFFF" Offset="0"/>
+							<GradientStop Color="#00FFFFFF" Offset="1"/>
+						</LinearGradientBrush>
+					</Path.Fill>
+					<Path.BitmapEffect>
+						<BlurBitmapEffect Radius="8"/>
+					</Path.BitmapEffect>
+				</Path>
+
+			</Canvas>
+			
+			<!-- Voltage & Current -->
+			<Canvas Grid.Column="1" Background="Black" Width="180" Height="180" Margin="0">
+				<!-- Frame -->
+				<Rectangle RadiusX="30" RadiusY="30" Stroke="#ff191919" StrokeThickness="2" Fill="#ff191919" Width="180" Height="180" />
+
+				<!-- Screws -->
+				<ContentControl Content="{Binding Source={StaticResource Screw}}" Canvas.Left="13" Canvas.Top="13"/>
+				<ContentControl Content="{Binding Source={StaticResource Screw}}" Canvas.Left="153" Canvas.Top="13"/>
+				<ContentControl Content="{Binding Source={StaticResource Screw}}" Canvas.Left="13" Canvas.Top="153"/>
+				<ContentControl Content="{Binding Source={StaticResource Screw}}" Canvas.Left="153" Canvas.Top="153"/>
+
+				<!-- Voltage -->
+
+				<!-- Background -->
+				<Path Canvas.Left="83" Canvas.Top="90" Fill="Black" Data="M -6,-68 A67,65 0 0 0 -6,68 L-6,13 A10,13 0 0 0 -6,-13 L-6,-68"/>
+				<Path Canvas.Left="78" Canvas.Top="90" Stroke="#808080" StrokeThickness="1.5" Data="M -3,-65 A65,65 0 0 0 -3,65 L-3,10 A6,6 0 0 0 -3,-10 L -3,-65"/>
+
+				<!-- Scale color range -->
+				<Path Stroke="Green" StrokeThickness="4" Data="M 55,32 A68,68 0 0 0 19,65" />
+				<Path Stroke="#e0e000" StrokeThickness="4" Data="M 19,65 A68,68 0 0 0 19,115" /> 
+				<Path Stroke="Red" StrokeThickness="4" Data="M 19,115 A68,68 0 0 0 55,148" />
+
+				<!-- Scale -->
+				<c:CircularScale Canvas.Top="27" Canvas.Left="12"
+											 StartAngle="110" EndAngle="250" 
+											 MajorTickColor="White" MajorTickThickness="3" MajorTickCount="3" Width="126" Height="126"
+											 MinorTickCount="10" MinorTickThickness="1.5" MinorTickLength="5"
+											 ScaleMin="6" ScaleMax="9"
+											 Font="Century" />
+
+				<TextBlock Text="V" Foreground="White" FontFamily="Century" Canvas.Left="49" Canvas.Top="84" FontSize="10" />
+
+				<!-- Battery symbol -->
+				<Path Canvas.Top="130" Canvas.Left="80" Stroke="White" StrokeThickness="2" StrokeLineJoin="Round" Data="M 0,0 L 20,0 20,12 0,12 z M3,-2 L7,-2 M 13,-2 L 17,-2"/>
+				<Path Canvas.Top="130" Canvas.Left="80" Stroke="White" StrokeThickness="1.5" Data="M 4,5 L 8,5 M6,3 L6,7 M 13,5 L 16,5"/>
+				
+				<!-- Needle -->
+				<Polygon Canvas.Left="75" Canvas.Top="90" StrokeThickness="0" StrokeLineJoin="Round" Points="0,-2,0,2,53,1,58,0,53,-1" >
+					<Polygon.Fill>
+						<LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+							<GradientStop Color="#FFFF3D0D" Offset="0.462"/>
+							<GradientStop Color="#FFCD3700" Offset="0.552"/>
+						</LinearGradientBrush>
+					</Polygon.Fill>
+					<Polygon.RenderTransform>
+						<RotateTransform Angle="{Binding Value, ElementName=vbat_slider, Mode=OneWay, Converter={StaticResource VBatMapper}}"/>
+					</Polygon.RenderTransform>
+					<Polygon.Effect>
+						<DropShadowEffect Direction="{Binding Value, ElementName=vbat_slider, Mode=OneWay, Converter={StaticResource VBatMapper}}" ShadowDepth="3" />
+					</Polygon.Effect>
+				</Polygon>
+
+				<!--Shaft  -->
+				<Ellipse Canvas.Left="68" Canvas.Top="83" Width="14" Height="14" Stroke="Silver">
+					<Ellipse.Fill>
+						<LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+							<GradientStop Color="#FFCFCFCF" Offset="0.462"/>
+							<GradientStop Color="#FFB2B2B2" Offset="0.552"/>
+						</LinearGradientBrush>
+					</Ellipse.Fill>
+				</Ellipse>
+
+				<Ellipse Canvas.Left="70" Canvas.Top="85" Width="10" Height="10" Stroke="#FFAAAAAA">
+					<Ellipse.Fill>
+						<LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+							<GradientStop Color="White" Offset="0"/>
+							<GradientStop Color="#FF959595" Offset="1"/>
+						</LinearGradientBrush>
+					</Ellipse.Fill>
+				</Ellipse>
+
+				<!-- Glow  -->
+				<Path Canvas.Left="90" Canvas.Top="90" Stroke="{x:Null}" Opacity="0.2" Data="M-27,-64 A 6,32 0 0 1 -27,64 A12,16 0 0 1 -27,-64 z" >
+					<Path.Fill>
+						<LinearGradientBrush StartPoint="0,0" EndPoint="0.8,1">
+							<GradientStop Color="#FFFFFFFF" Offset="0"/>
+							<GradientStop Color="#00FFFFFF" Offset="1"/>
+						</LinearGradientBrush>
+					</Path.Fill>
+					<Path.BitmapEffect>
+						<BlurBitmapEffect Radius="8"/>
+					</Path.BitmapEffect>
+				</Path>
+
+				<!-- Current -->
+				
+				<!-- Background -->
+
+				<Path Canvas.Left="97" Canvas.Top="90" Fill="Black" Data="M 6,-68 A67,65 0 0 1 6,68 L6,13 A10,13 0 0 1 6,-13 L6,-68"/>
+				<Path Canvas.Left="102" Canvas.Top="90" Stroke="#808080" StrokeThickness="1.5" Data="M 3,-65 A65,65 0 0 1 3,65 L3,10 A6,6 0 0 1 3,-10 L 3,-65"/>
+
+				<!-- Scale -->
+				<c:CircularScale Canvas.Top="27" Canvas.Left="42"
+											 StartAngle="70" EndAngle="-70" 
+											 MajorTickColor="White" MajorTickThickness="3" MajorTickCount="5" Width="126" Height="126"
+											 MinorTickCount="4" MinorTickThickness="1.5" MinorTickLength="5"
+											 ScaleMin="0" ScaleMax="10"
+											 Font="Century" />
+
+				<TextBlock Text="A" Foreground="White" FontFamily="Century" Canvas.Left="131" Canvas.Top="84" FontSize="10" />
+
+				<!-- Needle -->
+				<Polygon Canvas.Left="105" Canvas.Top="90" StrokeThickness="0" StrokeLineJoin="Round" Points="0,-2,0,2,53,1,58,0,53,-1" >
+					<Polygon.Fill>
+						<LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+							<GradientStop Color="#FFFF3D0D" Offset="0.462"/>
+							<GradientStop Color="#FFCD3700" Offset="0.552"/>
+						</LinearGradientBrush>
+					</Polygon.Fill>
+					<Polygon.RenderTransform>
+						<RotateTransform Angle="{Binding Value, ElementName=ibat_slider, Mode=OneWay, Converter={StaticResource IBatMapper}}"/>
+					</Polygon.RenderTransform>
+					<Polygon.Effect>
+						<DropShadowEffect Direction="{Binding Value, ElementName=ibat_slider, Mode=OneWay, Converter={StaticResource IBatMapper}}" ShadowDepth="3" />
+					</Polygon.Effect>
+				</Polygon>
+
+				<!--Shaft  -->
+				<Ellipse Canvas.Left="98" Canvas.Top="83" Width="14" Height="14" Stroke="Silver">
+					<Ellipse.Fill>
+						<LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+							<GradientStop Color="#FFCFCFCF" Offset="0.462"/>
+							<GradientStop Color="#FFB2B2B2" Offset="0.552"/>
+						</LinearGradientBrush>
+					</Ellipse.Fill>
+				</Ellipse>
+
+				<Ellipse Canvas.Left="100" Canvas.Top="85" Width="10" Height="10" Stroke="#FFAAAAAA">
+					<Ellipse.Fill>
+						<LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+							<GradientStop Color="White" Offset="0"/>
+							<GradientStop Color="#FF959595" Offset="1"/>
+						</LinearGradientBrush>
+					</Ellipse.Fill>
+				</Ellipse>
+
+			</Canvas>
+
+			<!-- Compass -->
+			<Canvas Grid.Column="2" Background="Black" Width="180" Height="180">
+				<!-- Frame -->
+				<Rectangle RadiusX="30" RadiusY="30" Stroke="#ff191919" StrokeThickness="2" Fill="#ff191919" Width="180" Height="180" Canvas.Left="0" Canvas.Top="0"/>
+
+				<!-- Screws -->
+				<ContentControl Content="{Binding Source={StaticResource Screw}}" Canvas.Left="13" Canvas.Top="13"/>
+				<ContentControl Content="{Binding Source={StaticResource Screw}}" Canvas.Left="153" Canvas.Top="13"/>
+				<ContentControl Content="{Binding Source={StaticResource Screw}}" Canvas.Left="13" Canvas.Top="153"/>
+				<ContentControl Content="{Binding Source={StaticResource Screw}}" Canvas.Left="153" Canvas.Top="153"/>
+
+				<!-- Background -->
+				<Ellipse Canvas.Top="5" Canvas.Left="5" Fill="Black" Height="170" Width="170"/>
+				<Ellipse Canvas.Top="8" Canvas.Left="8" Height="164" Width="164" Stroke="#808080" StrokeThickness="1.5"/>
+
+				<!-- Scale -->
+				<c:CircularScale Canvas.Top="12" Canvas.Left="12"
+											 StartAngle="-90" EndAngle="270" 
+											 Width="156" Height="156"
+											 MajorTickColor="White" MajorTickThickness="3" MajorTickCount="12" 
+											 MinorTickCount="6" MinorTickThickness="1.5" MinorTickLength="5"
+											 ScaleMin="0" ScaleMax="36"
+											 Font="Century"
+											 MajorTickLabelAngleMode="Relative" MajorTickLabelAngle="90"
+											 >
+					<c:CircularScale.Labels>
+						<c:MajorTickLabel Value="0" Label="N" FontColor="Orange" FontHeight="12"/>
+						<c:MajorTickLabel Value="9" Label="E" FontColor="Orange" FontHeight="12"/>
+						<c:MajorTickLabel Value="18" Label="S" FontColor="Orange" FontHeight="12"/>
+						<c:MajorTickLabel Value="27" Label="W" FontColor="Orange" FontHeight="12"/>
+						<c:MajorTickLabel Value="36" Label=""/>
+					</c:CircularScale.Labels>
+					<c:CircularScale.RenderTransform>
+						<RotateTransform Angle="{Binding Value, ElementName=heading_slider, Mode=OneWay}" CenterX="78" CenterY="78"/>
+					</c:CircularScale.RenderTransform>
+				</c:CircularScale>
+
+				<Path Stroke="Yellow" StrokeThickness="2" Canvas.Top="90" Canvas.Left="90">
+					<Path.Data>
+						M0,-70 L 0,-50 8,-35 -8,-35 0,-50
+						M0,50 L 0,40
+						M-50,0 L-35,0
+						M50,0 L35,0
+						M14,-30 L15,-25 15,-22 18,-22 19,-27 26,-27 27,-26 27,-14 26,-13 19,-13 18,-18 15,-18 
+						L15,18 18,18 19,14 26,14 27,15 27,26 26,27 19,27 18,22 15,22 15,30 12,32 0,32
+						L-12,32 -15,30-15,22 -18,22 -19,27 -26,27 -27,26 -27,15 -26,14 -19,14 -18,18 -15,18
+						L-15,-18 -18,-18 -19,-13 -26,-13 -27,-14 -27,-26 -26,-27 -19,-27 -18,-22 -15,-22 -15,-25 -14,-30 
+						L-0.2,-30 z
+					</Path.Data>
+				</Path>
+
+				<!--   23.375,-1.9921875 20,-2 20,-4 28,-10 27.95703125,-10.525390625 27.84375,-11.953125 27.68359375,-14.060546875 27.5,-16.625 27.15625,-22.234375 27.04296875,-24.833984375 27,-27 26.671875,-28.8046875 25.875,-29.8125 24.890625,-30.1640625 24,-30 1.22460635382238E-15,-20 1.53075794227797E-15,-25 27,-43 27.0458984375,-47.17578125 27.1796875,-50.71875 27.3955078125,-53.65234375 27.6875,-56 28.0498046875,-57.78515625 28.4765625,-59.03125 28.9619140625,-59.76171875 29.5,-60 29.7999992370605,-60 29.7999992370605,-80 30,-80z-->
+
+				<!-- Glow  -->
+				<Path Canvas.Left="90" Canvas.Top="90" Stroke="{x:Null}" Opacity="0.3" Data="M-74,-27 A 80,80 0 0 1 74,-27 A80,25 0 0 1 -74,-27 z" >
+					<Path.Fill>
+						<LinearGradientBrush StartPoint="0,0" EndPoint="0.8,1">
+							<GradientStop Color="#FFFFFFFF" Offset="0"/>
+							<GradientStop Color="#00FFFFFF" Offset="1"/>
+						</LinearGradientBrush>
+					</Path.Fill>
+					<Path.BitmapEffect>
+						<BlurBitmapEffect Radius="8"/>
+					</Path.BitmapEffect>
+				</Path>
+
+			</Canvas>
+
+			<!-- Steering indicator -->
+			<Canvas Grid.Column="3" Background="Black" Width="180" Height="180" Margin="0">
+				<!-- Frame -->
+				<Rectangle RadiusX="30" RadiusY="30" Stroke="#ff191919" StrokeThickness="2" Fill="#ff191919" Width="180" Height="180" />
+
+				<!-- Screws -->
+				<ContentControl Content="{Binding Source={StaticResource Screw}}" Canvas.Left="13" Canvas.Top="13"/>
+				<ContentControl Content="{Binding Source={StaticResource Screw}}" Canvas.Left="153" Canvas.Top="13"/>
+				<ContentControl Content="{Binding Source={StaticResource Screw}}" Canvas.Left="13" Canvas.Top="153"/>
+				<ContentControl Content="{Binding Source={StaticResource Screw}}" Canvas.Left="153" Canvas.Top="153"/>
+
+				<!-- Steering -->
+
+				<!-- Background -->
+				<Path Canvas.Left="90" Canvas.Top="72" Fill="Black" Data="M -68,6 A65,67 0 0 1 68,6 L13,6 A13,10 0 0 1 -13,6 L-68,6"/>
+				<Path Canvas.Left="90" Canvas.Top="72" Stroke="#808080" StrokeThickness="1.5" Data="M -65,3 A65,65 0 0 1 65,3 L10,3 A6,6 0 0 1 -10,3 L -65,3"/>
+
+				<!-- Scale -->
+				<c:CircularScale Canvas.Top="12" Canvas.Left="27"
+											 StartAngle="230" EndAngle="310" 
+											 MajorTickColor="White" MajorTickThickness="3" MajorTickCount="4" Width="126" Height="126"
+											 MinorTickCount="3" MinorTickThickness="1.5" MinorTickLength="5"
+											 ScaleMin="-12" ScaleMax="12"
+											 Font="Century" />
+
+				<TextBlock Text="L" Foreground="White" FontFamily="Century" Canvas.Left="45" Canvas.Top="45" FontSize="10" />
+				<TextBlock Text="deg" Foreground="White" FontFamily="Century" Canvas.Left="82" Canvas.Top="45" FontSize="10" />
+				<TextBlock Text="R" Foreground="White" FontFamily="Century" Canvas.Left="130" Canvas.Top="45" FontSize="10" />
+
+				<!-- Needle -->
+				<Polygon Canvas.Left="90" Canvas.Top="75" StrokeThickness="0" StrokeLineJoin="Round" Points="0,-2,0,2,53,1,58,0,53,-1" >
+					<Polygon.Fill>
+						<LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+							<GradientStop Color="#FFFF3D0D" Offset="0.462"/>
+							<GradientStop Color="#FFCD3700" Offset="0.552"/>
+						</LinearGradientBrush>
+					</Polygon.Fill>
+					<Polygon.RenderTransform>
+						<RotateTransform Angle="{Binding Value, ElementName=steering_slider, Mode=OneWay, Converter={StaticResource SteeringMapper}}"/>
+					</Polygon.RenderTransform>
+					<Polygon.Effect>
+						<DropShadowEffect Direction="{Binding Value, ElementName=steering_slider, Mode=OneWay, Converter={StaticResource SteeringMapper}}" ShadowDepth="3" />
+					</Polygon.Effect>
+				</Polygon>
+
+				<!--Shaft  -->
+				<Ellipse Canvas.Left="83" Canvas.Top="68" Width="14" Height="14" Stroke="Silver">
+					<Ellipse.Fill>
+						<LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+							<GradientStop Color="#FFCFCFCF" Offset="0.462"/>
+							<GradientStop Color="#FFB2B2B2" Offset="0.552"/>
+						</LinearGradientBrush>
+					</Ellipse.Fill>
+				</Ellipse>
+
+				<Ellipse Canvas.Left="85" Canvas.Top="70" Width="10" Height="10" Stroke="#FFAAAAAA">
+					<Ellipse.Fill>
+						<LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+							<GradientStop Color="White" Offset="0"/>
+							<GradientStop Color="#FF959595" Offset="1"/>
+						</LinearGradientBrush>
+					</Ellipse.Fill>
+				</Ellipse>
+
+				<!-- Glow  -->
+				<Path Canvas.Left="90" Canvas.Top="90" Stroke="{x:Null}" Opacity="0.2" Data="M-64,-27 A 32,25 0 0 1 64,-27 A70,15 0 0 1 -64,-27 z" >
+					<Path.Fill>
+						<LinearGradientBrush StartPoint="0,0" EndPoint="0.8,1">
+							<GradientStop Color="#FFFFFFFF" Offset="0"/>
+							<GradientStop Color="#00FFFFFF" Offset="1"/>
+						</LinearGradientBrush>
+					</Path.Fill>
+					<Path.BitmapEffect>
+						<BlurBitmapEffect Radius="8"/>
+					</Path.BitmapEffect>
+				</Path>
+
+				<!-- Throttle -->
+
+				<!-- Background -->
+				<Path Canvas.Top="99" Canvas.Left="90" Fill="Black" Data="M -68,3 A65,67 0 0 0 68,3 L13,3 A13,10 0 0 0 -13,3 L-68,3"/>
+				<Path Canvas.Top="99" Canvas.Left="90" Stroke="#808080" StrokeThickness="1.5" Data="M -65,6 A65,65 0 0 0 65,6 L10,6 A6,6 0 0 0 -10,6 L -65,6"/>
+
+				<!-- Scale -->
+				<c:CircularScale Canvas.Top="42" Canvas.Left="27"
+											 StartAngle="160" EndAngle="20" 
+											 MajorTickColor="White" MajorTickThickness="3" MajorTickCount="5" Width="126" Height="126"
+											 MinorTickCount="4" MinorTickThickness="1.5" MinorTickLength="5"
+											 ScaleMin="0" ScaleMax="100"
+											 Font="Century" />
+
+				<TextBlock Text="Throttle" Foreground="White" FontFamily="Century" Canvas.Left="71" Canvas.Top="120" FontSize="10" />
+				<TextBlock Text="%" Foreground="White" FontFamily="Century" Canvas.Left="85" Canvas.Top="130" FontSize="10" />
+
+				<!-- Needle -->
+				<Polygon Canvas.Left="90" Canvas.Top="105" StrokeThickness="0" StrokeLineJoin="Round" Points="0,-2,0,2,53,1,58,0,53,-1" >
+					<Polygon.Fill>
+						<LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+							<GradientStop Color="#FFFF3D0D" Offset="0.462"/>
+							<GradientStop Color="#FFCD3700" Offset="0.552"/>
+						</LinearGradientBrush>
+					</Polygon.Fill>
+					<Polygon.RenderTransform>
+						<RotateTransform Angle="{Binding Value, ElementName=throttle_slider, Mode=OneWay, Converter={StaticResource ThrottleMapper}}"/>
+					</Polygon.RenderTransform>
+					<Polygon.Effect>
+						<DropShadowEffect Direction="{Binding Value, ElementName=throttle_slider, Mode=OneWay, Converter={StaticResource ThrottleMapper}}" ShadowDepth="3" />
+					</Polygon.Effect>
+				</Polygon>
+
+				<Ellipse Canvas.Left="83" Canvas.Top="98" Width="14" Height="14" Stroke="Silver">
+					<Ellipse.Fill>
+						<LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+							<GradientStop Color="#FFCFCFCF" Offset="0.462"/>
+							<GradientStop Color="#FFB2B2B2" Offset="0.552"/>
+						</LinearGradientBrush>
+					</Ellipse.Fill>
+				</Ellipse>
+
+				<Ellipse Canvas.Left="85" Canvas.Top="100" Width="10" Height="10" Stroke="#FFAAAAAA">
+					<Ellipse.Fill>
+						<LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+							<GradientStop Color="White" Offset="0"/>
+							<GradientStop Color="#FF959595" Offset="1"/>
+						</LinearGradientBrush>
+					</Ellipse.Fill>
+				</Ellipse>
+						
+			</Canvas>
+
+			<!-- Sliders -->
+			<StackPanel Grid.Column="4" Orientation="Horizontal" >
+				<!-- SPEED Slider -->
+				<StackPanel>
+					<TextBlock Text="Speed" Foreground="White" Margin="2,0,2,0"/>
+					<Slider x:Name="speed_slider" Orientation="Vertical" HorizontalAlignment="Center" Minimum="0" Maximum="15" Height="140" Margin="0,16,0,0" SmallChange="0.01"/>
+					<TextBlock Text="{Binding Value, ElementName=speed_slider, StringFormat={}{0:N}}" Foreground="White" HorizontalAlignment="Center" />
+				</StackPanel>
+
+				<!-- HEADING Slider -->
+				<StackPanel>
+					<TextBlock Text="Heading" Foreground="White" HorizontalAlignment="Center" Margin="2,0,2,0"/>
+					<Slider x:Name="heading_slider" Orientation="Vertical" HorizontalAlignment="Center" Minimum="0" Maximum="360" Height="140" Margin="0,16,0,0"/>
+					<TextBlock Text="{Binding Value, ElementName=heading_slider, StringFormat={}{0:N}}" Foreground="White" HorizontalAlignment="Center" />
+				</StackPanel>
+
+				<!-- VBat Slider -->
+				<StackPanel>
+					<TextBlock Text="VBat" Foreground="White" HorizontalAlignment="Center" Margin="2,0,2,0"/>
+					<Slider x:Name="vbat_slider" Orientation="Vertical" HorizontalAlignment="Center" Minimum="6" Maximum="9" Height="140" Margin="0,16,0,0"/>
+					<TextBlock Text="{Binding Value, ElementName=vbat_slider, StringFormat={}{0:N}}" Foreground="White" HorizontalAlignment="Center" />
+				</StackPanel>
+
+				<!-- VBat Slider -->
+				<StackPanel>
+					<TextBlock Text="IBat" Foreground="White" HorizontalAlignment="Center" Margin="2,0,2,0"/>
+					<Slider x:Name="ibat_slider" Orientation="Vertical" HorizontalAlignment="Center" Minimum="0" Maximum="10" Height="140" Margin="0,16,0,0"/>
+					<TextBlock Text="{Binding Value, ElementName=ibat_slider, StringFormat={}{0:N}}" Foreground="White" HorizontalAlignment="Center" />
+				</StackPanel>
+
+				<!-- Throttle Slider -->
+				<StackPanel>
+					<TextBlock Text="Throttle" Foreground="White" HorizontalAlignment="Center" Margin="2,0,2,0"/>
+					<Slider x:Name="throttle_slider" Orientation="Vertical" HorizontalAlignment="Center" Minimum="0" Maximum="100" Height="140" Margin="0,16,0,0"/>
+					<TextBlock Text="{Binding Value, ElementName=throttle_slider, StringFormat={}{0:N}}" Foreground="White" HorizontalAlignment="Center" />
+				</StackPanel>
+
+				<!-- Steering Slider -->
+				<StackPanel>
+					<TextBlock Text="Steering" Foreground="White" HorizontalAlignment="Center" Margin="2,0,2,0"/>
+					<Slider x:Name="steering_slider" Orientation="Vertical" HorizontalAlignment="Center" Minimum="-12" Maximum="12" Height="140" Margin="0,16,0,0"/>
+					<TextBlock Text="{Binding Value, ElementName=steering_slider, StringFormat={}{0:N}}" Foreground="White" HorizontalAlignment="Center" />
+				</StackPanel>
+			</StackPanel>
+
+		</Grid>
+	</Grid>
+</UserControl>

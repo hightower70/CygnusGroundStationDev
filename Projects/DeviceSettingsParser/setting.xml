@@ -1,0 +1,8 @@
+<Settings>
+  <Group Name="WiFiTelemetry">
+    <String Name="SSID" Length="16">CygnusTelemetry</String>
+    <String Name="Password" Length="32">cygnustelemetry</String>
+    <Int Name="Port">1234</Int>
+    <Int Name="test"  DisplayName="Test Value" Units="mm" Description="Test value description text">12</Int>
+  </Group>
+</Settings>

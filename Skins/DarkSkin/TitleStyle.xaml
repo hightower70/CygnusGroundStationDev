@@ -1,0 +1,18 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+										xmlns:c="clr-namespace:CygnusControls;assembly=CygnusControls">
+
+	<Style x:Key="StandardTitle" TargetType="c:Title" >
+		<Setter Property="Template">
+			<Setter.Value>
+				<ControlTemplate TargetType="c:Title">
+					<Grid>
+						<Border BorderBrush="{DynamicResource TitleForeground}" BorderThickness="0,0,0,2" Margin="5,3,5,3">
+							<TextBlock Text="{TemplateBinding Text}" Margin="5" Foreground="{DynamicResource TitleForeground}" FontSize="14" FontWeight="Bold"/>
+						</Border>
+					</Grid>
+				</ControlTemplate>
+			</Setter.Value>
+		</Setter>
+	</Style>
+</ResourceDictionary>

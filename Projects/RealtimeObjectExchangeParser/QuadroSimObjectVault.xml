@@ -1,0 +1,24 @@
+<RealtimeObjectExchangle>
+
+  <!-- Objects -->
+  <Object Name="SimIMU">
+    <Value Name="AccelX" PacketID="4" PacketIndex="5"/>
+    <Value Name="AccelY" PacketID="4" PacketIndex="6"/>
+    <Value Name="AccelZ" PacketID="4" PacketIndex="4"/>
+
+    <Value Name="GyroX" />
+    <Value Name="GyroY"/>
+    <Value Name="GyroZ"/>
+  </Object>
+
+  <Object Name="SimAttitude">
+    <Value Name="Roll" PacketID="18" PacketIndex="0"/>
+    <Value Name="Pitch" PacketID="18" PacketIndex="1"/>
+    <Value Name="Heading" PacketID="18" PacketIndex="2"/>
+  </Object>
+
+  <!-- Converters -->
+  <LinearConverter Name="FeetToMeter" Multiplier="0.3048" />
+  <LinearConverter Name="KnotToKilometerPerHour" Multiplier="1.85200" />
+
+</RealtimeObjectExchangle>

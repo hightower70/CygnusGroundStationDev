@@ -1,0 +1,64 @@
+﻿<Window x:Class="CygnusControls.FolderBrowserDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:CygnusControls"
+        Title="Select folder" Height="500" Width="500" WindowStartupLocation="CenterScreen" Style="{DynamicResource WindowStyle}">
+    <Window.Resources>
+        <!--<Style x:Key="DialogButtonStyle" TargetType="{x:Type Button}">
+            <Setter Property="Width" Value="75"/>
+            <Setter Property="Margin" Value="8"/>
+        </Style>-->
+        <local:NullToBoolConverter x:Key="NullToBoolConverter"/>
+		<Style x:Key="FolderBrowseItemTemplate" TargetType="TreeViewItem">
+				<Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+				<Setter Property="Background"  Value="{DynamicResource TextBoxBackground}"/>
+				<Setter Property="BorderBrush" Value="Transparent"/>
+				<Setter Property="Template">
+					<Setter.Value>
+						<ControlTemplate TargetType="{x:Type TreeViewItem}">
+							<Grid Margin="4,0,4,4">
+								<Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" SnapsToDevicePixels="True"/>
+							<ContentPresenter />
+							</Grid>
+							<ControlTemplate.Triggers>
+								<MultiTrigger>
+									<MultiTrigger.Conditions>
+										<Condition Property="IsMouseOver" Value="True" />
+										<Condition Property="IsSelected" Value="False"/>
+									</MultiTrigger.Conditions>
+									<Setter Property="Background" Value="{DynamicResource BackgroundHighlighted}" />
+									<Setter Property="BorderBrush" Value="{DynamicResource BorderBrushHighlighted}" />
+								</MultiTrigger>
+								<Trigger Property="IsSelected" Value="True">
+									<Setter Property="Background" Value="{DynamicResource BackgroundSelected}" />
+									<Setter Property="BorderBrush" Value="{DynamicResource BorderBrushSelected}" />
+								</Trigger>
+							</ControlTemplate.Triggers>
+						</ControlTemplate>
+					</Setter.Value>
+				</Setter>
+
+		</Style>
+	</Window.Resources>
+	<Grid x:Name="LayoutRoot" Background="{DynamicResource Background}">
+		<Grid.RowDefinitions>
+			<RowDefinition Height="*"/>
+			<RowDefinition Height="Auto"/>
+			<RowDefinition Height="Auto"/>
+		</Grid.RowDefinitions>
+		<local:FolderBrowserControl x:Name="fbcBrowser" Grid.Row="0" Margin="5" />
+		<TextBox x:Name="tbPathEditor"  Grid.Row="1" Margin="5" Text="{Binding CurrentPathEdit, ElementName=fbcBrowser, UpdateSourceTrigger=PropertyChanged}"  >
+			<TextBox.InputBindings>
+				<KeyBinding Key="Enter" Command="{Binding CurrentPathChangedCommand, ElementName=fbcBrowser}"/>
+			</TextBox.InputBindings>
+		</TextBox>
+		<DockPanel Grid.Row="2">
+			<Button x:Name="CreateButton" Content="New folder" Width="75" Height="25" Margin="5" Click="CreateButton_Click" IsEnabled="{Binding ElementName=fbcBrowser,Path=SelectedItem,Converter={StaticResource NullToBoolConverter}}"/>
+			<Button x:Name="RefreshButton" Content="Refresh" Width="75" Height="25" Margin="5" Click="RefreshButton_Click" ToolTip="Refreshes folders tree (including drives)"/>
+			<StackPanel Orientation="Horizontal" HorizontalAlignment="Right" >
+				<Button x:Name="OkButton" Content="Ok" Width="75" Height="25" Margin="5" IsDefault="True" Click="OkButton_Click" />
+				<Button x:Name="CancelButton" Content="Cancel" Width="75" Height="25" Margin="5" IsCancel="True" Click="CancelButton_Click" />
+			</StackPanel>
+		</DockPanel>
+	</Grid>
+</Window>

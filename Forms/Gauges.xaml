@@ -1,0 +1,676 @@
+﻿<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+						 xmlns:c ="clr-namespace:CygnusControls;assembly=CygnusControls"
+				     mc:Ignorable="d" 
+             d:DesignHeight="500" d:DesignWidth="1000"
+						 Background="Black">
+	<UserControl.Resources>
+		<LinearGradientBrush x:Key="InstrumentBackground" StartPoint="0,0" EndPoint="1,1" >
+			<GradientStop Color="#ff505050" Offset="0" />
+			<GradientStop Color="Black" Offset="1.0" />
+		</LinearGradientBrush>
+
+		<Style x:Key="ScrewStyle" TargetType="{x:Type Path}">
+			<Setter Property="Stroke" Value="#111111"/>
+			<Setter Property="Fill" Value="#262626"/>
+			<Setter Property="StrokeThickness" Value="1.5"/>
+		</Style>
+
+		<Geometry x:Key="ScrewData">M 2,7 L 12,7 M7,2 L7,12 M 0,7 A 7,7 0 1 1 14,7 A 7,7 0 1 1 0,7 Z</Geometry>
+
+		<c:LinearMappingConverter x:Key="AirspeedMapper" InputMin="0" InputMax="200" OutputMin="-240" OutputMax="60"/>
+		<c:LinearMappingConverter x:Key="VerticalSpeedMapper" InputMin="-20" InputMax="20" OutputMin="10" OutputMax="350"/>
+		<c:LinearMappingConverter x:Key="AltitudeMapper" InputMin="0" InputMax="100" OutputMin="-90" OutputMax="270" OverflowMode="Wrap"/>
+
+		<c:NumericFormatConverter x:Key="NumberFormatter" />
+	</UserControl.Resources>
+
+		<Grid>
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="190"/>
+				<ColumnDefinition Width="190"/>
+				<ColumnDefinition Width="190"/>
+				<ColumnDefinition Width="*"/>
+			</Grid.ColumnDefinitions>
+			<Grid.RowDefinitions>
+				<RowDefinition Height="190"/>
+				<RowDefinition Height="190"/>
+			</Grid.RowDefinitions>
+
+			<!-- AIRSPEED -->
+			<Canvas Grid.Column="0" Background="Black" Width="180" Height="180" Margin="0">
+				<!-- Frame -->
+				<Rectangle RadiusX="30" RadiusY="30" Stroke="#ff191919" StrokeThickness="2" Fill="#ff191919" Width="180" Height="180" />
+
+				<!-- Screws -->
+				<Path Canvas.Left="13" Canvas.Top="13" Style="{StaticResource ScrewStyle}" Data="{StaticResource ScrewData}"/>
+				<Path Canvas.Left="153" Canvas.Top="13" Style="{StaticResource ScrewStyle}" Data="{StaticResource ScrewData}"/>
+				<Path Canvas.Left="13" Canvas.Top="153" Style="{StaticResource ScrewStyle}" Data="{StaticResource ScrewData}"/>
+				<Path Canvas.Left="153" Canvas.Top="153" Style="{StaticResource ScrewStyle}" Data="{StaticResource ScrewData}"/>
+
+				<!-- Background -->
+				<Ellipse Canvas.Top="5" Canvas.Left="5" Fill="Black" Height="170" Width="170"/>
+				<Ellipse Canvas.Top="8" Canvas.Left="8" Height="164" Width="164" Stroke="#808080" StrokeThickness="1.5"/>
+
+				<!-- Scale color range -->
+				<Path Stroke="Green" StrokeThickness="4" Data="M 17,70 A75,75 0 0 1 129,25" />
+				<Path Stroke="#e0e000" StrokeThickness="4" Data="M 129,25 A75,75 0 0 1 166,90" />
+				<Path Stroke="Red" StrokeThickness="4" Data="M 166,90 A75,75 0 0 1 129,155" />
+
+				<!-- Scale -->
+				<c:CircularScale Canvas.Top="12" Canvas.Left="12"
+											 StartAngle="120" EndAngle="420" 
+											 MajorTickColor="White" MajorTickThickness="3" MajorTickCount="10" Width="156" Height="156"
+											 MinorTickCount="4" MinorTickThickness="1.5" MinorTickLength="5"
+											 ScaleMin="0" ScaleMax="200"
+											 Font="Century"/>
+
+				<TextBlock Text="AIRSPEED" Foreground="White" FontFamily="Century" Canvas.Left="63" Canvas.Top="65" FontSize="10" />
+				<TextBlock Text="KNOTS" Foreground="White" FontFamily="Century" Canvas.Left="71" Canvas.Top="105" FontSize="10" />
+
+				<!-- Data="M-76,-27 A 80,80 0 0 1 76,-27 A80,30 0 0 1 -76,-27 z" -->
+				<!-- Data="M-76,-27 A 80,80 0 0 1 30,-71 A100,100 0 0 1 -76,-27 z" -->
+
+
+				<!-- Needle -->
+				<Polygon Canvas.Left="90" Canvas.Top="90" StrokeThickness="0" Points="-15,-3,-15,3,63,2,68,0,63,-2" >
+					<Polygon.Fill>
+						<LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+							<GradientStop Color="#FFFF3D0D" Offset="0.462"/>
+							<GradientStop Color="#FFCD3700" Offset="0.552"/>
+						</LinearGradientBrush>
+					</Polygon.Fill>
+					<Polygon.RenderTransform>
+						<RotateTransform Angle="{Binding Value, ElementName=airspeed_slider, Mode=OneWay, Converter={StaticResource AirspeedMapper}}"/>
+					</Polygon.RenderTransform>
+					<Polygon.Effect>
+						<DropShadowEffect Direction="{Binding Value, ElementName=airspeed_slider, Mode=OneWay, Converter={StaticResource AirspeedMapper}}" ShadowDepth="3" />
+					</Polygon.Effect>
+				</Polygon>
+
+				<!--Shaft  -->
+				<Ellipse Canvas.Left="83" Canvas.Top="83" Width="14" Height="14" Stroke="Silver">
+					<Ellipse.Fill>
+						<LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+							<GradientStop Color="#FFCFCFCF" Offset="0.462"/>
+							<GradientStop Color="#FFB2B2B2" Offset="0.552"/>
+						</LinearGradientBrush>
+					</Ellipse.Fill>
+				</Ellipse>
+
+				<Ellipse Canvas.Left="85" Canvas.Top="85" Width="10" Height="10" Stroke="#FFAAAAAA">
+					<Ellipse.Fill>
+						<LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+							<GradientStop Color="White" Offset="0"/>
+							<GradientStop Color="#FF959595" Offset="1"/>
+						</LinearGradientBrush>
+					</Ellipse.Fill>
+				</Ellipse>
+
+				<!-- Glow  -->
+				<Path Canvas.Left="90" Canvas.Top="90" Stroke="{x:Null}" Opacity="0.3" Data="M-74,-27 A 80,80 0 0 1 74,-27 A80,25 0 0 1 -74,-27 z" >
+					<Path.Fill>
+						<LinearGradientBrush StartPoint="0,0" EndPoint="0.8,1">
+							<GradientStop Color="#FFFFFFFF" Offset="0"/>
+							<GradientStop Color="#00FFFFFF" Offset="1"/>
+						</LinearGradientBrush>
+					</Path.Fill>
+					<Path.BitmapEffect>
+						<BlurBitmapEffect Radius="8"/>
+					</Path.BitmapEffect>
+				</Path>
+
+			</Canvas>
+
+			<!-- VERTICAL SPEED -->
+			<Canvas Grid.Column="2" Grid.Row="1" Background="Black" Width="180" Height="180">
+				<!-- Frame -->
+				<Rectangle RadiusX="30" RadiusY="30" Stroke="#ff191919" StrokeThickness="2" Fill="#ff191919" Width="180" Height="180" Canvas.Left="0" Canvas.Top="0"/>
+
+				<!-- Screws -->
+				<Path Canvas.Left="13" Canvas.Top="13" Style="{StaticResource ScrewStyle}" Data="{StaticResource ScrewData}"/>
+				<Path Canvas.Left="153" Canvas.Top="13" Style="{StaticResource ScrewStyle}" Data="{StaticResource ScrewData}"/>
+				<Path Canvas.Left="13" Canvas.Top="153" Style="{StaticResource ScrewStyle}" Data="{StaticResource ScrewData}"/>
+				<Path Canvas.Left="153" Canvas.Top="153" Style="{StaticResource ScrewStyle}" Data="{StaticResource ScrewData}"/>
+
+				<!-- Background -->
+				<Ellipse Canvas.Top="5" Canvas.Left="5" Fill="Black" Height="170" Width="170"/>
+				<Ellipse Canvas.Top="8" Canvas.Left="8" Height="164" Width="164" Stroke="#808080" StrokeThickness="1.5"/>
+
+				<!-- Scale -->
+				<c:CircularScale Canvas.Top="12" Canvas.Left="12"
+											 StartAngle="10" EndAngle="350" 
+											 Width="156" Height="156"
+											 MajorTickColor="White" MajorTickThickness="3" MajorTickCount="8" 
+											 MinorTickCount="5" MinorTickThickness="1.5" MinorTickLength="5"
+											 ScaleMin="-20" ScaleMax="20"
+											 Font="Century"/>
+
+				<TextBlock Text="VERTICAL" Foreground="White" FontFamily="Century" Canvas.Left="64" Canvas.Top="55" FontSize="10" />
+				<TextBlock Text="SPEED" Foreground="White" FontFamily="Century" Canvas.Left="73" Canvas.Top="65" FontSize="10" />
+				<TextBlock Text="100feet per" Foreground="White" FontFamily="Century" Canvas.Left="64" Canvas.Top="105" FontSize="10" />
+				<TextBlock Text="minute" Foreground="White" FontFamily="Century" Canvas.Left="73" Canvas.Top="115" FontSize="10" />
+
+				<!-- Data="M-76,-27 A 80,80 0 0 1 76,-27 A80,30 0 0 1 -76,-27 z" -->
+				<!-- Data="M-76,-27 A 80,80 0 0 1 30,-71 A100,100 0 0 1 -76,-27 z" -->
+
+
+				<!-- Needle -->
+				<Polygon Canvas.Left="90" Canvas.Top="90" StrokeThickness="0" Points="-15,-3,-15,3,63,2,68,0,63,-2" >
+					<Polygon.Fill>
+						<LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+							<GradientStop Color="#FFFF3D0D" Offset="0.462"/>
+							<GradientStop Color="#FFCD3700" Offset="0.552"/>
+						</LinearGradientBrush>
+					</Polygon.Fill>
+					<Polygon.RenderTransform>
+						<RotateTransform Angle="{Binding Value, ElementName=vertical_speed_slider, Mode=OneWay, Converter={StaticResource VerticalSpeedMapper}}"/>
+					</Polygon.RenderTransform>
+					<Polygon.Effect>
+						<DropShadowEffect Direction="{Binding Value, ElementName=vertical_speed_slider, Mode=OneWay, Converter={StaticResource VerticalSpeedMapper}}" ShadowDepth="3" />
+					</Polygon.Effect>
+				</Polygon>
+
+				<!--Shaft  -->
+				<Ellipse Canvas.Left="83" Canvas.Top="83" Width="14" Height="14" Stroke="Silver">
+					<Ellipse.Fill>
+						<LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+							<GradientStop Color="#FFCFCFCF" Offset="0.462"/>
+							<GradientStop Color="#FFB2B2B2" Offset="0.552"/>
+						</LinearGradientBrush>
+					</Ellipse.Fill>
+				</Ellipse>
+
+				<Ellipse Canvas.Left="85" Canvas.Top="85" Width="10" Height="10" Stroke="#FFAAAAAA">
+					<Ellipse.Fill>
+						<LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+							<GradientStop Color="White" Offset="0"/>
+							<GradientStop Color="#FF959595" Offset="1"/>
+						</LinearGradientBrush>
+					</Ellipse.Fill>
+				</Ellipse>
+
+				<!-- Glow  -->
+				<Path Canvas.Left="90" Canvas.Top="90" Stroke="{x:Null}" Opacity="0.3" Data="M-74,-27 A 80,80 0 0 1 74,-27 A80,25 0 0 1 -74,-27 z" >
+					<Path.Fill>
+						<LinearGradientBrush StartPoint="0,0" EndPoint="0.8,1">
+							<GradientStop Color="#FFFFFFFF" Offset="0"/>
+							<GradientStop Color="#00FFFFFF" Offset="1"/>
+						</LinearGradientBrush>
+					</Path.Fill>
+					<Path.BitmapEffect>
+						<BlurBitmapEffect Radius="8"/>
+					</Path.BitmapEffect>
+				</Path>
+
+			</Canvas>
+
+			<!-- Compass -->
+			<Canvas Grid.Column="1" Grid.Row="1" Background="Black" Width="180" Height="180">
+				<!-- Frame -->
+				<Rectangle RadiusX="30" RadiusY="30" Stroke="#ff191919" StrokeThickness="2" Fill="#ff191919" Width="180" Height="180" Canvas.Left="0" Canvas.Top="0"/>
+
+				<!-- Screws -->
+				<Path Canvas.Left="13" Canvas.Top="13" Style="{StaticResource ScrewStyle}" Data="{StaticResource ScrewData}"/>
+				<Path Canvas.Left="153" Canvas.Top="13" Style="{StaticResource ScrewStyle}" Data="{StaticResource ScrewData}"/>
+				<Path Canvas.Left="13" Canvas.Top="153" Style="{StaticResource ScrewStyle}" Data="{StaticResource ScrewData}"/>
+				<Path Canvas.Left="153" Canvas.Top="153" Style="{StaticResource ScrewStyle}" Data="{StaticResource ScrewData}"/>
+
+				<!-- Background -->
+				<Ellipse Canvas.Top="5" Canvas.Left="5" Fill="Black" Height="170" Width="170"/>
+				<Ellipse Canvas.Top="8" Canvas.Left="8" Height="164" Width="164" Stroke="#808080" StrokeThickness="1.5"/>
+
+				<!-- Scale -->
+				<c:CircularScale Canvas.Top="12" Canvas.Left="12"
+											 StartAngle="-90" EndAngle="270" 
+											 Width="156" Height="156"
+											 MajorTickColor="White" MajorTickThickness="3" MajorTickCount="12" 
+											 MinorTickCount="3" MinorTickThickness="1.5" MinorTickLength="5"
+											 ScaleMin="0" ScaleMax="36"
+											 Font="Century"
+											 MajorTickLabelAngleMode="Relative" MajorTickLabelAngle="90"
+											 >
+					<c:CircularScale.Labels>
+						<c:MajorTickLabel Value="0" Label="N" FontColor="Orange" FontHeight="12"/>
+						<c:MajorTickLabel Value="9" Label="E" FontColor="Orange" FontHeight="12"/>
+						<c:MajorTickLabel Value="18" Label="S" FontColor="Orange" FontHeight="12"/>
+						<c:MajorTickLabel Value="27" Label="W" FontColor="Orange" FontHeight="12"/>
+						<c:MajorTickLabel Value="36" Label=""/>
+					</c:CircularScale.Labels>
+					<c:CircularScale.RenderTransform>
+						<RotateTransform Angle="{Binding Value, ElementName=heading_slider, Mode=OneWay}" CenterX="78" CenterY="78"/>
+					</c:CircularScale.RenderTransform>
+				</c:CircularScale>
+
+				<Path Stroke="Yellow" StrokeThickness="1.5" Canvas.Top="120" Canvas.Left="60">
+					<Path.Data>
+						M30,-80 L30.2,-90 30.2,-60
+					L30.5,-60 31.7,-59 32,-58 32.5,-56 32.8,-53 33,-51 33,-47 33,-43 60,-25 60,-20 36,-30 35,-30 34,-30 33.5,-29 33,-14 33,-10 40,-4 40,-2 34,-2 31,-1.5 30.5,-0.5 30,0 
+					L29.5,-0.5 29,-1.5 26,-2 20,-2 20,-4 27,-10 27,-14 26.5,-29 26,-30 25,-30 24,-30 0,-20 0,-25 27,-43 27,-51 27.2,-53 27.5,-56 28,-58 28.3,-59 29.5,-60
+					L29.8,-60 29.8,-90 z
+					M30.2,8 L30.2,20
+					M-20,-30 L-8,-30
+				  M68,-30 L80,-30
+					</Path.Data>
+				</Path>
+
+				<!--   23.375,-1.9921875 20,-2 20,-4 28,-10 27.95703125,-10.525390625 27.84375,-11.953125 27.68359375,-14.060546875 27.5,-16.625 27.15625,-22.234375 27.04296875,-24.833984375 27,-27 26.671875,-28.8046875 25.875,-29.8125 24.890625,-30.1640625 24,-30 1.22460635382238E-15,-20 1.53075794227797E-15,-25 27,-43 27.0458984375,-47.17578125 27.1796875,-50.71875 27.3955078125,-53.65234375 27.6875,-56 28.0498046875,-57.78515625 28.4765625,-59.03125 28.9619140625,-59.76171875 29.5,-60 29.7999992370605,-60 29.7999992370605,-80 30,-80z-->
+
+				<!-- Glow  -->
+				<Path Canvas.Left="90" Canvas.Top="90" Stroke="{x:Null}" Opacity="0.3" Data="M-74,-27 A 80,80 0 0 1 74,-27 A80,25 0 0 1 -74,-27 z" >
+					<Path.Fill>
+						<LinearGradientBrush StartPoint="0,0" EndPoint="0.8,1">
+							<GradientStop Color="#FFFFFFFF" Offset="0"/>
+							<GradientStop Color="#00FFFFFF" Offset="1"/>
+						</LinearGradientBrush>
+					</Path.Fill>
+					<Path.BitmapEffect>
+						<BlurBitmapEffect Radius="8"/>
+					</Path.BitmapEffect>
+				</Path>
+
+			</Canvas>
+
+			<!-- Altitude -->
+			<Canvas Grid.Column="2" Grid.Row="0" Background="Black" Width="180" Height="180">
+				<!-- Frame -->
+				<Rectangle RadiusX="30" RadiusY="30" Stroke="#ff191919" StrokeThickness="2" Fill="#ff191919" Width="180" Height="180" Canvas.Left="0" Canvas.Top="0"/>
+
+				<!-- Screws -->
+				<Path Canvas.Left="13" Canvas.Top="13" Style="{StaticResource ScrewStyle}" Data="{StaticResource ScrewData}"/>
+				<Path Canvas.Left="153" Canvas.Top="13" Style="{StaticResource ScrewStyle}" Data="{StaticResource ScrewData}"/>
+				<Path Canvas.Left="13" Canvas.Top="153" Style="{StaticResource ScrewStyle}" Data="{StaticResource ScrewData}"/>
+				<Path Canvas.Left="153" Canvas.Top="153" Style="{StaticResource ScrewStyle}" Data="{StaticResource ScrewData}"/>
+
+				<!-- Background -->
+				<Ellipse Canvas.Top="5" Canvas.Left="5" Fill="Black" Height="170" Width="170"/>
+				<Ellipse Canvas.Top="8" Canvas.Left="8" Height="164" Width="164" Stroke="#808080" StrokeThickness="1.5"/>
+
+				<!-- Scale -->
+				<c:CircularScale Canvas.Top="12" Canvas.Left="12"
+											 StartAngle="-90" EndAngle="270" 
+											 Width="156" Height="156"
+											 MajorTickCount="10" MajorTickColor="White" MajorTickThickness="3" 
+											 MinorTickCount="10" MinorTickThickness="1.5" MinorTickLength="5"
+											 ScaleMin="0" ScaleMax="10"
+											 Font="Century"
+											 >
+					<c:CircularScale.Labels>
+						<c:MajorTickLabel Value="10" Label=""/>
+					</c:CircularScale.Labels>
+				</c:CircularScale>
+
+				<!-- Gauge label -->
+				<TextBlock Text="ALTITUDE" Foreground="White" FontFamily="Century" Canvas.Left="62" Canvas.Top="65" FontSize="10" />
+				<TextBlock Text="FEET" Foreground="White" FontFamily="Century" Canvas.Left="76" Canvas.Top="125" FontSize="10" />
+
+				<!-- Altitude digital display -->
+				<StackPanel Canvas.Left="63" Canvas.Top="101" Orientation="Horizontal" Background="#FFCFCFCF">
+					<c:SevenSegmentDigit Height="16" Width="11" SegmentColor="Black" Margin="2,2,0,2" Value="{Binding Value, ElementName=altitude_slider, Mode=OneWay}" DigitIndex="4"/>
+					<c:SevenSegmentDigit Height="16" Width="11" SegmentColor="Black" Value="{Binding Value, ElementName=altitude_slider, Mode=OneWay}" DigitIndex="3" DisableZeroBlanking="True"/>
+					<c:SevenSegmentDigit Height="12" Width="9" SegmentColor="Black" Margin="0,4,0,0" Value="{Binding Value, ElementName=altitude_slider, Mode=OneWay}" DigitIndex="2" DisableZeroBlanking="True"/>
+					<c:SevenSegmentDigit Height="12" Width="9" SegmentColor="Black" Margin="0,4,0,0" Value="{Binding Value, ElementName=altitude_slider, Mode=OneWay}" DigitIndex="1" DisableZeroBlanking="True"/>
+					<c:SevenSegmentDigit Height="12" Width="9" SegmentColor="Black" Margin="0,4,2,0" Value="{Binding Value, ElementName=altitude_slider, Mode=OneWay}" DigitIndex="0" />
+				</StackPanel>
+				<Rectangle Canvas.Left="62" Canvas.Top="100" Stroke="#202020" StrokeThickness="1" Width="55" Height="22" RadiusX="2" RadiusY="2">
+					<Rectangle.Effect>
+						<DropShadowEffect BlurRadius="2" ShadowDepth="1" />
+					</Rectangle.Effect>
+				</Rectangle>
+
+				<!-- Needle -->
+				<Polygon Canvas.Left="90" Canvas.Top="90" StrokeThickness="1" Stroke="#202020" Points="-15,-0.5,-15,0.5,40,0.5,60,5,70,0,60,-5,40,-0.5" >
+					<Polygon.Fill>
+						<LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+							<GradientStop Color="#FFFF3D0D" Offset="0.462"/>
+							<GradientStop Color="#FFCD3700" Offset="0.552"/>
+						</LinearGradientBrush>
+					</Polygon.Fill>
+					<Polygon.RenderTransform>
+						<RotateTransform Angle="{Binding Value, ElementName=altitude_slider, Mode=OneWay, Converter={StaticResource AltitudeMapper}}"/>
+					</Polygon.RenderTransform>
+					<Polygon.Effect>
+						<DropShadowEffect Direction="{Binding Value, ElementName=altitude_slider, Mode=OneWay, Converter={StaticResource VerticalSpeedMapper}}" ShadowDepth="3" />
+					</Polygon.Effect>
+				</Polygon>
+
+
+				<!--Shaft  -->
+				<Ellipse Canvas.Left="83" Canvas.Top="83" Width="14" Height="14" Stroke="Silver">
+					<Ellipse.Fill>
+						<LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+							<GradientStop Color="#FFCFCFCF" Offset="0.462"/>
+							<GradientStop Color="#FFB2B2B2" Offset="0.552"/>
+						</LinearGradientBrush>
+					</Ellipse.Fill>
+				</Ellipse>
+
+				<Ellipse Canvas.Left="85" Canvas.Top="85" Width="10" Height="10" Stroke="#FFAAAAAA">
+					<Ellipse.Fill>
+						<LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+							<GradientStop Color="White" Offset="0"/>
+							<GradientStop Color="#FF959595" Offset="1"/>
+						</LinearGradientBrush>
+					</Ellipse.Fill>
+				</Ellipse>
+
+
+				<!-- Glow  -->
+				<Path Canvas.Left="90" Canvas.Top="90" Stroke="{x:Null}" Opacity="0.3" Data="M-74,-27 A 80,80 0 0 1 74,-27 A80,25 0 0 1 -74,-27 z" >
+					<Path.Fill>
+						<LinearGradientBrush StartPoint="0,0" EndPoint="0.8,1">
+							<GradientStop Color="#FFFFFFFF" Offset="0"/>
+							<GradientStop Color="#00FFFFFF" Offset="1"/>
+						</LinearGradientBrush>
+					</Path.Fill>
+					<Path.BitmapEffect>
+						<BlurBitmapEffect Radius="8"/>
+					</Path.BitmapEffect>
+				</Path>
+			</Canvas>
+
+			<!-- Turn coordinator -->
+			<Canvas Grid.Column="0" Grid.Row="1" Background="Black" Width="180" Height="180">
+				<!-- Frame -->
+				<Rectangle RadiusX="30" RadiusY="30" Stroke="#ff191919" StrokeThickness="2" Fill="#ff191919" Width="180" Height="180" Canvas.Left="0" Canvas.Top="0"/>
+
+				<!-- Screws -->
+				<Path Canvas.Left="13" Canvas.Top="13" Style="{StaticResource ScrewStyle}" Data="{StaticResource ScrewData}"/>
+				<Path Canvas.Left="153" Canvas.Top="13" Style="{StaticResource ScrewStyle}" Data="{StaticResource ScrewData}"/>
+				<Path Canvas.Left="13" Canvas.Top="153" Style="{StaticResource ScrewStyle}" Data="{StaticResource ScrewData}"/>
+				<Path Canvas.Left="153" Canvas.Top="153" Style="{StaticResource ScrewStyle}" Data="{StaticResource ScrewData}"/>
+
+				<!-- Background -->
+				<Ellipse Canvas.Top="5" Canvas.Left="5" Fill="Black" Height="170" Width="170"/>
+				<Ellipse Canvas.Top="8" Canvas.Left="8" Height="164" Width="164" Stroke="#808080" StrokeThickness="1.5"/>
+
+				<Ellipse Canvas.Left="20" Canvas.Top="20" Width="140" Height="140" Fill="#0c0c0c"/>
+				<Ellipse Canvas.Left="25" Canvas.Top="25" Width="130" Height="130" Stroke="Gray" StrokeThickness="10" Opacity="0.25">
+					<Ellipse.BitmapEffect>
+						<BlurBitmapEffect  />
+					</Ellipse.BitmapEffect>
+				</Ellipse>
+
+				<Ellipse Canvas.Left="10" Canvas.Top="10" Width="160" Height="160" Stroke="#0c0c0c" StrokeThickness="20" >
+				</Ellipse>
+
+				<TextBlock Text="TURN" Foreground="White" FontFamily="Arial" Canvas.Left="78" Canvas.Top="40" FontSize="9" />
+				<TextBlock Text="COORDINATOR" Foreground="White" FontFamily="Arial" Canvas.Left="56" Canvas.Top="50" FontSize="9" />
+
+				<!-- Turn indicator -->
+				<Path Stroke="White" Fill="White" StrokeThickness="0.5" Canvas.Top="70" Canvas.Left="90">
+					<Path.Data>
+						M0,0 L0,0.4 0.5,0.8 1,2 1.3,10 15,10 18,10.2 19,10.5 18,10.8 15,11 5,11.5 5.6,12 6.4,13 7.4,15 7.7,17.5 49,17.9 52,18 48,18.7 46,19 45,19.2 40,19.7 13,21.5 11,21.8 8,22.4 6,22.8 4,24 2,24.7 0,25
+					L-2,24.7 -4,24 -6,22.8 -8,22.4 -11,21.8 -13,21.5 -40,19.7 -45,19.2 -46,19 -48,18.7 -52,18 -49,17.9 -7.7,17.5 -7.4,15 -6.4,13 -5.6,12 -5,11.5 -15,11 -18,10.8 -19,10.5 -18,10.2 -15,10 -1.3,10 -1,2 -0.5,0.8 0,0.4
+					</Path.Data>
+					<Path.RenderTransform>
+						<RotateTransform Angle="{Binding Value, ElementName=turn_rate_slider, Mode=OneWay}" CenterX="0" CenterY="19"/>
+					</Path.RenderTransform>
+				</Path>
+
+				<!-- Tube -->
+				<Path Stroke="DarkGray" StrokeThickness="0.5" Canvas.Top="120" Canvas.Left="90">
+					<Path.Fill>
+						<LinearGradientBrush StartPoint="0,0" EndPoint="1,0" >
+							<GradientStop Color="#919280" Offset="0.0" />
+							<GradientStop Color="#c1c2a9" Offset="0.1" />
+							<GradientStop Color="#c1c2a9" Offset="0.9" />
+							<GradientStop Color="#919280" Offset="1.0" />
+						</LinearGradientBrush>
+					</Path.Fill>
+					<Path.Data>
+						M0,16 A 60,60 0 0 0 30,6 A 2,2 0 0 0 24,-4	A 60,60 0 0 1 0,4
+					A 60,60 0 0 1 -24,-4 A 2,2 0 0 0 -30,6
+					A 60,60 0 0 0 0,16
+					</Path.Data>
+				</Path>
+
+				<!-- Ball -->
+				<Ellipse Canvas.Top="125" Canvas.Left="85" Height="10" Width="10">
+					<Ellipse.Fill>
+						<RadialGradientBrush	GradientOrigin="0.3,0.3"
+																Center="0.35,0.35" 
+																RadiusX="0.25" RadiusY="0.25">
+							<RadialGradientBrush.GradientStops>
+								<GradientStop Color="White" Offset="0" />
+								<GradientStop Color="Black" Offset="1.0" />
+							</RadialGradientBrush.GradientStops>
+						</RadialGradientBrush>
+					</Ellipse.Fill>
+					<Ellipse.RenderTransform>
+						<RotateTransform Angle="{Binding Value, ElementName=balance_slider, Mode=OneWay}" CenterX="5" CenterY="-40"/>
+					</Ellipse.RenderTransform>
+				</Ellipse>
+
+				<!-- Tube markers -->
+				<Line X1="83" Y1="124" X2="83" Y2="134.5" Stroke="#101010" StrokeThickness="1"/>
+				<Line X1="97" Y1="124" X2="97" Y2="134.5" Stroke="#101010" StrokeThickness="1"/>
+
+				<!-- Tube glow -->
+				<Path Canvas.Left="90" Canvas.Top="120" Stroke="White" StrokeThickness="3" StrokeEndLineCap="Round" StrokeStartLineCap="Round" Opacity="0.8" Data="M-25,0 A 60,75 0 0 0 25,0">
+					<Path.Effect>
+						<BlurEffect/>
+					</Path.Effect>
+				</Path>
+
+				<!-- Markers -->
+				<Line X1="18" Y1="90" X2="30" Y2="90"  Stroke="White" StrokeThickness="5"/>
+				<Line X1="162" Y1="90" X2="150" Y2="90"  Stroke="White" StrokeThickness="5"/>
+				<Line X1="36" Y1="117" X2="26" Y2="122"  Stroke="White" StrokeThickness="5"/>
+				<Line X1="144" Y1="117" X2="154" Y2="122"  Stroke="White" StrokeThickness="5"/>
+
+				<TextBlock Canvas.Left="30" Canvas.Top="124" Text="L" FontFamily="Arial" FontWeight="Black" FontSize="13" Foreground="White"/>
+				<TextBlock Canvas.Left="140" Canvas.Top="124" Text="R" FontFamily="Arial" FontWeight="Black" FontSize="13" Foreground="White"/>
+
+				<TextBlock Text="NO PITCH" Foreground="White" FontFamily="Arial" Canvas.Left="75" Canvas.Top="152" FontSize="6" />
+				<TextBlock Text="INFORMATION" Foreground="White" FontFamily="Arial" Canvas.Left="70" Canvas.Top="158" FontSize="6" />
+
+				<TextBlock Text="2 MIN. TURN" Foreground="White" FontFamily="Arial" Canvas.Left="71" Canvas.Top="105" FontSize="6" />
+
+				<!-- Glow  -->
+				<Path Canvas.Left="90" Canvas.Top="90" Stroke="{x:Null}" Opacity="0.3" Data="M-74,-27 A 80,80 0 0 1 74,-27 A80,25 0 0 1 -74,-27 z" >
+					<Path.Fill>
+						<LinearGradientBrush StartPoint="0,0" EndPoint="0.8,1">
+							<GradientStop Color="#FFFFFFFF" Offset="0"/>
+							<GradientStop Color="#00FFFFFF" Offset="1"/>
+						</LinearGradientBrush>
+					</Path.Fill>
+					<Path.BitmapEffect>
+						<BlurBitmapEffect Radius="8"/>
+					</Path.BitmapEffect>
+				</Path>
+
+			</Canvas>
+
+			<!-- Attitude indicator -->
+			<Canvas Grid.Column="1" Grid.Row="0" Background="Black" Width="180" Height="180">
+				<!-- Frame -->
+				<Rectangle RadiusX="30" RadiusY="30" Stroke="#ff191919" StrokeThickness="2" Fill="#ff191919" Width="180" Height="180" Canvas.Left="0" Canvas.Top="0"/>
+
+				<!-- Screws -->
+				<Path Canvas.Left="13" Canvas.Top="13" Style="{StaticResource ScrewStyle}" Data="{StaticResource ScrewData}"/>
+				<Path Canvas.Left="153" Canvas.Top="13" Style="{StaticResource ScrewStyle}" Data="{StaticResource ScrewData}"/>
+				<Path Canvas.Left="13" Canvas.Top="153" Style="{StaticResource ScrewStyle}" Data="{StaticResource ScrewData}"/>
+				<Path Canvas.Left="153" Canvas.Top="153" Style="{StaticResource ScrewStyle}" Data="{StaticResource ScrewData}"/>
+
+				<!-- Background -->
+				<Ellipse Canvas.Top="5" Canvas.Left="5" Fill="Black" Height="170" Width="170"/>
+				<Ellipse Canvas.Top="8" Canvas.Left="8" Height="164" Width="164" Stroke="#808080" StrokeThickness="1.5"/>
+
+				<!-- Attitude strip -->
+				<Canvas Canvas.Left="90" Canvas.Top="90">
+					<Canvas Canvas.Left="0" Canvas.Top="0">
+						<Rectangle Canvas.Left="-80" Canvas.Top="-270" Width="160" Height="270" Fill="#2d8be6"/>
+						<Rectangle Canvas.Left="-80" Canvas.Top="0" Width="160" Height="270" Fill="#9D7129"/>
+						<Line X1="-70" Y1="0" X2="70" Y2="0" Stroke="White" StrokeThickness="2"/>
+						<Line X1="-5" Y1="5" X2="5" Y2="5" Stroke="White" StrokeThickness="1"/>
+						<Line X1="-5" Y1="-5" X2="5" Y2="-5" Stroke="White" StrokeThickness="1"/>
+						<Line X1="-10" Y1="10" X2="10" Y2="10" Stroke="White" StrokeThickness="1"/>
+						<Line X1="-10" Y1="-10" X2="10" Y2="-10" Stroke="White" StrokeThickness="1"/>
+						<TextBlock Canvas.Left="-20" Canvas.Top="-14" Text="10" FontFamily="Arial" FontSize="7" Foreground="White"/>
+						<TextBlock Canvas.Left="12" Canvas.Top="-14" Text="10" FontFamily="Arial" FontSize="7" Foreground="White"/>
+						<TextBlock Canvas.Left="-20" Canvas.Top="6" Text="10" FontFamily="Arial" FontSize="7" Foreground="White"/>
+						<TextBlock Canvas.Left="12" Canvas.Top="6" Text="10" FontFamily="Arial" FontSize="7" Foreground="White"/>
+
+						<Line X1="-5" Y1="15" X2="5" Y2="15" Stroke="White" StrokeThickness="1"/>
+						<Line X1="-5" Y1="-15" X2="5" Y2="-15" Stroke="White" StrokeThickness="1"/>
+						<Line X1="-15" Y1="20" X2="15" Y2="20" Stroke="White" StrokeThickness="1"/>
+						<Line X1="-15" Y1="-20" X2="15" Y2="-20" Stroke="White" StrokeThickness="1"/>
+						<TextBlock Canvas.Left="-25" Canvas.Top="-24" Text="20" FontFamily="Arial" FontSize="7" Foreground="White"/>
+						<TextBlock Canvas.Left="17" Canvas.Top="-24" Text="20" FontFamily="Arial" FontSize="7" Foreground="White"/>
+						<TextBlock Canvas.Left="-25" Canvas.Top="16" Text="20" FontFamily="Arial" FontSize="7" Foreground="White"/>
+						<TextBlock Canvas.Left="17" Canvas.Top="16" Text="20" FontFamily="Arial" FontSize="7" Foreground="White"/>
+
+						<Line X1="-5" Y1="25" X2="5" Y2="25" Stroke="White" StrokeThickness="1"/>
+						<Line X1="-5" Y1="-25" X2="5" Y2="-25" Stroke="White" StrokeThickness="1"/>
+						<Line X1="-20" Y1="30" X2="20" Y2="30" Stroke="White" StrokeThickness="1"/>
+						<Line X1="-20" Y1="-30" X2="20" Y2="-30" Stroke="White" StrokeThickness="1"/>
+						<TextBlock Canvas.Left="-30" Canvas.Top="-34" Text="30" FontFamily="Arial" FontSize="7" Foreground="White"/>
+						<TextBlock Canvas.Left="22" Canvas.Top="-34" Text="30" FontFamily="Arial" FontSize="7" Foreground="White"/>
+						<TextBlock Canvas.Left="-30" Canvas.Top="26" Text="30" FontFamily="Arial" FontSize="7" Foreground="White"/>
+						<TextBlock Canvas.Left="22" Canvas.Top="26" Text="30" FontFamily="Arial" FontSize="7" Foreground="White"/>
+
+						<!-- arrows -->
+						<Path Canvas.Left="0" Canvas.Top="-90" Stroke="DarkRed" StrokeThickness="1" Fill="Red" Data="M0,10 L20,-10 15,-10 0,0 -15,-10 -20,-10 z" />
+						<Path Canvas.Left="0" Canvas.Top="-120" Stroke="DarkRed" StrokeThickness="1" Fill="Red" Data="M0,10 L20,-10 15,-10 0,0 -15,-10 -20,-10 z" />
+
+						<Path Canvas.Left="0" Canvas.Top="90" Stroke="DarkRed" StrokeThickness="1" Fill="Red" Data="M0,-10 L20,10 15,10 0,0 -15,10 -20,10 z" />
+						<Path Canvas.Left="0" Canvas.Top="120" Stroke="DarkRed" StrokeThickness="1" Fill="Red" Data="M0,-10 L20,10 15,10 0,0 -15,10 -20,10 z" />
+
+						<Canvas.RenderTransform>
+							<TransformGroup>
+								<TranslateTransform X="0" Y="{Binding Value, ElementName=pitch_slider, Mode=OneWay}"/>
+								<RotateTransform Angle="{Binding Value, ElementName=roll_slider, Mode=OneWay}" CenterX="0" CenterY="0"/>
+							</TransformGroup>
+						</Canvas.RenderTransform>
+					</Canvas>
+					<Canvas.Clip>
+						<EllipseGeometry RadiusX="70" RadiusY="70" Center="0,0"/>
+					</Canvas.Clip>
+				</Canvas>
+
+				<!-- Roll ring -->
+				<Canvas Canvas.Left="10" Canvas.Top="10" Width="160" Height="160" >
+					<Ellipse Canvas.Left="5" Canvas.Top="5" Width="150" Height="150" Stroke="Black" StrokeThickness="10" Opacity="0.25">
+						<Ellipse.BitmapEffect>
+							<BlurBitmapEffect  />
+						</Ellipse.BitmapEffect>
+					</Ellipse>
+					<Path Canvas.Left="0" Canvas.Top="0" Stroke="#317ec8" StrokeThickness="10" Data="M5,80 A 70,70 0 0 1 155,80"/>
+					<Path Canvas.Left="0" Canvas.Top="0" Stroke="#8d682f" StrokeThickness="10" Data="M5,80 A 70,70 0 0 0 155,80"/>
+					<Path Canvas.Left="80" Canvas.Top="10" Fill="White" Data="M0,0 L-5,-9 5,-9 z"/>
+					<Line X1="0" Y1="80" X2="10" Y2="80" Stroke="White" StrokeThickness="3"/>
+					<Line X1="150" Y1="80" X2="160" Y2="80" Stroke="White" StrokeThickness="3"/>
+					<Path Canvas.Left="30" Canvas.Top="30" Fill="White" Data="M0,0 L-6,0 0,-6 z"/>
+					<Path Canvas.Left="130" Canvas.Top="30" Fill="White" Data="M0,0 L6,0 0,-6 z"/>
+					<Line X1="19" Y1="45" X2="14" Y2="42" Stroke="White" StrokeThickness="3"/>
+					<Line X1="141" Y1="45" X2="146" Y2="42" Stroke="White" StrokeThickness="3"/>
+					<Line X1="68" Y1="11" X2="67" Y2="5" Stroke="White" StrokeThickness="1"/>
+					<Line X1="56" Y1="14.2" X2="54" Y2="8.5" Stroke="White" StrokeThickness="1"/>
+					<Line X1="45" Y1="19.3" X2="42" Y2="14" Stroke="White" StrokeThickness="3"/>
+					<Line X1="92" Y1="11" X2="93" Y2="5" Stroke="White" StrokeThickness="1"/>
+					<Line X1="104" Y1="14.2" X2="106" Y2="8.5" Stroke="White" StrokeThickness="1"/>
+					<Line X1="115" Y1="19.3" X2="118" Y2="14" Stroke="White" StrokeThickness="3"/>
+					<Canvas.RenderTransform>
+						<RotateTransform Angle="{Binding Value, ElementName=roll_slider, Mode=OneWay}" CenterX="80" CenterY="80"/>
+					</Canvas.RenderTransform>
+				</Canvas>
+
+				<!-- Roll pointer -->
+				<Path Canvas.Left="90" Canvas.Top="23" Stroke="Orange" StrokeThickness="2" Data="M0,0 L5,10 -5,10 z">
+					<Path.Effect>
+						<DropShadowEffect Opacity="0.4"/>
+					</Path.Effect>
+				</Path>
+
+				<!-- Pitch needle -->
+				<Ellipse Canvas.Left="87" Canvas.Top="87" Width="6" Height="6" Fill="Orange">
+					<Ellipse.Effect>
+						<DropShadowEffect Opacity="0.4"/>
+					</Ellipse.Effect>
+				</Ellipse>
+				<Path Canvas.Left="90" Canvas.Top="90" Stroke="Orange" StrokeThickness="3" Data="M-50,0 L-20,0 -20,7 M20,7 L20,0 50,0" >
+					<Path.Effect>
+						<DropShadowEffect Opacity="0.4"/>
+					</Path.Effect>
+				</Path>
+
+				<!-- Glow  -->
+				<Path Canvas.Left="90" Canvas.Top="90" Stroke="{x:Null}" Opacity="0.3" Data="M-74,-27 A 80,80 0 0 1 74,-27 A80,25 0 0 1 -74,-27 z" >
+					<Path.Fill>
+						<LinearGradientBrush StartPoint="0,0" EndPoint="0.8,1">
+							<GradientStop Color="#FFFFFFFF" Offset="0"/>
+							<GradientStop Color="#00FFFFFF" Offset="1"/>
+						</LinearGradientBrush>
+					</Path.Fill>
+					<Path.BitmapEffect>
+						<BlurBitmapEffect Radius="8"/>
+					</Path.BitmapEffect>
+				</Path>
+
+			</Canvas>
+
+			<!-- Sliders -->
+			<StackPanel Orientation="Horizontal" Grid.Column="3">
+				<!-- AIRSPEED Slider -->
+				<StackPanel>
+					<TextBlock Text="Airspeed" Foreground="White" Margin="2,0,2,0"/>
+					<Slider x:Name="airspeed_slider" Orientation="Vertical" HorizontalAlignment="Center" Minimum="0" Maximum="200" Height="140" Margin="0,16,0,0"/>
+					<TextBlock Text="{Binding Value, ElementName=airspeed_slider, Converter={StaticResource NumberFormatter}, ConverterParameter={}{0:N}}" Foreground="White" HorizontalAlignment="Center" />
+				</StackPanel>
+
+				<!-- VERTICAL SPEED Slider -->
+				<StackPanel>
+					<TextBlock Text="Vertical" Foreground="White" HorizontalAlignment="Center" Margin="2,0,2,0"/>
+					<TextBlock Text="Speed" Foreground="White" HorizontalAlignment="Center"/>
+					<Slider x:Name="vertical_speed_slider" Orientation="Vertical" HorizontalAlignment="Center" Minimum="-20" Maximum="20" Height="140"/>
+					<TextBlock Text="{Binding Value, ElementName=vertical_speed_slider, Converter={StaticResource NumberFormatter}, ConverterParameter={}{0:N}}" Foreground="White" HorizontalAlignment="Center" />
+				</StackPanel>
+
+				<!-- HEADING Slider -->
+				<StackPanel>
+					<TextBlock Text="Heading" Foreground="White" HorizontalAlignment="Center" Margin="2,0,2,0"/>
+					<Slider x:Name="heading_slider" Orientation="Vertical" HorizontalAlignment="Center" Minimum="0" Maximum="360" Height="140" Margin="0,16,0,0"/>
+					<TextBlock Text="{Binding Value, ElementName=heading_slider, Converter={StaticResource NumberFormatter}, ConverterParameter={}{0:N}}" Foreground="White" HorizontalAlignment="Center" />
+				</StackPanel>
+
+				<!-- ALTITUDE Slider -->
+				<StackPanel>
+					<TextBlock Text="Altitude" Foreground="White" HorizontalAlignment="Center" Margin="2,0,2,0"/>
+					<Slider x:Name="altitude_slider" Orientation="Vertical" HorizontalAlignment="Center" Minimum="0" Maximum="15000" Height="140" Margin="0,16,0,0"/>
+					<TextBlock Text="{Binding Value, ElementName=altitude_slider, Converter={StaticResource NumberFormatter}, ConverterParameter={}{0:0}}" Foreground="White" HorizontalAlignment="Center" />
+				</StackPanel>
+
+				<!-- TURN RATE Slider -->
+				<StackPanel>
+					<TextBlock Text="Turn" Foreground="White" HorizontalAlignment="Center" Margin="2,0,2,0"/>
+					<TextBlock Text="Rate" Foreground="White" HorizontalAlignment="Center" Margin="2,0,2,0"/>
+					<Slider x:Name="turn_rate_slider" Orientation="Vertical" HorizontalAlignment="Center" Minimum="-40" Maximum="40" Height="140" Margin="0,0,0,0"/>
+					<TextBlock Text="{Binding Value, ElementName=turn_rate_slider, Converter={StaticResource NumberFormatter}, ConverterParameter={}{0:0}}" Foreground="White" HorizontalAlignment="Center" />
+				</StackPanel>
+
+				<!-- BALANCE Slider -->
+				<StackPanel>
+					<TextBlock Text="Balance" Foreground="White" HorizontalAlignment="Center" Margin="2,0,2,0"/>
+					<Slider x:Name="balance_slider" Orientation="Vertical" HorizontalAlignment="Center" Minimum="-35" Maximum="35" Height="140" Margin="0,16,0,0"/>
+					<TextBlock Text="{Binding Value, ElementName=balance_slider, Converter={StaticResource NumberFormatter}, ConverterParameter={}{0:0}}" Foreground="White" HorizontalAlignment="Center" />
+				</StackPanel>
+
+				<!-- Roll Slider -->
+				<StackPanel>
+					<TextBlock Text="Roll" Foreground="White" HorizontalAlignment="Center" Margin="2,0,2,0"/>
+					<Slider x:Name="roll_slider" Orientation="Vertical" HorizontalAlignment="Center" Minimum="-180" Maximum="180" Height="140" Margin="0,16,0,0"/>
+					<TextBlock Text="{Binding Value, ElementName=roll_slider, Converter={StaticResource NumberFormatter}, ConverterParameter={}{0:0}}" Foreground="White" HorizontalAlignment="Center" />
+				</StackPanel>
+
+				<!-- Pitch Slider -->
+				<StackPanel>
+					<TextBlock Text="Pitch" Foreground="White" HorizontalAlignment="Center" Margin="2,0,2,0"/>
+					<Slider x:Name="pitch_slider" Orientation="Vertical" HorizontalAlignment="Center" Minimum="-180" Maximum="180" Height="140" Margin="0,16,0,0"/>
+					<TextBlock Text="{Binding Value, ElementName=pitch_slider, Converter={StaticResource NumberFormatter}, ConverterParameter={}{0:0}}" Foreground="White" HorizontalAlignment="Center" />
+				</StackPanel>
+			</StackPanel>
+		</Grid>
+</UserControl>

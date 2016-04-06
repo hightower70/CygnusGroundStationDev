@@ -1,0 +1,20 @@
+﻿<RealtimeObjectExchangle>
+
+  <!-- IMU settings -->
+  <Object Name="SimIMU">
+    <Value Name="AccelX" BlockID="4" BlockIndex="5"/>
+    <Value Name="AccelY" BlockID="4" BlockIndex="6"/>
+    <Value Name="AccelZ" BlockID="4" BlockIndex="4"/>
+
+    <Value Name="GyroX" />
+    <Value Name="GyroY"/>
+    <Value Name="GyroZ"/>
+  </Object>
+
+  <!-- Attitude settings -->
+  <Object Name="SimAttitude">
+    <Value Name="Roll" BlockID="18" BlockIndex="0"/>
+    <Value Name="Pitch" BlockID="18" BlockIndex="1"/>
+    <Value Name="Heading" BlockID="18" BlockIndex="2"/>
+  </Object>
+</RealtimeObjectExchangle>

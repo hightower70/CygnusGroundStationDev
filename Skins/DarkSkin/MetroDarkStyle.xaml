@@ -1,0 +1,61 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+										xmlns:c="clr-namespace:CygnusControls;assembly=CygnusControls">
+	<ResourceDictionary.MergedDictionaries>
+		<ResourceDictionary Source="MetroDarkColors.xaml"/>
+
+		<ResourceDictionary Source="WindowStyle.xaml"/>
+		<ResourceDictionary Source="ButtonStyle.xaml"/>
+		<ResourceDictionary Source="ListBoxStyle.xaml"/>
+		<ResourceDictionary Source="ScrollBarStyle.xaml"/>
+		<ResourceDictionary Source="TextBoxStyle.xaml"/>
+		<ResourceDictionary Source="TabControlStyle.xaml"/>
+		<ResourceDictionary Source="ComboBoxStyle.xaml"/>
+		<ResourceDictionary Source="TextBlockStyle.xaml"/>
+		<!--<ResourceDictionary Source="ChartStyle.xaml"/>-->
+		<ResourceDictionary Source="ToolTipStyle.xaml"/>
+		<ResourceDictionary Source="PathTrimmingTextBlockStyle.xaml"/>
+		<ResourceDictionary Source="TreeViewStyle.xaml"/>
+		<ResourceDictionary Source="GridSplitterStyle.xaml"/>
+		<ResourceDictionary Source="MenuStyles.xaml"/>
+		<ResourceDictionary Source="TitleStyle.xaml"/>
+		<ResourceDictionary Source="SyntaxHighlighterStyles.xaml"/>
+		<ResourceDictionary Source="CheckBoxStyle.xaml"/>
+		<ResourceDictionary Source="NumericUpDownStyle.xaml"/>
+		<ResourceDictionary Source="DataGridStyles.xaml"/>
+
+
+
+
+		<!--<ResourceDictionary Source="TabControlStyles.xaml"/>
+        <ResourceDictionary Source="MenuStyles.xaml"/>-->
+		<!--<ResourceDictionary Source="TextBoxStyles.xaml"/>
+        <ResourceDictionary Source="ScrollBarStyles.xaml"/>
+        <ResourceDictionary Source="ComboBoxStyles.xaml"/>
+        <ResourceDictionary Source="GroupBoxStyles.xaml"/>-->
+		<!--<ResourceDictionary Source="AppTreeStyle.xaml"/>-->
+	</ResourceDictionary.MergedDictionaries>
+
+	<Style TargetType="Window" BasedOn="{StaticResource WindowStyle}"/>
+  <Style TargetType="ListBox" BasedOn="{StaticResource StandardListBox}"/>
+  <Style TargetType="ScrollBar" BasedOn="{StaticResource StandardScrollBar}"/>
+  <Style TargetType="TextBox" BasedOn="{StaticResource StandardTextBox}"/>
+	<Style TargetType="c:ReadOnlyTextBox" BasedOn="{StaticResource StandardTextBox}"/>
+	<Style TargetType="TabControl" BasedOn="{StaticResource StandardTabControl}"/>
+	<Style TargetType="TextBlock" BasedOn="{StaticResource StandardTextBlock}"/>
+	<Style TargetType="ToolTip" BasedOn="{StaticResource StandardToolTip}"/>
+	<Style TargetType="c:PathTrimmingTextBlock" BasedOn="{StaticResource StandardPathTrimmingTextBlockStyle}"/>
+	<Style TargetType="TreeView" BasedOn="{StaticResource StandardTreeView}"/>
+	<Style TargetType="GridSplitter" BasedOn="{StaticResource StandardGridSplitter}"/>
+	<Style TargetType="c:Title" BasedOn="{StaticResource StandardTitle}"/>
+	<Style TargetType="DataGrid" BasedOn="{StaticResource StandardDataGrid}"/>
+
+	<!--<Style TargetType="GridSplitter" BasedOn="{StaticResource StandardGridSplitter}"/>-->
+    <!--
+    <Style TargetType="TabControl" BasedOn="{StaticResource StandardTabControl}"/>
+    <Style TargetType="ScrollBar" BasedOn="{StaticResource StandardScrollBar}"/>
+    <Style TargetType="DataGrid" BasedOn="{StaticResource StandardDataGrid}"/>
+    <Style TargetType="ComboBox" BasedOn="{StaticResource StandardComboBox}"/>
+    <Style TargetType="GroupBox" BasedOn="{StaticResource StandardGroupBox}"/>
+    -->
+</ResourceDictionary>

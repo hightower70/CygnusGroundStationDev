@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<typedef>
+	<!-- Type mapping from packet declaration to programming language declarations -->
+	<types>
+    <type Name="byte" CDecl="uint8_t"/>
+    <type Name="float" CDecl="float"/>
+    <type Name="int16" CDecl="int16_t"/>
+    <type Name="uint32" CDecl="uint32_t"/>
+    <type Name="uint16" CDecl="uint16_t"/>
+  </types>
+</typedef>

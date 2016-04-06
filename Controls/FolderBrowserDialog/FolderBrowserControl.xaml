@@ -1,0 +1,38 @@
+﻿<UserControl x:Class="CygnusControls.FolderBrowserControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:CygnusControls"
+             mc:Ignorable="d" 
+             x:Name="pickerControl"
+             d:DesignHeight="300" d:DesignWidth="300">
+    <UserControl.Resources>
+      <local:DriveIconConverter x:Key="DriveIconConverter"/>
+			<local:SystemIconConverter x:Key="SystemIconConverter"/>
+			<ContextMenu x:Key="TreeItemContextMenu">
+            <MenuItem Header="Create" Click="CreateMenuItem_Click"/>
+            <MenuItem Header="Rename" Click="RenameMenuItem_Click"/>
+            <MenuItem Header="Delete" Click="DeleteMenuItem_Click"/>
+      </ContextMenu>
+    </UserControl.Resources>
+	<Grid x:Name="LayoutRoot">
+		<Grid.RowDefinitions>
+			<RowDefinition Height="*"/>
+			<RowDefinition Height="Auto"/>
+		</Grid.RowDefinitions>
+		<TreeView x:Name="TreeView" 
+                  ItemsSource="{Binding ElementName=pickerControl,Path=Root.Children}"
+                  ItemContainerStyle="{Binding ElementName=pickerControl,Path=ItemContainerStyle}"
+                  TreeViewItem.Expanded="TreeView_Expanded" TreeViewItem.Selected="TreeView_Selected">
+			<TreeView.ItemTemplate>
+				<HierarchicalDataTemplate ItemsSource ="{Binding Children}">
+					<StackPanel Orientation="Horizontal" ContextMenu="{StaticResource TreeItemContextMenu}"  Background="Transparent">
+						<Image Height="16" Width="16" Source="{Binding FullPath, Converter={StaticResource SystemIconConverter}}"/>
+						<TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+					</StackPanel>
+				</HierarchicalDataTemplate>
+			</TreeView.ItemTemplate>
+		</TreeView>
+	</Grid>
+</UserControl>

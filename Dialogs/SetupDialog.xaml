@@ -1,0 +1,55 @@
+﻿<Window
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d" x:Class="CygnusGroundStation.SetupDialog"
+        Title="Setup"
+				Style="{DynamicResource WindowStyle}"
+				WindowStartupLocation="CenterOwner" ShowInTaskbar="False" ResizeMode="CanMinimize" Closing="Window_Closing" Initialized="Window_Initialized" 
+				d:DesignWidth="550" d:DesignHeight="300">
+	<Grid Background="{DynamicResource Background}">
+		<Grid.RowDefinitions>
+			<RowDefinition />
+			<RowDefinition Height="30"/>
+		</Grid.RowDefinitions>
+
+		<Grid Grid.Row="0">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="220" MinWidth="210"/>
+				<ColumnDefinition Width="5"/>
+				<ColumnDefinition Width="1*" MinWidth="200"/>
+			</Grid.ColumnDefinitions>
+
+			<Grid Grid.Column="0">
+				<Grid.RowDefinitions>
+					<RowDefinition />
+					<RowDefinition Height="30"/>
+				</Grid.RowDefinitions>
+
+				<TreeView x:Name="tvSetupTree" Grid.Row="0" Margin="4,3,3,0" ItemsSource="{Binding ModuleSetupTreeInfo}" ItemContainerStyle="{DynamicResource TreeViewItemFullRowSelect}" SelectedItemChanged="tvSetupTree_SelectedItemChanged">
+					<TreeView.ItemTemplate>
+						<HierarchicalDataTemplate ItemsSource="{Binding Children}">
+							<TextBlock Text="{Binding DisplayName}" />
+						</HierarchicalDataTemplate>
+					</TreeView.ItemTemplate>
+				</TreeView>
+
+				<WrapPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+					<Button x:Name="bAddModule" Content="Add Module" Width="100" Height="24" Margin="0,0,10,0" Click="bAddModule_Click"/>
+					<Button Content="Remove Module" Width="100" Height="24"/>
+				</WrapPanel>
+			</Grid>
+
+			<GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" ResizeDirection="Columns"/>
+
+			<Grid x:Name="gSetupFormContainer" Grid.Column="2"/>
+		</Grid>
+
+		<Grid Grid.Row="1" Background="{DynamicResource WindowTitleBackground}">
+			<WrapPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" >
+				<Button Content="OK" Width="70" Height="24" Margin="0,0,10,0" Click="bOK_Click"/>
+				<Button Content="Cancel" Width="70" Height="24" IsCancel="True"/>
+			</WrapPanel>
+		</Grid>
+
+	</Grid>
+</Window>
