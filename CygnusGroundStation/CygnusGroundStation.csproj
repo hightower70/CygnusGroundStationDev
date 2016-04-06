@@ -74,9 +74,6 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="Dialogs\SetupCommunication.xaml.cs">
-      <DependentUpon>SetupCommunication.xaml</DependentUpon>
-    </Compile>
     <Compile Include="Dialogs\AboutControl.xaml.cs">
       <DependentUpon>AboutControl.xaml</DependentUpon>
     </Compile>
@@ -92,6 +89,9 @@
     <Compile Include="Dialogs\ExceptionDialog.xaml.cs">
       <DependentUpon>ExceptionDialog.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Dialogs\SetupCommunication.xaml.cs">
+      <DependentUpon>SetupCommunication.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Dialogs\SetupDialog.xaml.cs">
       <DependentUpon>SetupDialog.xaml</DependentUpon>
     </Compile>
@@ -103,10 +103,6 @@
     </Compile>
     <Compile Include="FormManager\FormInfo.cs" />
     <Compile Include="FormManager\FormManager.cs" />
-    <Compile Include="MainWindow\MainWindow.xaml.cs">
-      <DependentUpon>MainWindow.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="MainWindow\MainWindowDataProvider.cs" />
     <Compile Include="Settings\FrameworkSettingsFile.cs" />
     <Compile Include="Settings\ISettingsDataProvider.cs" />
     <Compile Include="Settings\MainGeneralSettings.cs" />
@@ -121,55 +117,51 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Page Include="Dialogs\SetupCommunication.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
     <Page Include="Dialogs\AboutControl.xaml">
-      <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Dialogs\AboutDialog.xaml">
-      <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Dialogs\AddModuleDialog.xaml">
-      <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Dialogs\DeviceSettingsDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Dialogs\ExceptionDialog.xaml">
-      <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Dialogs\SetupCommunication.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Dialogs\SetupDialog.xaml">
-      <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Dialogs\SetupForms.xaml">
-      <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Dialogs\SetupGeneral.xaml">
-      <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Forms\Gauges.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
     <Page Include="Forms\PFD.xaml">
-      <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="Forms\Rover.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="MainWindow\MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -222,15 +214,15 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="MainWindow\" />
+  </ItemGroup>
+  <ItemGroup>
     <Resource Include="Images\CygnusGS.ico" />
     <Resource Include="Images\Error48.png" />
     <Resource Include="Images\logo_large.png" />
     <Resource Include="Images\logo_large_256.png" />
     <Resource Include="Images\logo_large_64.png" />
     <Resource Include="Images\logo_small.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Helpers\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
