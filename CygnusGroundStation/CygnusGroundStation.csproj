@@ -103,6 +103,10 @@
     </Compile>
     <Compile Include="FormManager\FormInfo.cs" />
     <Compile Include="FormManager\FormManager.cs" />
+    <Compile Include="MainWindow\MainWindow.xaml.cs">
+      <DependentUpon>MainWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="MainWindow\MainWindowDataProvider.cs" />
     <Compile Include="Settings\FrameworkSettingsFile.cs" />
     <Compile Include="Settings\ISettingsDataProvider.cs" />
     <Compile Include="Settings\MainGeneralSettings.cs" />
@@ -165,6 +169,10 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
+    <Page Include="MainWindow\MainWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ModuleInterface\ModuleBase.cs" />
@@ -200,21 +208,18 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\CommonClassLibrary\CommonClassLibrary.csproj">
+    <ProjectReference Include="..\Libraries\CommonClassLibrary\CommonClassLibrary.csproj">
       <Project>{1ceced51-8cd3-4bba-a46c-f0ce6768334b}</Project>
       <Name>CommonClassLibrary</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\Controls\CygnusControls.csproj">
+    <ProjectReference Include="..\Libraries\Controls\CygnusControls.csproj">
       <Project>{2a3c94d7-b9f2-4ddc-b593-308e1dabaab1}</Project>
       <Name>CygnusControls</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\Skins\DarkSkin\DarkSkin.csproj">
+    <ProjectReference Include="..\Libraries\Skins\DarkSkin\DarkSkin.csproj">
       <Project>{d18c8da5-f4ed-4774-a9eb-294cbe8ac340}</Project>
       <Name>DarkSkin</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="MainWindow\" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Images\CygnusGS.ico" />
