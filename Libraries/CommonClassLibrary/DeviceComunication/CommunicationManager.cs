@@ -40,6 +40,7 @@ namespace CommonClassLibrary.DeviceCommunication
 		const int HostHeartbeatPeriod = 1000;
 		const int PacketTransmitTimeout = 500;
 		const byte InvalidSystemFileID = 0xff;
+		const uint InvalidDeviceUniqueID = 0xffffffff;
 
 		#endregion
 
@@ -84,6 +85,7 @@ namespace CommonClassLibrary.DeviceCommunication
 
 		// device status
 		private bool m_device_connected;
+		private string m_device_name;
 		private UInt32 m_device_unique_id;
 		private DateTime m_last_device_heartbeat_timestamp;
 
@@ -97,9 +99,16 @@ namespace CommonClassLibrary.DeviceCommunication
 		private UInt32 m_file_operation_current_size;
 		private DeviceFileCache.CachedFile m_file_operation_current_file;
 
-		// Realtime Object interface members
-		private RealtimeObjectStorage m_realtime_object_creator;
+		private DateTime m_communication_state_update_timestamp;
+		private RealtimeObject m_communication_state_object;
+		private RealtimeObjectMember m_device_connected_member;
+		private RealtimeObjectMember m_device_name_member;
 
+		// Realtime Object interface members
+		//private RealtimeObjectStorage m_realtime_object_creator;
+
+		// signleton members
+		private static CommunicationManager m_default;
 
 		#endregion
 
@@ -161,11 +170,43 @@ namespace CommonClassLibrary.DeviceCommunication
 		}
 		#endregion
 
+		#region · Singleton members ·
+
+		/// <summary>
+		/// Singleton instance
+		/// </summary>
+		public static CommunicationManager Default
+		{
+			get
+			{
+				if (m_default == null)
+				{
+					m_default = new CommunicationManager();
+				}
+
+				return m_default;
+			}
+		}
+		#endregion
+
 		#region · Public members ·
 
 		public void CreateRealtimeObjects()
 		{
-			ParserRealtimeObject communication_state = m_realtime_object_creator.CreateObject("DeviceCommunicationState");
+			// create object
+			m_communication_state_object = RealtimeObjectStorage.Default.ObjectCreate("DeviceCommunicationState");
+
+			// create members
+			m_device_connected_member = m_communication_state_object.MemberCreate("DeviceConnected", RealtimeObjectMember.MemberType.Int);
+			m_device_name_member = m_communication_state_object.MemberCreate("DeviceName", RealtimeObjectMember.MemberType.String);
+
+			// create members from communicator plug-ins
+			for (int i = 0; i < m_communication_interfaces.Count; i++)
+			{
+				m_communication_interfaces[i].CreateRealtimeObjects(m_communication_state_object);
+			}
+
+			m_communication_state_object.ObjectCreateEnd();
 		}
 
 		/// <summary>
@@ -186,6 +227,8 @@ namespace CommonClassLibrary.DeviceCommunication
 
 			// initialize communication state
 			m_device_connected = false;
+			m_device_name = string.Empty;
+			m_device_unique_id = InvalidDeviceUniqueID;
 			m_last_device_heartbeat_timestamp = DateTime.MinValue;
 			m_host_heartbeat_timestamp = DateTime.MinValue;
 
@@ -207,7 +250,7 @@ namespace CommonClassLibrary.DeviceCommunication
 		{
 			int i;
 
-			// stop communicatios
+			// stop communication
 			for (i = 0; i < m_communication_interfaces.Count; i++)
 			{
 				m_communication_interfaces[i].Stop();
@@ -293,6 +336,8 @@ namespace CommonClassLibrary.DeviceCommunication
 			bool event_occured;
 			double ellapsed_time;
 
+			m_communication_state_update_timestamp = DateTime.Now;
+
 			while (!m_stop_requested)
 			{
 				// wait for event
@@ -308,6 +353,9 @@ namespace CommonClassLibrary.DeviceCommunication
 				// handle packet receiving
 				ProcessReceivedPacket();
 
+				// Update Comm State realtime object
+				UpdateCommunicationState();
+
 				// handle file timeout
 				if (m_file_operation_state != FileOperationState.Idle)
 					FileOperationTimeOutHandler();
@@ -316,6 +364,8 @@ namespace CommonClassLibrary.DeviceCommunication
 				if (m_device_connected && (DateTime.Now - m_last_device_heartbeat_timestamp).TotalMilliseconds > DevicePacketTimeout)
 				{
 					m_device_connected = false;
+					m_device_name = string.Empty;
+					m_device_unique_id = InvalidDeviceUniqueID;
 				}
 
 				// send host heartbeat
@@ -386,6 +436,14 @@ namespace CommonClassLibrary.DeviceCommunication
 			if (!m_receiver_queue.PeekPacketValid())
 				return;
 
+			// get device name if it is just connected
+			if(!m_device_connected)
+			{
+				PacketDeviceNameRequest packet = new PacketDeviceNameRequest();
+
+				SendPacket(packet);
+			}
+
 			// update connection state
 			m_device_connected = true;
 			m_last_device_heartbeat_timestamp = DateTime.Now;
@@ -401,6 +459,11 @@ namespace CommonClassLibrary.DeviceCommunication
 					// process device heartbeat packet
 					case PacketType.CommDeviceHeartbeat:
 						ProcessDeviceHeartbeatPacket();
+						break;
+
+					// process device name response
+					case PacketType.CommDeviceNameResponse:
+						ProcessDeviceNameResponsePacket();
 						break;
 
 					// process file information response packet
@@ -419,10 +482,47 @@ namespace CommonClassLibrary.DeviceCommunication
 			}
 		}
 
+		/// <summary>
+		/// Updates communicaiton state realtime object
+		/// </summary>
+		private void UpdateCommunicationState()
+		{
+			double ellapsed_time;
+
+			ellapsed_time = (DateTime.Now - m_communication_state_update_timestamp).TotalMilliseconds;
+			if (ellapsed_time >= 1000)
+			{
+				m_communication_state_update_timestamp.AddMilliseconds(ellapsed_time);
+
+				// start object update
+				m_communication_state_object.UpdateBegin();
+
+				m_device_connected_member.Write(m_device_connected);
+				m_device_name_member.Write(m_device_name);
+
+				for (int i=0;i<m_communication_interfaces.Count;i++ )
+				{
+					m_communication_interfaces[i].UpdateCommunicationStatistics((int)ellapsed_time);
+				}
+
+				m_communication_state_object.UpdateEnd();
+			}
+		}
 
 		#endregion
 
-		#region · Comm packet processors ·
+		#region · Communication packet processors ·
+
+		/// <summary>
+		/// Processes device name response packet
+		/// </summary>
+		private void ProcessDeviceNameResponsePacket()
+		{
+			PacketDeviceNameResponse packet = (PacketDeviceNameResponse)m_receiver_queue.Pop(typeof(PacketDeviceNameResponse));
+
+			m_device_name = packet.DeviceName;
+			m_device_unique_id = packet.UniqueID;
+		}
 
 		/// <summary>
 		/// Processes heart beat packet
@@ -478,7 +578,7 @@ namespace CommonClassLibrary.DeviceCommunication
 		{
 			PacketFileInfoResponse packet = (PacketFileInfoResponse)m_receiver_queue.Pop(typeof(PacketFileInfoResponse));
 
-			if(packet.FileID == InvalidSystemFileID)
+			if (packet.FileID == InvalidSystemFileID)
 			{
 				// if file not found -> error
 				m_file_operation_state = FileOperationState.Idle;
@@ -488,7 +588,7 @@ namespace CommonClassLibrary.DeviceCommunication
 			else
 			{
 				// file exists -> check file in the cache
-				if(DeviceFileCache.IsFileExists(m_file_operation_current_name, packet.FileLength, packet.FileHash))
+				if (DeviceFileCache.IsFileExists(m_file_operation_current_name, packet.FileLength, packet.FileHash))
 				{
 					// file exists in the cache -> call callback with success code
 					string file_path;

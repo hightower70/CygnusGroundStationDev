@@ -19,6 +19,7 @@
             </c:LinearMappingConverter.Items>
         </c:LinearMappingConverter>
 
+        <c:RealtimeObjectProvider x:Key="DeviceCommunicationStateProvider" RealtimeObjectName="DeviceCommunicationState"/>
         <c:LinearMappingConverter x:Key="PitchMapper" InputMin="-180" InputMax="180" OutputMin="-360" OutputMax="360" OverflowMode="Limit"/>
 
         <c:NumericFormatConverter x:Key="NumberFormatter" />
@@ -57,7 +58,7 @@
             </Grid.ColumnDefinitions>
 
             <!-- PFD -->
-            <Border Grid.Column="0" Grid.Row="0" BorderBrush="{DynamicResource Background}" BorderThickness="2" Margin="3">
+            <Border Grid.Column="0" Grid.Row="0" BorderBrush="{DynamicResource BorderBrushNormal}" BorderThickness="1" Margin="3">
                 <Grid>
 
                     <!-- Attitude strip -->
@@ -71,7 +72,6 @@
                                 </Rectangle.Fill>
                             </Rectangle>
                             <Rectangle Canvas.Left="-400" Canvas.Top="-360" Width="800" Height="360" Fill="{DynamicResource SkyBrush}"/>
-
 
                             <!-- Ground -->
                             <Rectangle Canvas.Left="-400" Canvas.Top="0" Width="800" Height="360" Fill="{DynamicResource GroundBrush}"/>
@@ -382,8 +382,8 @@
             </StackPanel>
 
             <StackPanel>
-                <Border BorderThickness="1" Margin="3" BorderBrush="Cyan">
-                    <Grid Margin="2">
+                <Border BorderThickness="1" Margin="3" BorderBrush="{DynamicResource BorderBrushNormal}">
+                    <Grid Margin="2" DataContext="{StaticResource DeviceCommunicationStateProvider}" >
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="50" />
                             <ColumnDefinition Width="130" />
@@ -394,21 +394,34 @@
                             <RowDefinition />
                             <RowDefinition />
                         </Grid.RowDefinitions>
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Communication" Grid.ColumnSpan="2" HorizontalAlignment="Center"/>
+                        <TextBlock Grid.Row="0" Grid.Column="0"  Text="Communication" Grid.ColumnSpan="2" HorizontalAlignment="Stretch" TextAlignment="Center" Background="{DynamicResource LightBackground}"/>
 
+                        <!-- Communication state -->
                         <TextBlock Grid.Row="1" Grid.Column="0"  Text="State" VerticalAlignment="Center"/>
-                        <Border Grid.Row="1" Grid.Column="1" BorderBrush="Green" Background="Green" Margin="2" Height="18">
-                            <TextBlock Text="Cygnus" TextAlignment="Center" VerticalAlignment="Top"/>
+                        <Border Grid.Row="1" Grid.Column="1" BorderBrush="Gray" BorderThickness="1" Margin="2" Height="18" SnapsToDevicePixels="True">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding DeviceConnected}" Value="True">
+                                            <Setter Property="Background" Value="Green" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+
+                            <TextBlock Text="{Binding DeviceName}" TextAlignment="Center" VerticalAlignment="Top"/>
                         </Border>
 
+                        <!-- UDP state -->
                         <TextBlock Grid.Row="2" Grid.Column="0" Text="UDP"/>
                         <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" >
+                            <TextBlock Width="30" Text="{Binding UDPUpStream, Converter={StaticResource NumberFormatter}, ConverterParameter={}{0:00.0;0.00;----}}"  TextAlignment="Right"/>
+                            <TextBlock Text="bps"/>
+                            <Path Width="10" Height="10" Fill="Red" Data="M5,1 L9,9 1,9 Z" Margin="0,3,0,0"/>
                             <TextBlock Width="30" Text="-.--" TextAlignment="Right"/>
                             <TextBlock Text="bps"/>
-                            <Path Width="10" Height="10" Fill="Red" Data="M5,1 L9,9 1,9 Z"/>
-                            <TextBlock Width="30" Text="-.--" TextAlignment="Right"/>
-                            <TextBlock Text="bps"/>
-                            <Path Width="10" Height="10" Fill="LightGreen" Data="M5,9 L9,1 1,1 Z"/>
+                            <Path Width="10" Height="10" Fill="LightGreen" Data="M5,9 L9,1 1,1 Z" Margin="0,3,0,0"/>
                         </StackPanel>
                     </Grid>
                 </Border>

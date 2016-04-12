@@ -27,18 +27,8 @@ namespace CommonClassLibrary.RealtimeObjectExchange
 {
 	public class ParserRealtimeObjectMember
 	{
-		#region · Types ·
-
-		public enum MemberType
-		{
-			Integer,
-			Float,
-			String
-		};
-		#endregion
-
 		#region · Data members ·
-		private MemberType m_member_type;
+		private RealtimeObjectMember.MemberType m_member_type;
 		private string m_name;
 		private Dictionary<string, string> m_attributes = new Dictionary<string, string>();
 		#endregion
@@ -46,10 +36,10 @@ namespace CommonClassLibrary.RealtimeObjectExchange
 		#region · Constructor ·
 		internal ParserRealtimeObjectMember()
 		{
-			m_member_type = MemberType.Float;
+			m_member_type = RealtimeObjectMember.MemberType.Float;
 		}
 
-		public ParserRealtimeObjectMember(string in_name, MemberType in_type)
+		public ParserRealtimeObjectMember(string in_name, RealtimeObjectMember.MemberType in_type)
 		{
 
 		}
@@ -83,7 +73,7 @@ namespace CommonClassLibrary.RealtimeObjectExchange
 			m_name = XMLAttributeParser.ConvertAttributeToString(in_element, "Name", XMLAttributeParser.atObligatory);
 
 			// default type
-			m_member_type = MemberType.Float;
+			m_member_type = RealtimeObjectMember.MemberType.Float;
 
 			// store other attributes for further processing
 			XPathNavigator element = in_element.Clone();

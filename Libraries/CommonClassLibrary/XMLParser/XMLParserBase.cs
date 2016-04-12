@@ -100,7 +100,6 @@ namespace CommonClassLibrary
 
 		#region · Parser functions ·
 
-
 		/// <summary>
 		/// Parses XML as a file
 		/// </summary>

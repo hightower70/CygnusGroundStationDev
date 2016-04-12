@@ -1,5 +1,5 @@
 ﻿///////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2013 Laszlo Arvai. All rights reserved.
+// Copyright (c) 2013-2014 Laszlo Arvai. All rights reserved.
 //
 // This library is free software; you can redistribute it and/or modify it 
 // under the terms of the GNU Lesser General Public License as published
@@ -18,47 +18,15 @@
 ///////////////////////////////////////////////////////////////////////////////
 // File description
 // ----------------
-// Data provider class for SetupForms dialog
+// Interface for registering/deregistering RealtimeObjectProvider classes
 ///////////////////////////////////////////////////////////////////////////////
-using CygnusControls;
-using CygnusGroundStation.Dialogs;
-using System.Collections.Generic;
+using System.Windows;
 
-namespace CygnusGroundStation
+namespace CygnusControls
 {
-	class SetupFormsDataProvider
+	interface IRealtimeObjectProvider
 	{
-		private List<FormInfo> m_available_forms;
-		private SetupFormSettings m_settings;
-
-		public List<FormInfo> AvailableForms
-		{
-			get { return m_available_forms; }
-		}
-
-		public SetupFormSettings Settings
-		{ 
-			get { return m_settings; } 
-		}
-
-		public SetupFormsDataProvider()
-		{
-			Load();
-		}
-
-		public void Load()
-		{
-			MainGeneralSettings settings = FrameworkSettingsFile.Default.GetSettings<MainGeneralSettings>();
-			
-			FormManager.Default.RefreshFormInfo(settings.FormsPath);
-			m_available_forms = FormManager.Default.AvailableForms;
-
-			m_settings = SetupDialog.CurrentSettings.GetSettings<SetupFormSettings>();
-		}
-
-		public void Save()
-		{
-			SetupDialog.CurrentSettings.SetSettings(m_settings);
-		}
+		void Register(FrameworkElement in_parent, string in_resource_key);
+		void Deregister(FrameworkElement in_parent);
 	}
 }

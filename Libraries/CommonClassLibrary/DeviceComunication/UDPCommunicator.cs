@@ -21,6 +21,7 @@
 // Communication class over UDP
 ///////////////////////////////////////////////////////////////////////////////
 using CommonClassLibrary.Helpers;
+using CommonClassLibrary.RealtimeObjectExchange;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -29,7 +30,7 @@ using System.Threading;
 
 namespace CommonClassLibrary.DeviceCommunication
 {
-	class UDPCommunicator : IDisposable, ICommunicationInterface
+	public class UDPCommunicator : IDisposable, ICommunicationInterface
 	{
 		#region · Constants ·
 		public int ReceiveBufferSize = 512;
@@ -114,6 +115,12 @@ namespace CommonClassLibrary.DeviceCommunication
 		private UInt32 m_client_unique_id;
 
 		private List<DeviceInfo> m_detected_devices = new List<DeviceInfo>();
+
+		private volatile int m_upstream_bytes;
+		private volatile int m_downstream_bytes;
+		private RealtimeObjectMember m_upstream_member;
+		private RealtimeObjectMember m_downstream_member;
+
 		#endregion
 
 		#region · Properties ·
@@ -174,6 +181,25 @@ namespace CommonClassLibrary.DeviceCommunication
 			m_communication_channel_index = in_communication_channel_index;
 			m_received_packet_callback = in_received_data_processor;
 		}
+
+		public void CreateRealtimeObjects(RealtimeObject in_realtime_object)
+		{
+			m_upstream_member = in_realtime_object.MemberCreate("UDPUpStream", RealtimeObjectMember.MemberType.Float);
+			m_downstream_member = in_realtime_object.MemberCreate("UDPDownStream", RealtimeObjectMember.MemberType.Float);
+		}
+
+
+		public void UpdateCommunicationStatistics(int in_ellapsed_millisec)
+		{
+			float upstream = m_upstream_bytes * 1000 / in_ellapsed_millisec;
+			m_upstream_bytes = 0;
+			float downstream = m_downstream_bytes * 1000 / in_ellapsed_millisec;
+			m_downstream_bytes = 0;
+
+			m_upstream_member.Write(upstream);
+			m_downstream_member.Write(downstream);
+		}
+
 
 		#endregion
 
@@ -333,6 +359,10 @@ namespace CommonClassLibrary.DeviceCommunication
 			m_client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
 			m_client.Bind(m_receiver_endpoint);
 
+			// init
+			m_upstream_bytes = 0;
+			m_downstream_bytes = 0;
+
 			// start data reception
 			m_client.BeginReceive(m_receive_buffer, 0, m_receive_buffer.Length, 0, new AsyncCallback(ReceiveCallback), this);
 
@@ -358,6 +388,9 @@ namespace CommonClassLibrary.DeviceCommunication
 						{
 							// CRC OK -> continue processing received packet
 							PacketType type = (PacketType)m_receive_buffer[PacketConstants.TypeOffset];
+
+							// update statistics
+							Interlocked.Add(ref m_upstream_bytes, m_received_data_length);
 
 							switch (type)
 							{
@@ -394,6 +427,7 @@ namespace CommonClassLibrary.DeviceCommunication
 									break;
 
 								default:
+									// process received data
 									if(m_received_data_length <= PacketConstants.PacketMaxLength)
 										m_received_packet_callback(m_communication_channel_index, m_receive_buffer, (byte)m_received_data_length);
 									break;
@@ -510,7 +544,9 @@ namespace CommonClassLibrary.DeviceCommunication
 				Socket client = communicator.m_client;
 
 				// Complete sending the data to the remote device.
-				int bytesSent = client.EndSend(ar);
+				int bytes_sent = client.EndSend(ar);
+
+				Interlocked.Add(ref communicator.m_downstream_bytes, bytes_sent);
 
 				// Signal that all bytes have been sent.
 				communicator.m_sender_lock.Release();

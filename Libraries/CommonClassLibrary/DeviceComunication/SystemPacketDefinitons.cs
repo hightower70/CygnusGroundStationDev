@@ -59,6 +59,8 @@ namespace CommonClassLibrary.DeviceCommunication
 		CommHostHeartbeat = (FlagSystem + ClassComm + 2),
 		CommDeviceInfo = (FlagSystem + ClassComm + 3),
 		CommHostInfo = (FlagSystem + ClassComm + 4),
+		CommDeviceNameRequest = (FlagSystem + ClassComm + FlagRequest + 5),
+		CommDeviceNameResponse = (FlagSystem + ClassComm + 5),
 
 		// file class packets
 		FileInfo = (FlagSystem + ClassFile + 1),
@@ -111,6 +113,15 @@ namespace CommonClassLibrary.DeviceCommunication
 		{
 			get { return m_counter; }
 		}
+
+		protected static string ConvertFromZeroTerminatedString(byte[] in_buffer)
+		{
+			int count = Array.IndexOf<byte>(in_buffer, 0, 0, in_buffer.Length);
+			if (count < 0)
+				count = in_buffer.Length;
+
+			return Encoding.ASCII.GetString(in_buffer, 0, count);
+		}
 	}
 
 	#endregion
@@ -146,7 +157,7 @@ namespace CommonClassLibrary.DeviceCommunication
 		{
 			get
 			{
-				return Encoding.ASCII.GetString(m_device_name);
+				return PacketBase.ConvertFromZeroTerminatedString(m_device_name);
 			}
 
 			set
@@ -191,7 +202,7 @@ namespace CommonClassLibrary.DeviceCommunication
 	public class PacketHostInfo : PacketBase
 	{
 		[MarshalAs(UnmanagedType.ByValArray, SizeConst = PacketConstants.DeviceNameLength)]
-		private byte[] m_device_name;
+		private byte[] m_host_name;
 
 		private UInt32 m_address;
 		/// <summary>
@@ -200,18 +211,18 @@ namespace CommonClassLibrary.DeviceCommunication
 		public PacketHostInfo()
 			: base(PacketType.CommHostInfo)
 		{
-			m_device_name = new byte[PacketConstants.DeviceNameLength];
-			m_device_name[0] = 0;
+			m_host_name = new byte[PacketConstants.DeviceNameLength];
+			m_host_name[0] = 0;
 		}
 
 		/// <summary>
 		/// Gets/sets device name string
 		/// </summary>
-		public string DeviceName
+		public string HostName
 		{
 			get
 			{
-				return Encoding.ASCII.GetString(m_device_name);
+				return PacketBase.ConvertFromZeroTerminatedString(m_host_name);
 			}
 
 			set
@@ -221,8 +232,8 @@ namespace CommonClassLibrary.DeviceCommunication
 				if (bytes.Length + 1 >= PacketConstants.DeviceNameLength)
 					throw new ArgumentOutOfRangeException();
 
-				bytes.CopyTo(m_device_name, 0);
-				m_device_name[bytes.Length] = 0;
+				bytes.CopyTo(m_host_name, 0);
+				m_host_name[bytes.Length] = 0;
 			}
 		}
 
@@ -277,11 +288,23 @@ namespace CommonClassLibrary.DeviceCommunication
 	[StructLayout(LayoutKind.Sequential, Pack = 1), Serializable]
 	public class PacketDeviceHeartbeat : PacketBase
 	{
+		private UInt32 m_unique_id;
 		private byte m_cpu_load;
 
 		public PacketDeviceHeartbeat()
 		: base(PacketType.CommHostHeartbeat)
 		{
+		}
+
+		/// <summary>
+		/// Gets unique ID
+		/// </summary>
+		public UInt32 UniqueID
+		{
+			get
+			{
+				return m_unique_id;
+			}
 		}
 
 		/// <summary>
@@ -291,6 +314,52 @@ namespace CommonClassLibrary.DeviceCommunication
 		{
 			get { return m_cpu_load; }
 		}
+	}
+
+	/// <summary>
+	/// Device name request packet
+	/// </summary>
+	[StructLayout(LayoutKind.Sequential, Pack = 1), Serializable]
+	public class PacketDeviceNameRequest : PacketBase
+	{
+		public PacketDeviceNameRequest()
+		: base(PacketType.CommDeviceNameRequest)
+		{
+		}
+	}
+
+	/// <summary>
+	/// Device name response packet
+	/// </summary>
+	[StructLayout(LayoutKind.Sequential, Pack = 1), Serializable]
+	public class PacketDeviceNameResponse : PacketBase
+	{
+		private UInt32 m_unique_id;
+		[MarshalAs(UnmanagedType.ByValArray, SizeConst = PacketConstants.DeviceNameLength)]
+		private byte[] m_device_name;
+
+		/// <summary>
+		/// Gets/sets device name string
+		/// </summary>
+		public string DeviceName
+		{
+			get
+			{
+				return PacketBase.ConvertFromZeroTerminatedString(m_device_name);
+			}
+		}
+
+		/// <summary>
+		/// Gets unique ID
+		/// </summary>
+		public UInt32 UniqueID
+		{
+			get
+			{
+				return m_unique_id;
+			}
+		}
+
 	}
 
 	#endregion

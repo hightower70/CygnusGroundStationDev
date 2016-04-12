@@ -21,15 +21,21 @@
 // Interface class for communication interface implementation
 ///////////////////////////////////////////////////////////////////////////////
 
+using CommonClassLibrary.RealtimeObjectExchange;
+
 namespace CommonClassLibrary.DeviceCommunication
 {
 	public interface ICommunicationInterface
 	{
+
 		void Start();
 		void Stop();
 
 		bool SendPacket(byte[] in_packet, int in_packet_length);
 
 		void SetReceivedPacketProcessor(byte in_communication_interface_index, CommunicationManager.ReceivedPacketProcessorCallback in_received_packet_callback);
+
+		void CreateRealtimeObjects(RealtimeObject in_realtime_object_index);
+		void UpdateCommunicationStatistics(int in_ellapsed_time);
 	}
 }

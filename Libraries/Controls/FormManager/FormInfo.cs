@@ -1,5 +1,5 @@
 ﻿///////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2013 Laszlo Arvai. All rights reserved.
+// Copyright (c) 2013-2014 Laszlo Arvai. All rights reserved.
 //
 // This library is free software; you can redistribute it and/or modify it 
 // under the terms of the GNU Lesser General Public License as published
@@ -18,47 +18,36 @@
 ///////////////////////////////////////////////////////////////////////////////
 // File description
 // ----------------
-// Data provider class for SetupForms dialog
+// Form information class
 ///////////////////////////////////////////////////////////////////////////////
-using CygnusControls;
-using CygnusGroundStation.Dialogs;
-using System.Collections.Generic;
 
-namespace CygnusGroundStation
+namespace CygnusControls
 {
-	class SetupFormsDataProvider
+	public class FormInfo
 	{
-		private List<FormInfo> m_available_forms;
-		private SetupFormSettings m_settings;
+		#region · Properties ·
 
-		public List<FormInfo> AvailableForms
+		public string FormName { get; set; }
+		public string FormPath { get; set; }
+
+		#endregion
+
+		#region · Member functions ·
+					 
+		public override bool Equals(object in_object)
 		{
-			get { return m_available_forms; }
+			// If this and obj do not refer to the same type, then they are not equal.
+			if (in_object.GetType() != this.GetType())
+				return false;
+
+			return FormPath == ((FormInfo)in_object).FormPath;
 		}
 
-		public SetupFormSettings Settings
-		{ 
-			get { return m_settings; } 
-		}
-
-		public SetupFormsDataProvider()
+		public override int GetHashCode()
 		{
-			Load();
+			return FormPath.GetHashCode();
 		}
 
-		public void Load()
-		{
-			MainGeneralSettings settings = FrameworkSettingsFile.Default.GetSettings<MainGeneralSettings>();
-			
-			FormManager.Default.RefreshFormInfo(settings.FormsPath);
-			m_available_forms = FormManager.Default.AvailableForms;
-
-			m_settings = SetupDialog.CurrentSettings.GetSettings<SetupFormSettings>();
-		}
-
-		public void Save()
-		{
-			SetupDialog.CurrentSettings.SetSettings(m_settings);
-		}
+		#endregion
 	}
 }

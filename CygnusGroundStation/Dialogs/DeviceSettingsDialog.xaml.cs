@@ -141,6 +141,8 @@ namespace CygnusGroundStation.Dialogs
 			UpdateDisplayedTree();
 
 			InitializeComponent();
+
+			FormManager.RealtimeObjectProvidersRegister(this);
 		}
 
 		private void bOK_Click(object sender, RoutedEventArgs e)
@@ -167,6 +169,8 @@ namespace CygnusGroundStation.Dialogs
 
 		private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
 		{
+			FormManager.RealtimeObjectProvidersDeregister(this);
+
 			//gSetupFormContainer.Children.Clear();
 
 			//SetupDialogSettings settings = m_current_settings.GetSettings<SetupDialogSettings>();

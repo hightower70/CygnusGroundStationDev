@@ -78,6 +78,10 @@
     <Compile Include="Helpers\SystemPaths.cs" />
     <Compile Include="Helpers\WildcardStringComparer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RealtimeObjectExchange\IRealtimeObjectRefresher.cs" />
+    <Compile Include="RealtimeObjectExchange\IRealtimeObjectUpdateNotifier.cs" />
+    <Compile Include="RealtimeObjectExchange\RealtimeObject.cs" />
+    <Compile Include="RealtimeObjectExchange\RealtimeObjectMember.cs" />
     <Compile Include="RealtimeObjectExchange\RealtimeObjectStorage.cs" />
     <Compile Include="RealtimeObjectExchange\IValueConverter.cs" />
     <Compile Include="RealtimeObjectExchange\LinearConverter.cs" />

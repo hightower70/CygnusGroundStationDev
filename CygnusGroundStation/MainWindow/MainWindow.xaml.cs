@@ -1,19 +1,11 @@
-﻿using CygnusControls;
+﻿using CommonClassLibrary.DeviceCommunication;
+using CommonClassLibrary.RealtimeObjectExchange;
+using CygnusControls;
 using CygnusGroundStation.Dialogs;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+using System.Windows.Threading;
+using CommonClassLibrary.DeviceCommunication;
 
 namespace CygnusGroundStation
 {
@@ -35,9 +27,27 @@ namespace CygnusGroundStation
 
 			FormManager.Default.SetFormParent(FormContainer);
 
+
+			// init communication manager
+			UDPCommunicator udp_communicator = new UDPCommunicator();
+			udp_communicator.UDPReceiverPort = 9602;
+			udp_communicator.UDPTransmiterPort = 9601;
+			udp_communicator.UDPDeviceReceiverPort = 9601;
+
+			CommunicationManager.Default.AddCommunicator(udp_communicator);
+
+			// create realtime objects
+			CreateRealtimeObjects();
+
 			// load startup form
 			SetupFormSettings form_settings = FrameworkSettingsFile.Default.GetSettings<SetupFormSettings>();
-			FormManager.Default.LoadForm(form_settings.StartupForm);
+			MainGeneralSettings main_settings = FrameworkSettingsFile.Default.GetSettings<MainGeneralSettings>();
+
+			FormManager.Default.LoadForm(form_settings.StartupForm, main_settings.ModulesPath, main_settings.FormsPath);
+
+			// start communication manager
+			CommunicationManager.Default.Start();
+
 		}
 
 		private void About_Click(object sender, RoutedEventArgs e)
@@ -56,7 +66,8 @@ namespace CygnusGroundStation
 			{
 				using (new WaitCursor())
 				{
-					// stop modules
+					// stop modules and dispatcher timer
+					FormManager.Default.ObjectRefreshStop();
 					ModuleManager.Default.ModulesStop();
 
 					// save settings if dialog result was success
@@ -69,13 +80,22 @@ namespace CygnusGroundStation
 
 					// reload startup form
 					SetupFormSettings form_settings = FrameworkSettingsFile.Default.GetSettings<SetupFormSettings>();
-					FormManager.Default.LoadForm(form_settings.StartupForm);
+					MainGeneralSettings main_settings = FrameworkSettingsFile.Default.GetSettings<MainGeneralSettings>();
+
+					FormManager.Default.LoadForm(form_settings.StartupForm, main_settings.ModulesPath, main_settings.FormsPath);
+
+					// restart modules and dispatcher timer
+					FormManager.Default.ObjectRefreshStart();
 				}
 			}
 		}
 
 		private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
 		{
+			CommunicationManager.Default.Stop();
+			FormManager.Default.ObjectRefreshStop();
+			FormManager.Default.CloseCurrentForm();
+
 			MainGeneralSettings settings = FrameworkSettingsFile.Default.GetSettings<MainGeneralSettings>();
 
 			settings.MainWindowPos.SaveWindowPosition(this);
@@ -98,6 +118,14 @@ namespace CygnusGroundStation
 			if (setup.ShowDialog() ?? false)
 			{
 			}
+		}
+
+		private void CreateRealtimeObjects()
+		{
+			// create realtime objects
+			RealtimeObjectStorage.Default.ObjectClear();
+
+			CommunicationManager.Default.CreateRealtimeObjects();
 		}
 	}
 }

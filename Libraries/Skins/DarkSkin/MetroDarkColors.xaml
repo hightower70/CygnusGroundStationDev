@@ -22,7 +22,6 @@
 	<SolidColorBrush x:Key="BorderBrushSelected" Color="#1C97EA"/>
 	<SolidColorBrush x:Key="BackgroundNormal" Color="#3F3F46"/>
 	<SolidColorBrush x:Key="BorderBrushNormal" Color="#FFA0A0A0"/>
-	<!-- #54545C-->
 
 	<!--Text Box-->
 	<SolidColorBrush x:Key="TextBoxBackground" Color="#333337"/>
@@ -52,8 +51,24 @@
 	<SolidColorBrush x:Key="ChartValueRetrieverCursorLineColor" Color="#40ffffff"/>
 	<SolidColorBrush x:Key="ChartGridLineAlternateColor" Color="#696969"/>
 	<SolidColorBrush x:Key="ChartGridVerticalLineColor" Color="#808080"/>
-	
-	<!-- ToolTip -->
+
+    <!-- Progress bar -->
+    <SolidColorBrush x:Key="ProgressBarBackground" Color="#FF565656" />
+    <SolidColorBrush x:Key="ProgressBarForeground" Color="#FF00AADE" />
+    <LinearGradientBrush x:Key="ProgressBarIndeterminateBackground" EndPoint="0,1" MappingMode="Absolute" SpreadMethod="Repeat" StartPoint="20,1" Opacity="0.8">
+        <LinearGradientBrush.Transform>
+            <TransformGroup>
+                <TranslateTransform X="0" />
+                <SkewTransform AngleX="-30" />
+            </TransformGroup>
+        </LinearGradientBrush.Transform>
+        <GradientStop Color="#FF0086AF" Offset="0.249" />
+        <GradientStop Color="#FF00AADE" Offset=".25" />
+        <GradientStop Color="#FF00AADE" Offset="0.75" />
+        <GradientStop Color="#FF0086AF" Offset="0.751" />
+    </LinearGradientBrush>
+
+    <!-- ToolTip -->
 	<LinearGradientBrush x:Key="ToolTipBackgroundBrush" StartPoint="0,0" EndPoint="0,1">
 		<GradientBrush.GradientStops>
 			<GradientStopCollection>

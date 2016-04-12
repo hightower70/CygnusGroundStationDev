@@ -20,14 +20,17 @@
 // ----------------
 // Displayed form manager class
 ///////////////////////////////////////////////////////////////////////////////
+using CommonClassLibrary.RealtimeObjectExchange;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Markup;
+using System.Windows.Threading;
 
-namespace CygnusGroundStation
+namespace CygnusControls
 {
 	public class FormManager
 	{
@@ -38,6 +41,26 @@ namespace CygnusGroundStation
 		private static FormManager m_default = null;
 		private List<FormInfo> m_available_forms = new List<FormInfo>();
 
+		private DispatcherTimer m_dispatcher_timer;
+		private List<IRealtimeObjectRefresher> m_object_refreshers;
+
+		#endregion
+
+		#region · Constructor ·
+
+		/// <summary>
+		/// Defult constuctor
+		/// </summary>
+		public FormManager()
+		{
+			m_object_refreshers = new List<IRealtimeObjectRefresher>();
+
+			//  DispatcherTimer setup
+			m_dispatcher_timer = new DispatcherTimer();
+			m_dispatcher_timer.Tick += new EventHandler(dispatcherTimer_Tick);
+			m_dispatcher_timer.Interval = new TimeSpan(0, 0, 0, 0, 100);
+			m_dispatcher_timer.Start();
+		}
 		#endregion
 
 		#region · Singleton members ·
@@ -71,6 +94,72 @@ namespace CygnusGroundStation
 
 		#endregion
 
+		#region · Realtime object refresher ·
+
+		public void RealtimeObjectRefresherAdd(IRealtimeObjectRefresher in_provider )
+		{
+			lock(m_object_refreshers)
+			{
+				m_object_refreshers.Add(in_provider);
+			}
+		}
+
+		public void RealtimeObjectRefresherRemove(IRealtimeObjectRefresher in_provider)
+		{
+			lock(m_object_refreshers)
+			{
+				m_object_refreshers.Remove(in_provider);
+			}
+		}
+
+		/// <summary>
+		/// Stops realtime object provider refresh service
+		/// </summary>
+		public void ObjectRefreshStop()
+		{
+			m_dispatcher_timer.Stop();
+		}
+
+		/// <summary>
+		/// Starts realtime object refresh servive
+		/// </summary>
+		public void ObjectRefreshStart()
+		{
+			m_dispatcher_timer.Start();
+		}
+
+		private void dispatcherTimer_Tick(object sender, EventArgs e)
+		{
+			lock(m_object_refreshers)
+			{
+				for(int i=0; i<m_object_refreshers.Count;i++)
+				{
+					m_object_refreshers[i].RefreshObject();
+				}
+			}
+		}
+
+		static public void RealtimeObjectProvidersRegister(FrameworkElement in_parent)
+		{
+			// set resource parents and add sideband data
+			foreach (DictionaryEntry entry in in_parent.Resources)
+			{
+				if (entry.Value is IRealtimeObjectProvider)
+					((IRealtimeObjectProvider)entry.Value).Register(in_parent, entry.Key.ToString());
+			}
+		}
+
+		static public void RealtimeObjectProvidersDeregister(FrameworkElement in_parent)
+		{
+			foreach (DictionaryEntry entry in in_parent.Resources)
+			{
+				if (entry.Value is IRealtimeObjectProvider)
+					((IRealtimeObjectProvider)entry.Value).Deregister(in_parent);
+			}
+		}
+
+		#endregion
+
 		#region · Public Member functions ·
 
 		/// <summary>
@@ -86,23 +175,25 @@ namespace CygnusGroundStation
 		/// <summary>
 		/// Loads given form
 		/// </summary>
-		/// <param name="in_form_path">Form (XAML) file name to load</param>
-		public void LoadForm(string in_form_path)
+		/// <param name="in_form_file_name">Form (XAML) file name to load</param>
+		public void LoadForm(string in_form_file_name, string in_modules_path, string in_forms_path)
 		{
-			MainGeneralSettings main_settings = FrameworkSettingsFile.Default.GetSettings<MainGeneralSettings>();
-
 			// create parser context for XAML load
 			var pc = new ParserContext();
-			pc.BaseUri = new Uri(main_settings.ModulesPath, UriKind.Absolute);
-			string form_full_path = in_form_path;
+			pc.BaseUri = new Uri(in_modules_path, UriKind.Absolute);
+			string form_full_path = in_form_file_name;
 
 			// try to rebuild form full path using current settings
 			if(!File.Exists(form_full_path))
 			{
 				string form_filename = Path.GetFileName(form_full_path);
 
-				form_full_path = Path.Combine(main_settings.FormsPath, form_filename);
+				form_full_path = Path.Combine(in_forms_path, form_filename);
 			}
+
+			// deregister form
+			if (m_current_form != null)
+				RealtimeObjectProvidersDeregister(m_current_form);
 
 			// load form
 			try
@@ -121,25 +212,35 @@ namespace CygnusGroundStation
 			// add new form
 			if(m_current_form != null)
 				m_parent.Children.Add(m_current_form);
+
+			// register form
+			if (m_current_form != null)
+				RealtimeObjectProvidersRegister(m_current_form);
+		}
+
+		/// <summary>
+		/// Closes current from
+		/// </summary>
+		public void CloseCurrentForm()
+		{
+			if (m_current_form != null)
+				RealtimeObjectProvidersDeregister(m_current_form);
 		}
 
 		/// <summary>
 		/// Refreshes form info collection
 		/// </summary>
-		public void RefreshFormInfo()
+		public void RefreshFormInfo(string in_path)
 		{
 			string[] form_files;
 			FormInfo form_info;
-			String path;
-			MainGeneralSettings settings = FrameworkSettingsFile.Default.GetSettings<MainGeneralSettings>();
-
+			
 			// init
 			m_available_forms.Clear();
-			path = settings.FormsPath;
 
 			try
 			{
-				form_files = Directory.GetFiles(path, "*.xaml");
+				form_files = Directory.GetFiles(in_path, "*.xaml");
 
 				for (int i = 0; i < form_files.Length; i++)
 				{

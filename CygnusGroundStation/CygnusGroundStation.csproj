@@ -101,8 +101,6 @@
     <Compile Include="Dialogs\SetupGeneral.xaml.cs">
       <DependentUpon>SetupGeneral.xaml</DependentUpon>
     </Compile>
-    <Compile Include="FormManager\FormInfo.cs" />
-    <Compile Include="FormManager\FormManager.cs" />
     <Compile Include="MainWindow\MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
     </Compile>

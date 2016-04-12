@@ -20,8 +20,6 @@
 // ----------------
 // Object for storing realtime values
 ///////////////////////////////////////////////////////////////////////////////
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Xml.XPath;
 
@@ -122,7 +120,7 @@ namespace CommonClassLibrary.RealtimeObjectExchange
 		/// </summary>
 		/// <param name="in_name"></param>
 		/// <param name="in_member_type"></param>
-		public void AddMember(string in_name, ParserRealtimeObjectMember.MemberType in_member_type)
+		public void AddMember(string in_name, RealtimeObjectMember.MemberType in_member_type)
 		{
 			ParserRealtimeObjectMember new_member = new ParserRealtimeObjectMember();
 
