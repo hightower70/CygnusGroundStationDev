@@ -48,7 +48,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\CommonClassLibrary\CommonClassLibrary.csproj">
+    <ProjectReference Include="..\Libraries\CommonClassLibrary\CommonClassLibrary.csproj">
       <Project>{1ceced51-8cd3-4bba-a46c-f0ce6768334b}</Project>
       <Name>CommonClassLibrary</Name>
     </ProjectReference>

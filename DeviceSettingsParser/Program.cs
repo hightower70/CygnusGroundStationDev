@@ -44,10 +44,10 @@ namespace DeviceSettingsParser
 
 		static void Main(string[] args)
 		{
-			string xml_file_name = @"d:\Projects\CygnusGroundStation\devel\SettingParser\setting.xml";
+			string xml_file_name = @"d:\Projects\CygnusFCS\Resources\ConfigurationXML.xml";
 
 			// display title
-			Console.Write(DeviceSettingsStringConstants.ProgramTitle);
+			Console.Write(ParserDeviceSettingsStringConstants.ProgramTitle);
 
 			// process command line
 			CommandLineParser command_line = new CommandLineParser();
@@ -61,7 +61,7 @@ namespace DeviceSettingsParser
 			// display help text
 			if (command_line.IsHelpRequested())
 			{
-				Console.WriteLine(DeviceSettingsStringConstants.Usage);
+				Console.WriteLine(ParserDeviceSettingsStringConstants.Usage);
 
 				return;
 			}
@@ -72,7 +72,7 @@ namespace DeviceSettingsParser
 				return;
 			}
 
-			DeviceSettings parser = new DeviceSettings();
+			ParserDeviceSettings parser = new ParserDeviceSettings();
 			parser.ParseXMLFile("/Settings/*", xml_file_name);
 
 

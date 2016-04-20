@@ -99,7 +99,17 @@ namespace CommonClassLibrary.RealtimeObjectExchange
 		/// Updates member value
 		/// </summary>
 		/// <param name="in_new_value"></param>
-		public void Write(object in_new_value)
+		public void Write(int in_new_value)
+		{
+			m_parent_object.MemberWrite(m_member_index, in_new_value);
+		}
+
+		public void Write(float in_new_value)
+		{
+			m_parent_object.MemberWrite(m_member_index, in_new_value);
+		}
+
+		public void Write(string in_new_value)
 		{
 			m_parent_object.MemberWrite(m_member_index, in_new_value);
 		}

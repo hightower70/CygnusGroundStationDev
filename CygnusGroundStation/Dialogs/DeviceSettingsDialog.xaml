@@ -8,15 +8,18 @@
 				xmlns:cc="clr-namespace:CygnusControls;assembly=CygnusControls"
         Title="Device Settings"
 				Style="{DynamicResource WindowStyle}"
-				WindowStartupLocation="CenterOwner" ShowInTaskbar="False" ResizeMode="CanMinimize" Closing="Window_Closing" Initialized="Window_Initialized" 
+				ShowInTaskbar="False" ResizeMode="CanMinimize" Closing="Window_Closing" Initialized="Window_Initialized" 
 				d:DesignWidth="550" d:DesignHeight="300">
+	<Window.Resources>
+		<cc:RealtimeObjectProvider x:Key="FileTransferStateProvider" RealtimeObjectName="FileTransferState"/>
+	</Window.Resources>
 	<Grid Background="{DynamicResource Background}">
 		<Grid.RowDefinitions>
 			<RowDefinition />
 			<RowDefinition Height="30"/>
 		</Grid.RowDefinitions>
 
-		<Grid Grid.Row="0" Visibility="Hidden">
+		<Grid Grid.Row="0" x:Name="gSettings">
 			<Grid.ColumnDefinitions>
 				<ColumnDefinition Width="220" MinWidth="210"/>
 				<ColumnDefinition Width="5"/>
@@ -26,7 +29,7 @@
 			<TreeView x:Name="tvDeviceSetupTree" Grid.Column="0" Margin="1" ItemsSource="{Binding TreeInfo}" ItemContainerStyle="{DynamicResource TreeViewItemFullRowSelect}" SelectedItemChanged="tvSetupTree_SelectedItemChanged">
 				<TreeView.ItemTemplate>
 					<HierarchicalDataTemplate ItemsSource="{Binding Children}">
-						<TextBlock Text="{Binding DisplayName}" />
+						<TextBlock Text="{Binding Name}" />
 					</HierarchicalDataTemplate>
 				</TreeView.ItemTemplate>
 			</TreeView>
@@ -43,17 +46,20 @@
 				<DataGrid x:Name="dgValueList" ItemsSource="{Binding ValueInfo}" Grid.Row="0" AutoGenerateColumns="False" SelectionUnit="FullRow" AlternationCount="2" AlternatingRowBackground="{DynamicResource Background}" HorizontalGridLinesBrush="Gray" VerticalGridLinesBrush="Gray" GridLinesVisibility="All">
 					<DataGrid.Resources>
 						<DataTemplate x:Key="StringTemplate">
-							<TextBox Text="{Binding Value}" />
+							<TextBox Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
 						</DataTemplate>
 						<DataTemplate x:Key="IntegerTemplate">
-							<cc:NumericUpDown IntValue="{Binding Value}" />
+							<cc:NumericUpDown IntValue="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+						</DataTemplate>
+						<DataTemplate x:Key="EnumTemplate">
+							<ComboBox SelectedIndex="{Binding Value, Mode=TwoWay}" ItemsSource="{Binding EnumValues, Mode=OneTime}" />
 						</DataTemplate>
 					</DataGrid.Resources>
 					<DataGrid.Columns>
 
-					<DataGridTextColumn Header="Name" Binding="{Binding DisplayName}" />
+						<DataGridTextColumn Header="Name" Binding="{Binding DisplayName}" />
 
-					<DataGridTemplateColumn Header="Value">
+						<DataGridTemplateColumn Header="Value">
 							<DataGridTemplateColumn.CellTemplateSelector>
 								<local:DeviceSettingsTemplateSelector
                          StringTemplate = "{StaticResource StringTemplate}"
@@ -63,10 +69,10 @@
 							</DataGridTemplateColumn.CellTemplateSelector>
 						</DataGridTemplateColumn>
 
-					<DataGridTextColumn Header="Unit" Binding="{Binding Units}" MinWidth="50"/>
+						<DataGridTextColumn Header="Unit" Binding="{Binding Units}" MinWidth="50"/>
 
-				</DataGrid.Columns>
-			</DataGrid>
+					</DataGrid.Columns>
+				</DataGrid>
 
 				<GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch" ResizeDirection="Rows" SnapsToDevicePixels="True"/>
 
@@ -74,18 +80,23 @@
 			</Grid>
 		</Grid>
 
-        <Grid Grid.Row="0" x:Name="gFileTransferIndicator">
-            <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Width="200">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="18" />
-                    <RowDefinition Height="18"/>
-                    <RowDefinition Height="6"/>
-                </Grid.RowDefinitions>
-                <TextBlock Grid.Row="0" Text="Loading files: 1 of 3" HorizontalAlignment="Center"/>
-                <TextBlock Grid.Row="1" Text="filename.bin" HorizontalAlignment="Center"/>
-                <ProgressBar Grid.Row="2" Value="50" />
-            </Grid>
-        </Grid>
+		<Grid Grid.Row="0" x:Name="gFileTransferIndicator" DataContext="{StaticResource FileTransferStateProvider}">
+			<Grid HorizontalAlignment="Center" VerticalAlignment="Center" Width="200">
+				<Grid.RowDefinitions>
+					<RowDefinition Height="18" />
+					<RowDefinition Height="18"/>
+					<RowDefinition Height="6"/>
+				</Grid.RowDefinitions>
+				<StackPanel Grid.Row="0" HorizontalAlignment="Center" Orientation="Horizontal" DataContext="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}">
+					<TextBlock Text="Loading files: " />
+					<TextBlock Text="{Binding CurrentFileIndex}"/>
+					<TextBlock Text=" of "/>
+					<TextBlock Text="{Binding TotalFileCount}"/>
+				</StackPanel>
+				<TextBlock Grid.Row="1" Text="{Binding FileName}" HorizontalAlignment="Center"/>
+				<ProgressBar Grid.Row="2" Value="{Binding FilePercentage, Converter={x:Static cc:IntegerToDoubleValueConverter.Instance}}" />
+			</Grid>
+		</Grid>
 
 		<Grid Grid.Row="1" Background="{DynamicResource WindowTitleBackground}">
 			<WrapPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" >

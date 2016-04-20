@@ -25,17 +25,26 @@ using System.Xml.XPath;
 
 namespace CommonClassLibrary.DeviceSettings
 {
-	public class DeviceSettingsGroup
+	public class ParserDeviceSettingsGroup : IParserDeviceSettingsType
 	{
 		#region · Data members ·
+		private string m_id;
 		private string m_name;
 		private string m_display_name;
-		private List<DeviceSettingsGroup> m_subgroups = new List<DeviceSettingsGroup>();
-		private List<DeviceSettingValue> m_values = new List<DeviceSettingValue>();
+		private List<ParserDeviceSettingValue> m_values = new List<ParserDeviceSettingValue>();
 		private Dictionary<string, int> m_name_lookup = new Dictionary<string, int>();
 		#endregion
 
 		#region · Properties ·
+
+		/// <summary>
+		/// Gets reference name of the enum value
+		/// </summary>
+		public string ID
+		{
+			get { return m_id; }
+		}
+
 		/// <summary>
 		/// Name of the settings group
 		/// </summary>
@@ -47,17 +56,9 @@ namespace CommonClassLibrary.DeviceSettings
 		/// <summary>
 		/// Gets settings values
 		/// </summary>
-		public List<DeviceSettingValue> Values
+		public List<ParserDeviceSettingValue> Values
 		{
 			get { return m_values; }
-		}
-
-		/// <summary>
-		/// Gets child groups
-		/// </summary>
-		public List<DeviceSettingsGroup> Groups
-		{
-			get { return m_subgroups; }
 		}
 
 		/// <summary>
@@ -70,22 +71,17 @@ namespace CommonClassLibrary.DeviceSettings
 
 		#endregion
 
-		public void AddGroup(XPathNavigator in_element, DeviceSettingsGroup in_group)
-		{
-			// only group or values can be defined but not both
-			if (m_values.Count > 0)
-			{
-				DeviceSettingsParserException exception = new DeviceSettingsParserException(in_element);
-				exception.SetInvalidParentGroupError(m_name);
-				throw exception;
-			}
+		#region · Parser routines ·
 
-			// store group
-			m_subgroups.Add(in_group);
-		}
-
+		/// <summary>
+		/// Parses group element
+		/// </summary>
+		/// <param name="in_element"></param>
 		public void ParseXML(XPathNavigator in_element)
 		{
+			// get name
+			m_id = XMLAttributeParser.ConvertAttributeToString(in_element, "ID", XMLAttributeParser.atObligatory);
+
 			// get name
 			m_name = XMLAttributeParser.ConvertAttributeToString(in_element, "Name", XMLAttributeParser.atObligatory);
 
@@ -97,19 +93,28 @@ namespace CommonClassLibrary.DeviceSettings
 				m_display_name = m_name;
 		}
 
-
-		public void AddValue(XPathNavigator in_element, DeviceSettingValue in_value)
+		/// <summary>
+		/// Adds value to the group
+		/// </summary>
+		/// <param name="in_element"></param>
+		/// <param name="in_value"></param>
+		public void AddValue(XPathNavigator in_element, ParserDeviceSettingValue in_value)
 		{
-			// only group or values can be defined but not both
-			if (m_subgroups.Count > 0)
-			{
-				DeviceSettingsParserException exception = new DeviceSettingsParserException(in_element);
-				exception.SetInvalidParentGroupError(m_name);
-				throw exception;
-			} 
-
 			// store value
 			m_values.Add(in_value);
 		}
+		#endregion
+
+		#region · IParserDeviceSettingsType interface ·
+
+		/// <summary>
+		/// Gets type of this class
+		/// </summary>
+		/// <returns></returns>
+		public ParserDeviceSettings.ClassType GetClassType()
+		{
+			return ParserDeviceSettings.ClassType.Group;
+		}
+		#endregion
 	}
 }

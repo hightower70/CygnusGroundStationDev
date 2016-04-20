@@ -96,18 +96,20 @@ namespace CommonClassLibrary.DeviceCommunication
 		#endregion
 
 		#region · Data members ·
+		private CommunicationManager m_communication_manager;
+		private byte m_communication_channel_index;
 		private bool m_is_disposed;
+
+		private Thread m_thread;
 		private volatile bool m_stop_requested; // external request to stop the thread
 		private ManualResetEvent m_thread_stopped;  // Worker thread sets this event when it is stopped
 		private AutoResetEvent m_event_occured;
-		private Thread m_thread;
+		private SemaphoreSlim m_sender_lock;
+
 		private byte[] m_receive_buffer;
 		private int m_received_data_length;
 		private byte[] m_transmit_buffer;
-		private CommunicationManager.ReceivedPacketProcessorCallback m_received_packet_callback;
 		private DateTime m_timestamp;
-		private SemaphoreSlim m_sender_lock;
-		private byte m_communication_channel_index;
 
 		private Socket m_client;
 		private EndPoint m_receiver_endpoint;
@@ -141,7 +143,6 @@ namespace CommonClassLibrary.DeviceCommunication
 			m_event_occured = new AutoResetEvent(false);
 			m_thread = null;
 			m_receive_buffer = new byte[ReceiveBufferSize];
-			m_received_packet_callback = null;
 			m_received_data_length = 0;
 			m_transmit_buffer = new byte[TransmitBufferSize];
 		}
@@ -176,24 +177,36 @@ namespace CommonClassLibrary.DeviceCommunication
 
 		#region · ICommunicator members  ·
 
-		public void SetReceivedPacketProcessor(byte in_communication_channel_index, CommunicationManager.ReceivedPacketProcessorCallback in_received_data_processor)
+		/// <summary>
+		/// Assigns communication interface (communicator) to the communication manager
+		/// </summary>
+		/// <param name="in_communication_manager"></param>
+		/// <param name="in_communication_channel_index"></param>
+		public void AddToManager(CommunicationManager in_communication_manager, byte in_communication_channel_index)
 		{
 			m_communication_channel_index = in_communication_channel_index;
-			m_received_packet_callback = in_received_data_processor;
+			m_communication_manager = in_communication_manager;
 		}
 
+		/// <summary>
+		/// Creates realtime object member used by this interface
+		/// </summary>
+		/// <param name="in_realtime_object"></param>
 		public void CreateRealtimeObjects(RealtimeObject in_realtime_object)
 		{
-			m_upstream_member = in_realtime_object.MemberCreate("UDPUpStream", RealtimeObjectMember.MemberType.Float);
-			m_downstream_member = in_realtime_object.MemberCreate("UDPDownStream", RealtimeObjectMember.MemberType.Float);
+			m_upstream_member = in_realtime_object.MemberCreate("UDPUpStream", RealtimeObjectMember.MemberType.Int);
+			m_downstream_member = in_realtime_object.MemberCreate("UDPDownStream", RealtimeObjectMember.MemberType.Int);
 		}
 
-
+		/// <summary>
+		/// Updates communication statistics realtime object member
+		/// </summary>
+		/// <param name="in_ellapsed_millisec"></param>
 		public void UpdateCommunicationStatistics(int in_ellapsed_millisec)
 		{
-			float upstream = m_upstream_bytes * 1000 / in_ellapsed_millisec;
+			int upstream = m_upstream_bytes * 1000 / in_ellapsed_millisec;
 			m_upstream_bytes = 0;
-			float downstream = m_downstream_bytes * 1000 / in_ellapsed_millisec;
+			int downstream = m_downstream_bytes * 1000 / in_ellapsed_millisec;
 			m_downstream_bytes = 0;
 
 			m_upstream_member.Write(upstream);
@@ -392,6 +405,7 @@ namespace CommonClassLibrary.DeviceCommunication
 							// update statistics
 							Interlocked.Add(ref m_upstream_bytes, m_received_data_length);
 
+							// process received packet
 							switch (type)
 							{
 								case PacketType.CommDeviceInfo:
@@ -429,7 +443,7 @@ namespace CommonClassLibrary.DeviceCommunication
 								default:
 									// process received data
 									if(m_received_data_length <= PacketConstants.PacketMaxLength)
-										m_received_packet_callback(m_communication_channel_index, m_receive_buffer, (byte)m_received_data_length);
+										m_communication_manager.StoreReceivedPacket(m_communication_channel_index, m_receive_buffer, (byte)m_received_data_length);
 									break;
 							}
 						}
@@ -550,6 +564,9 @@ namespace CommonClassLibrary.DeviceCommunication
 
 				// Signal that all bytes have been sent.
 				communicator.m_sender_lock.Release();
+
+				// signal communication manager about the freed buffer
+				communicator.m_communication_manager.GenerateEvent();
 			}
 			catch
 			{

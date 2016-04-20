@@ -1,11 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.23107.0
+VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DeviceSettingsParser", "DeviceSettingsParser.csproj", "{D164CEC2-FE31-413F-B4A2-2785CB53A327}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommonClassLibrary", "..\..\CommonClassLibrary\CommonClassLibrary.csproj", "{1CECED51-8CD3-4BBA-A46C-F0CE6768334B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommonClassLibrary", "..\Libraries\CommonClassLibrary\CommonClassLibrary.csproj", "{1CECED51-8CD3-4BBA-A46C-F0CE6768334B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

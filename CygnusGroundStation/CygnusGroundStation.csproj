@@ -105,6 +105,7 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="MainWindow\MainWindowDataProvider.cs" />
+    <Compile Include="Settings\DeviceSettingsDialogSettings.cs" />
     <Compile Include="Settings\FrameworkSettingsFile.cs" />
     <Compile Include="Settings\ISettingsDataProvider.cs" />
     <Compile Include="Settings\MainGeneralSettings.cs" />

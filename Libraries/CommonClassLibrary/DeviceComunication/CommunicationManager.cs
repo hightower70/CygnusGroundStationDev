@@ -23,6 +23,7 @@
 using CommonClassLibrary.RealtimeObjectExchange;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -63,6 +64,8 @@ namespace CommonClassLibrary.DeviceCommunication
 			NoConnection
 		}
 
+		public delegate void FileOperationCallback(FileOperationResult in_result, string in_file_path);
+
 		#endregion
 
 		#region · Data members ·
@@ -98,17 +101,23 @@ namespace CommonClassLibrary.DeviceCommunication
 		private UInt32 m_file_operation_current_position;
 		private UInt32 m_file_operation_current_size;
 		private DeviceFileCache.CachedFile m_file_operation_current_file;
+		private RealtimeObject m_file_transfer_state_object;
+		private RealtimeObjectMember m_file_name_member;
+		private RealtimeObjectMember m_file_percentage_member;
 
 		private DateTime m_communication_state_update_timestamp;
 		private RealtimeObject m_communication_state_object;
 		private RealtimeObjectMember m_device_connected_member;
 		private RealtimeObjectMember m_device_name_member;
 
-		// Realtime Object interface members
-		//private RealtimeObjectStorage m_realtime_object_creator;
+		private FileOperationCallback m_file_operation_callback;
 
 		// signleton members
 		private static CommunicationManager m_default;
+
+		// message logging variables
+		private StreamWriter m_packet_log_writter;
+		private long m_packet_log_timestamp;
 
 		#endregion
 
@@ -134,6 +143,11 @@ namespace CommonClassLibrary.DeviceCommunication
 
 			Stop();
 
+			if (m_packet_log_writter != null)
+				m_packet_log_writter.Close();
+
+			m_packet_log_writter = null;
+
 			m_is_disposed = true;
 		}
 
@@ -156,6 +170,7 @@ namespace CommonClassLibrary.DeviceCommunication
 			m_communication_interfaces = new List<ICommunicationInterface>();
 			m_file_operation_state = FileOperationState.Idle;
 			m_file_operation_current_file = null;
+			m_packet_log_writter = null;
 		}
 		#endregion
 
@@ -191,8 +206,17 @@ namespace CommonClassLibrary.DeviceCommunication
 
 		#region · Public members ·
 
+		/// <summary>
+		/// Creates realtime object used for communication state
+		/// </summary>
 		public void CreateRealtimeObjects()
 		{
+			// create file transfer state object
+			m_file_transfer_state_object = RealtimeObjectStorage.Default.ObjectCreate("FileTransferState");
+			m_file_name_member = m_file_transfer_state_object.MemberCreate("FileName", RealtimeObjectMember.MemberType.String);
+			m_file_percentage_member = m_file_transfer_state_object.MemberCreate("FilePercentage", RealtimeObjectMember.MemberType.Int);
+			m_file_transfer_state_object.ObjectCreateEnd();
+
 			// create object
 			m_communication_state_object = RealtimeObjectStorage.Default.ObjectCreate("DeviceCommunicationState");
 
@@ -296,7 +320,7 @@ namespace CommonClassLibrary.DeviceCommunication
 				interface_index = (byte)(m_communication_interfaces.Count - 1);
 			}
 
-			in_communication_interface.SetReceivedPacketProcessor(interface_index, StoreReceivedPacket);
+			in_communication_interface.AddToManager(this, interface_index);
 		}
 
 		/// <summary>
@@ -310,6 +334,9 @@ namespace CommonClassLibrary.DeviceCommunication
 			in_packet.SetCounter(counter);
 
 			m_transmitter_queue.Push(InvalidInterface, in_packet);
+
+			// notify thread about the new packet to send
+			m_thread_event.Set();
 		}
 
 		/// <summary>
@@ -324,6 +351,46 @@ namespace CommonClassLibrary.DeviceCommunication
 			m_thread_event.Set();
 		}
 
+		#endregion
+
+		#region · Packet logging function ·
+
+		/// <summary>
+		/// Creates packet log file
+		/// </summary>
+		/// <param name="in_log_file_name"></param>
+		public void PacketLogCreate(string in_log_file_name)
+		{
+			m_packet_log_writter =  new StreamWriter(in_log_file_name);
+			m_packet_log_timestamp = Stopwatch.GetTimestamp();
+		}
+
+		/// <summary>
+		/// Writtes packet to log
+		/// </summary>
+		/// <param name="in_packet"></param>
+		private void PacketLogWrite(char in_direction, PacketBase in_packet)
+		{
+			if (m_packet_log_writter == null)
+				return;
+
+			long last_timestamp = m_packet_log_timestamp;
+
+			m_packet_log_timestamp = Stopwatch.GetTimestamp();
+
+			m_packet_log_writter.WriteLine(in_direction + " " + ((int)((m_packet_log_timestamp - last_timestamp) * (1000.0 / Stopwatch.Frequency))).ToString() + " " + in_packet.ToString());
+		}
+
+		/// <summary>
+		/// Closes packet log file
+		/// </summary>
+		public void PacketLogClose()
+		{
+			if (m_packet_log_writter != null)
+				m_packet_log_writter.Close();
+
+			m_packet_log_writter = null;
+		}
 		#endregion
 
 		#region · Thread functions ·
@@ -382,6 +449,15 @@ namespace CommonClassLibrary.DeviceCommunication
 
 			// thread is finished
 			m_thread_stopped.Set();
+		}
+
+		/// <summary>
+		/// Generates thread event
+		/// </summary>
+		/// <param name=""></param>
+		public void GenerateEvent()
+		{
+			m_thread_event.Set();
 		}
 
 		/// <summary>
@@ -492,12 +568,12 @@ namespace CommonClassLibrary.DeviceCommunication
 			ellapsed_time = (DateTime.Now - m_communication_state_update_timestamp).TotalMilliseconds;
 			if (ellapsed_time >= 1000)
 			{
-				m_communication_state_update_timestamp.AddMilliseconds(ellapsed_time);
+				m_communication_state_update_timestamp = m_communication_state_update_timestamp.AddMilliseconds(ellapsed_time);
 
 				// start object update
 				m_communication_state_object.UpdateBegin();
 
-				m_device_connected_member.Write(m_device_connected);
+				m_device_connected_member.Write(Convert.ToInt32(m_device_connected));
 				m_device_name_member.Write(m_device_name);
 
 				for (int i=0;i<m_communication_interfaces.Count;i++ )
@@ -541,16 +617,24 @@ namespace CommonClassLibrary.DeviceCommunication
 		/// Starts file download operation
 		/// </summary>
 		/// <param name="in_file_name"></param>
-		public bool StartFileDownload(string in_file_name)
+		public bool StartFileDownload(string in_file_name, FileOperationCallback in_callback)
 		{
 			// sanity check
 			if (m_file_operation_state != FileOperationState.Idle)
 				return false;
 
+			m_file_operation_timestamp = DateTime.Now;
+
+			m_file_operation_callback = in_callback;
+
 			m_file_operation_state = FileOperationState.DownoadInfo;
 			m_file_operation_retry_count = 0;
-			m_file_operation_timestamp = DateTime.Now;
 			m_file_operation_current_name = in_file_name;
+
+			m_file_operation_current_position = 0;
+			m_file_operation_current_size = 0;
+
+			UpdateFileTransferState();
 
 			SendFileInfoPacketRequest(in_file_name);
 
@@ -567,6 +651,8 @@ namespace CommonClassLibrary.DeviceCommunication
 
 			request_packet.FileName = in_file_name;
 
+			PacketLogWrite('S', request_packet);
+
 			SendPacket(request_packet);
 		}
 
@@ -578,6 +664,8 @@ namespace CommonClassLibrary.DeviceCommunication
 		{
 			PacketFileInfoResponse packet = (PacketFileInfoResponse)m_receiver_queue.Pop(typeof(PacketFileInfoResponse));
 
+			PacketLogWrite('R', packet);
+
 			if (packet.FileID == InvalidSystemFileID)
 			{
 				// if file not found -> error
@@ -587,12 +675,22 @@ namespace CommonClassLibrary.DeviceCommunication
 			}
 			else
 			{
+				m_file_operation_retry_count = 0;
+				m_file_operation_current_position = 0;
+				m_file_operation_current_size = packet.FileLength;
+				m_file_operation_current_id = packet.FileID;
+
 				// file exists -> check file in the cache
 				if (DeviceFileCache.IsFileExists(m_file_operation_current_name, packet.FileLength, packet.FileHash))
 				{
 					// file exists in the cache -> call callback with success code
 					string file_path;
 					file_path = Path.Combine(DeviceFileCache.GetFileCachePath(), m_file_operation_current_name);
+
+					m_file_operation_current_position = m_file_operation_current_size;
+					m_file_operation_state = FileOperationState.Idle;
+
+					UpdateFileTransferState();
 
 					CallFileOperationCallback(FileOperationResult.Success, file_path);
 				}
@@ -602,10 +700,9 @@ namespace CommonClassLibrary.DeviceCommunication
 					m_file_operation_current_file = DeviceFileCache.CreateFile(m_file_operation_current_name, 0);
 
 					// start download
-					m_file_operation_retry_count = 0;
-					m_file_operation_current_position = 0;
-					m_file_operation_current_size = packet.FileLength;
 					m_file_operation_state = FileOperationState.DownloadData;
+
+					UpdateFileTransferState();
 
 					SendFileDataPacketRequest();
 				}
@@ -631,6 +728,10 @@ namespace CommonClassLibrary.DeviceCommunication
 			request_packet.FilePos = m_file_operation_current_position;
 			request_packet.DataLength = (byte)request_data_length;
 
+			m_file_operation_timestamp = DateTime.Now;
+
+			PacketLogWrite('S', request_packet);
+
 			SendPacket(request_packet);
 		}
 
@@ -646,10 +747,11 @@ namespace CommonClassLibrary.DeviceCommunication
 
 			if (m_receiver_queue.PopBegin(out packet, out packet_length, out interface_index, out packet_timestamp))
 			{
-
 				if (m_file_operation_current_file != null)
 				{
 					packet_header = (PacketFileDataResponseHeader)RawBinarySerialization.DeserializeObject(packet, typeof(PacketFileDataResponseHeader));
+
+					PacketLogWrite('R', packet_header);
 
 					data_offset = Marshal.SizeOf(typeof(PacketFileDataResponseHeader));
 					data_length = packet_header.Length - PacketConstants.PacketCRCLength - Marshal.SizeOf(typeof(PacketFileDataResponseHeader));
@@ -658,11 +760,18 @@ namespace CommonClassLibrary.DeviceCommunication
 
 					m_file_operation_current_position += (uint)data_length;
 
+					UpdateFileTransferState();
+
 					if (m_file_operation_current_position < m_file_operation_current_size)
+					{
 						SendFileDataPacketRequest();
+					}
 					else
 					{
 						m_file_operation_current_file.Close();
+
+						m_file_operation_state = FileOperationState.Idle;
+
 						CallFileOperationCallback(FileOperationResult.Success, m_file_operation_current_file.FullFilePath);
 						m_file_operation_current_file.Dispose();
 						m_file_operation_current_file = null;
@@ -674,17 +783,38 @@ namespace CommonClassLibrary.DeviceCommunication
 		}
 
 
+		private void UpdateFileTransferState()
+		{
+			m_file_transfer_state_object.UpdateBegin();
+			m_file_name_member.Write(m_file_operation_current_name);
+			if (m_file_operation_current_size == 0)
+				m_file_percentage_member.Write(0);
+			else
+				m_file_percentage_member.Write(m_file_operation_current_position * 100 / m_file_operation_current_size);
+			m_file_transfer_state_object.UpdateEnd();
+		}
+
 		/// <summary>
 		/// Handles timeout condition
 		/// </summary>
 		private void FileOperationTimeOutHandler()
 		{
+			return;
 
+			if ((DateTime.Now - m_file_operation_timestamp).TotalMilliseconds > 1000)
+			{
+				if(m_file_operation_current_file != null)
+					m_file_operation_current_file.Close();
+
+				m_file_operation_state = FileOperationState.Idle;
+				CallFileOperationCallback(FileOperationResult.NoConnection, m_file_operation_current_name);
+			}
 		}
 
 		private void CallFileOperationCallback(FileOperationResult in_result, string in_file_path)
 		{
-
+			if (m_file_operation_callback != null)
+				m_file_operation_callback(in_result, in_file_path);
 		}
 		#endregion
 	}

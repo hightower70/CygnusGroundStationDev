@@ -1,5 +1,5 @@
 ﻿///////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2013 Laszlo Arvai. All rights reserved.
+// Copyright (c) 2013-2015 Laszlo Arvai. All rights reserved.
 //
 // This library is free software; you can redistribute it and/or modify it 
 // under the terms of the GNU Lesser General Public License as published
@@ -18,47 +18,53 @@
 ///////////////////////////////////////////////////////////////////////////////
 // File description
 // ----------------
-// Data provider class for SetupForms dialog
+// Value storage/parser for enumerated type
 ///////////////////////////////////////////////////////////////////////////////
-using CygnusControls;
-using CygnusGroundStation.Dialogs;
-using System.Collections.Generic;
+using System.Xml.XPath;
 
-namespace CygnusGroundStation
+namespace CommonClassLibrary.DeviceSettings
 {
-	class SetupFormsDataProvider
+	public class ParserDeviceSettingsEnumValue
 	{
-		private List<FormInfo> m_available_forms;
-		private SetupFormSettings m_settings;
+		#region · Data members ·
+		private string m_id;
+		private string m_value;
+		#endregion
 
-		public List<FormInfo> AvailableForms
+		#region · Properties ·
+
+		/// <summary>
+		/// Gets reference name of the enum value
+		/// </summary>
+		public string ID
 		{
-			get { return m_available_forms; }
+			get { return m_id; }
 		}
 
-		public SetupFormSettings Settings
-		{ 
-			get { return m_settings; } 
-		}
-
-		public SetupFormsDataProvider()
+		/// <summary>
+		/// Gets enum value
+		/// </summary>
+		public string Value
 		{
-			Load();
+			get { return m_value; }
 		}
+		#endregion
 
-		public void Load()
+		#region · Parser functions ·
+
+		/// <summary>
+		/// Parses value description 
+		/// </summary>
+		/// <param name="in_element">Element to parse</param>
+		public void ParseXML(XPathNavigator in_element)
 		{
-			MainGeneralSettings settings = FrameworkSettingsFile.Default.GetSettings<MainGeneralSettings>();
-			
-			FormManager.Default.AvailableFormRefresh(settings.FormsPath);
-			m_available_forms = FormManager.Default.AvailableForms;
+			// get id
+			m_id = XMLAttributeParser.ConvertAttributeToString(in_element, "ID", XMLAttributeParser.atObligatory);
 
-			m_settings = SetupDialog.CurrentSettings.GetSettings<SetupFormSettings>();
+			// get value
+			m_value = in_element.Value;
 		}
 
-		public void Save()
-		{
-			SetupDialog.CurrentSettings.SetSettings(m_settings);
-		}
+		#endregion
 	}
 }

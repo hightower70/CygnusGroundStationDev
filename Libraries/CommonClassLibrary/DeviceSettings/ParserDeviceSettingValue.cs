@@ -26,7 +26,7 @@ using System.Xml.XPath;
 
 namespace CommonClassLibrary.DeviceSettings
 {
-	public class DeviceSettingValue
+	public class ParserDeviceSettingValue : IParserDeviceSettingsType
 	{
 		#region · Types ·
 
@@ -36,7 +36,9 @@ namespace CommonClassLibrary.DeviceSettings
 		public enum ValueType
 		{
 			StringValue,
-			IntValue
+			IntValue,
+			EnumValue,
+			FloatValue
 		}
    
 		#endregion
@@ -46,7 +48,7 @@ namespace CommonClassLibrary.DeviceSettings
 		/// Default constructor
 		/// </summary>
 		/// <param name="in_type">Type of the value</param>
-		public DeviceSettingValue(ValueType in_type)
+		public ParserDeviceSettingValue(ValueType in_type)
 		{
 			m_value_type = in_type;
 
@@ -57,19 +59,29 @@ namespace CommonClassLibrary.DeviceSettings
 
 		#region · Data members ·
 
+		private string m_id;
 		private string m_name;
-		private string m_display_name;
 		private ValueType m_value_type;
 		private int m_binary_length;
+		private int m_binary_offset;
 		private object m_value;
 		private string m_units;
 		private string m_description;
 		private int m_min;
 		private int m_max;
+		private string m_enum_ref;
 
 		#endregion
 
 		#region · Properties ·
+
+		/// <summary>
+		/// Gets reference name of the enum value
+		/// </summary>
+		public string ID
+		{
+			get { return m_id; }
+		}
 
 		/// <summary>
 		/// Gets name of the settings
@@ -77,14 +89,6 @@ namespace CommonClassLibrary.DeviceSettings
 		public string Name
 		{
 			get { return m_name; }
-		}
-
-		/// <summary>
-		/// Gets display name of the setting value (user readable name of the settings)
-		/// </summary>
-		public string DisplayName
-		{
-			get { return m_display_name; }
 		}
 
 		/// <summary>
@@ -138,6 +142,23 @@ namespace CommonClassLibrary.DeviceSettings
 			set { m_max = value; }
 		}
 
+		/// <summary>
+		/// Gets the length of the binary data in bytes
+		/// </summary>
+		/// <returns></returns>
+		public int BinaryLength
+		{
+			get { return m_binary_length; }
+		}
+
+		/// <summary>
+		/// Gets the offset of the first binary byte of this value
+		/// </summary>
+		public int BinaryOffset
+		{
+			get { return m_binary_offset; }
+		}
+
 		#endregion
 
 		#region · Parser functions ·
@@ -148,29 +169,24 @@ namespace CommonClassLibrary.DeviceSettings
 		/// <param name="in_element">Element to parse</param>
 		public void ParseXML(XPathNavigator in_element)
 		{
+			// get id
+			m_id = XMLAttributeParser.ConvertAttributeToString(in_element, "ID", XMLAttributeParser.atObligatory);
+
 			// get name
 			m_name = XMLAttributeParser.ConvertAttributeToString(in_element, "Name", XMLAttributeParser.atObligatory);
-			m_display_name = m_name;
-
-			// get display name
-			string display_name = XMLAttributeParser.ConvertAttributeToString(in_element, "DisplayName", 0);
-			if (!string.IsNullOrEmpty(display_name))
-				m_display_name = display_name;
-			else
-				m_display_name = m_name;
 
 			// get unit
-			m_units = XMLAttributeParser.ConvertAttributeToString(in_element, "Units", 0);
+			m_units = XMLAttributeParser.ConvertAttributeToString(in_element, "Units", XMLAttributeParser.atOptional);
 
 			// get description
-			m_description = XMLAttributeParser.ConvertAttributeToString(in_element, "Description", 0);
+			m_description = XMLAttributeParser.ConvertAttributeToString(in_element, "Description", XMLAttributeParser.atOptional);
 
 			// get value
 			switch (m_value_type)
 			{
 				case ValueType.StringValue:
 					// if string type is specified length must be existing
-					m_binary_length = XMLAttributeParser.ConvertAttributeToInt(in_element, "Length", XMLAttributeParser.atObligatory);
+					m_binary_length = XMLAttributeParser.ConvertAttributeToInt(in_element, "Length", XMLAttributeParser.atObligatory) + 1; // +1 because of the terminator zero
 					m_value = in_element.Value;
 
 					// check length
@@ -201,19 +217,52 @@ namespace CommonClassLibrary.DeviceSettings
 					}
 					break;
 
+				case ValueType.FloatValue:
+					m_binary_length = sizeof(float);
+					try
+					{
+						m_value = (float)in_element.ValueAsDouble;
+					}
+					catch
+					{
+						// throw an exception if value is invalid
+						XMLParserException exception = new XMLParserException(in_element);
+						exception.SetInvalidTypeError(m_name);
+						throw exception;
+					}
+					break;
+
+				case ValueType.EnumValue:
+					m_binary_length = sizeof(byte);
+
+					m_enum_ref = XMLAttributeParser.ConvertAttributeToString(in_element, "Enum", XMLAttributeParser.atObligatory);
+
+					try
+					{
+						m_value = (byte)in_element.ValueAsInt;
+					}
+					catch
+					{
+						// throw an exception if value is invalid
+						XMLParserException exception = new XMLParserException(in_element);
+						exception.SetInvalidTypeError(m_name);
+						throw exception;
+					}
+					break;
+
 				default:
 					break;
 			}
 		}
 
-
 		/// <summary>
-		/// Gets the length of the binary data in bytes
+		/// Sets the binary offset value
 		/// </summary>
+		/// <param name="in_offset"></param>
 		/// <returns></returns>
-		public int GetBinaryLength()
+		internal int SetBinaryOffset(int in_offset)
 		{
-			return m_binary_length;
+			return m_binary_offset = in_offset;
 		}
 
 		/// <summary>
@@ -225,14 +274,22 @@ namespace CommonClassLibrary.DeviceSettings
 			switch (m_value_type)
 			{
 				case ValueType.StringValue:
-				{
-					Encoding encoding = Encoding.ASCII;
-
-					return encoding.GetBytes(((string)m_value));
-				}
+					return Encoding.ASCII.GetBytes(((string)m_value));
 
 				case ValueType.IntValue:
 					return BitConverter.GetBytes((int)m_value);
+
+				case ValueType.FloatValue:
+					return BitConverter.GetBytes((float)m_value);
+
+				case ValueType.EnumValue:
+					{
+						byte[] retval = new byte[1];
+
+						retval[0] = (byte)m_value;
+
+						return retval;
+					}
 
 				default:
 					return null;
@@ -240,51 +297,19 @@ namespace CommonClassLibrary.DeviceSettings
 		}
 
 		#endregion
+
+		#region · IParserDeviceSettingsType interface ·
+
+		/// <summary>
+		/// Gets type of this class
+		/// </summary>
+		/// <returns></returns>
+		public ParserDeviceSettings.ClassType GetClassType()
+		{
+			return ParserDeviceSettings.ClassType.Value;
+		}
+		#endregion
+
 	}
 }
 
-
-
-#if false
-			// parse value type
-			//ConvertAttributeToEnumProperty(in_element, "PacketType");
-  
-			// get separators
-			//m_data_separator = GetSeparator(in_element, "DataSeparator");
-			//m_packet_separator = GetSeparator(in_element, "PacketSeparator");
-
-			// check separators
-			if (m_packet_type == PacketTypes.Text)
-			{
-				if (string.IsNullOrEmpty(m_data_separator) || string.IsNullOrEmpty(m_packet_separator))
-					throw PacketParser.CreateXMLParseException(StringConstants.ErrorSeparatorsAreNotDefined, in_element);
-			}
-
-			// parse child elements
-			XPathNavigator children = in_element;
-			child_exists = children.MoveToFirstChild();
-			while (child_exists)
-			{
-				// create child
-				if (in_element.NodeType == XPathNodeType.Element)
-				{
-					PacketDataBase data;
-
-					if (m_data_element_type_lookup.ContainsKey(in_element.Name))
-					{
-						data = (PacketDataBase)Activator.CreateInstance(m_data_element_type_lookup[in_element.Name], this, in_element.Name);
-					}
-					else
-					{
-						throw PacketParser.CreateXMLParseException(string.Format(StringConstants.ErrorInvalidDataType, in_element.Name), in_element);
-					}
-
-					data.ParseXML(in_element);
-
-					m_data_elements.Add(data);
-				}
-
-				child_exists = in_element.MoveToNext();
-			}
-
-#endif

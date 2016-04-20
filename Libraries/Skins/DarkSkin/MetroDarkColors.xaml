@@ -69,16 +69,8 @@
     </LinearGradientBrush>
 
     <!-- ToolTip -->
-	<LinearGradientBrush x:Key="ToolTipBackgroundBrush" StartPoint="0,0" EndPoint="0,1">
-		<GradientBrush.GradientStops>
-			<GradientStopCollection>
-				<GradientStop Color="#505050" Offset="0.0"/>
-				<GradientStop Color="#1C1C1C" Offset="1.0"/>
-			</GradientStopCollection>
-		</GradientBrush.GradientStops>
-	</LinearGradientBrush>
-
-	<SolidColorBrush x:Key="ToolTipBrush" Color="#606060" />
+    <SolidColorBrush x:Key="ToolTipBackground" Color="#0080ff"/>
+    <SolidColorBrush x:Key="ToolTipBorder" Color="#004080" />
 
 	<!-- GridSplitter -->
 	<SolidColorBrush x:Key="GridSplitterBackground" Color="#FF2D2D30"/>

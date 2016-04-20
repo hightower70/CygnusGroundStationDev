@@ -57,7 +57,7 @@ namespace CygnusControls
 
 			//  DispatcherTimer setup
 			m_dispatcher_timer = new DispatcherTimer();
-			m_dispatcher_timer.Tick += new EventHandler(dispatcherTimer_Tick);
+			m_dispatcher_timer.Tick += new EventHandler(DispatcherTimerTick);
 			m_dispatcher_timer.Interval = new TimeSpan(0, 0, 0, 0, 100);
 			m_dispatcher_timer.Start();
 		}
@@ -128,7 +128,7 @@ namespace CygnusControls
 			m_dispatcher_timer.Start();
 		}
 
-		private void dispatcherTimer_Tick(object sender, EventArgs e)
+		private void DispatcherTimerTick(object sender, EventArgs e)
 		{
 			lock(m_object_refreshers)
 			{
@@ -139,7 +139,7 @@ namespace CygnusControls
 			}
 		}
 
-		static public void RealtimeObjectProvidersRegister(FrameworkElement in_parent)
+		static public void RealtimeObjectProviderAdd(FrameworkElement in_parent)
 		{
 			// set resource parents and add sideband data
 			foreach (DictionaryEntry entry in in_parent.Resources)
@@ -149,7 +149,7 @@ namespace CygnusControls
 			}
 		}
 
-		static public void RealtimeObjectProvidersDeregister(FrameworkElement in_parent)
+		static public void RealtimeObjectProviderRemove(FrameworkElement in_parent)
 		{
 			foreach (DictionaryEntry entry in in_parent.Resources)
 			{
@@ -193,7 +193,7 @@ namespace CygnusControls
 
 			// deregister form
 			if (m_current_form != null)
-				RealtimeObjectProvidersDeregister(m_current_form);
+				RealtimeObjectProviderRemove(m_current_form);
 
 			// load form
 			try
@@ -215,7 +215,7 @@ namespace CygnusControls
 
 			// register form
 			if (m_current_form != null)
-				RealtimeObjectProvidersRegister(m_current_form);
+				RealtimeObjectProviderAdd(m_current_form);
 		}
 
 		/// <summary>
@@ -224,13 +224,13 @@ namespace CygnusControls
 		public void CloseCurrentForm()
 		{
 			if (m_current_form != null)
-				RealtimeObjectProvidersDeregister(m_current_form);
+				RealtimeObjectProviderRemove(m_current_form);
 		}
 
 		/// <summary>
 		/// Refreshes form info collection
 		/// </summary>
-		public void RefreshFormInfo(string in_path)
+		public void AvailableFormRefresh(string in_path)
 		{
 			string[] form_files;
 			FormInfo form_info;

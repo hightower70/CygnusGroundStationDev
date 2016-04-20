@@ -461,6 +461,76 @@ namespace CygnusControls
 		#endregion
 	}
 
+
+	/// <summary>
+	/// DoubleToIntegerValueConverter provides a two-way conversion between
+	/// a double value and an integer.
+	/// </summary>
+	[ValueConversion(typeof(double), typeof(int))]
+	public class IntegerToDoubleValueConverter : IValueConverter
+	{
+		#region Converter function
+		public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+		{
+			try
+			{
+				return GeneralConvert(value, targetType);
+			}
+			catch
+			{
+				return null;
+			}
+		}
+		#endregion
+
+		#region Singleton Implementation
+
+		/// <summary>
+		/// Singleton storage
+		/// </summary>
+		private static IntegerToDoubleValueConverter m_instance = new IntegerToDoubleValueConverter();
+
+		/// <summary> 
+		/// The TriggerComparer instance 
+		/// </summary> 
+		public static IntegerToDoubleValueConverter Instance
+		{
+			get
+			{
+				return m_instance;
+			}
+		}
+		#endregion
+
+		#region Convert back
+		public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+		{
+			return GeneralConvert(value, targetType);
+		}
+		#endregion
+
+		#region General conversion function
+		private object GeneralConvert(object in_value, Type in_target_type)
+		{
+			if (in_target_type == typeof(int))
+			{
+				if (in_value == null)
+					return 0;
+				else
+					return System.Convert.ToInt32(in_value);
+			}
+			else
+			{
+				if (in_value == null)
+					return 0.0;
+				else
+					return System.Convert.ToDouble(in_value);
+			}
+		}
+		#endregion
+	}
+
+
 	/// <summary>
 	/// Converts string to boolean
 	/// </summary>

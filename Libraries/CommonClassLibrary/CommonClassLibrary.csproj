@@ -59,6 +59,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Console\CommandLine.cs" />
+    <Compile Include="DeviceSettings\DeviceSettingsBinaryData.cs" />
+    <Compile Include="DeviceSettings\IParserDeviceSettingsType.cs" />
+    <Compile Include="DeviceSettings\ParserDeviceSettingsEnumDefs.cs" />
+    <Compile Include="DeviceSettings\ParserDeviceSettingsEnumValue.cs" />
+    <Compile Include="DeviceSettings\ParserDeviceSettingsRoot.cs" />
     <Compile Include="Helpers\RawBinarySerialization.cs" />
     <Compile Include="DeviceComunication\CommunicationManager.cs" />
     <Compile Include="DeviceComunication\DeviceFileCache.cs" />
@@ -67,11 +72,11 @@
     <Compile Include="DeviceComunication\SLIP.cs" />
     <Compile Include="DeviceComunication\SystemPacketDefinitons.cs" />
     <Compile Include="DeviceComunication\UDPCommunicator.cs" />
-    <Compile Include="DeviceSettings\DeviceSettingsGroup.cs" />
-    <Compile Include="DeviceSettings\DeviceSetting.cs" />
-    <Compile Include="DeviceSettings\DeviceSettingsParserException.cs" />
-    <Compile Include="DeviceSettings\DeviceSettingValue.cs" />
-    <Compile Include="DeviceSettings\DeviceSettingsStringConstants.cs" />
+    <Compile Include="DeviceSettings\ParserDeviceSettingsGroup.cs" />
+    <Compile Include="DeviceSettings\ParserDeviceSetting.cs" />
+    <Compile Include="DeviceSettings\ParserDeviceSettingsParserException.cs" />
+    <Compile Include="DeviceSettings\ParserDeviceSettingValue.cs" />
+    <Compile Include="DeviceSettings\ParserDeviceSettingsStringConstants.cs" />
     <Compile Include="Helpers\ByteAccess.cs" />
     <Compile Include="Helpers\CRC16.cs" />
     <Compile Include="Helpers\MD5Hash.cs" />

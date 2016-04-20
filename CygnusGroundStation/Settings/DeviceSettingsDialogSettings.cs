@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 
 namespace CygnusGroundStation
 {
-	class SetupDialogSettings	: SettingsBase
+	class DeviceSettinsgDialogSettings : SettingsBase
 	{
 		// Dialog position settings
 		public WindowPosSettings DialogPos;
 
-		public SetupDialogSettings() : base("Main","SetupDialog")
+		public DeviceSettinsgDialogSettings() : base("Main", "DeviceSettingsDialog")
 		{
 			DialogPos = new WindowPosSettings();
 			SetDefaultValues();

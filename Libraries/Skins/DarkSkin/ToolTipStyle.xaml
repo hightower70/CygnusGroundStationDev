@@ -1,32 +1,20 @@
-﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-	
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" 
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" 
+                    xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+                    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+                    mc:Ignorable="d">
 	<Style x:Key="StandardToolTip" TargetType="ToolTip">
 		<Setter Property="OverridesDefaultStyle" Value="true"/>
 		<Setter Property="HasDropShadow" Value="True"/>
 		<Setter Property="Template">
 			<Setter.Value>
 				<ControlTemplate TargetType="ToolTip">
-					<Border Name="Border"
-          Background="{DynamicResource ToolTipBackgroundBrush}"
-          BorderBrush="{DynamicResource ToolTipBrush}"
-          BorderThickness="1"
-          Width="{TemplateBinding Width}"
-          Height="{TemplateBinding Height}">
-						<ContentPresenter
-							Margin="2"
-            HorizontalAlignment="Left"
-            VerticalAlignment="Top" />
+					<Border Name="Border" Background="{DynamicResource ToolTipBackground}" BorderBrush="{DynamicResource ToolTipBorder}" BorderThickness="1" Width="{TemplateBinding Width}" Height="{TemplateBinding Height}" SnapsToDevicePixels="True" CornerRadius="2">
+						<ContentPresenter Margin="4,2,4,2" HorizontalAlignment="Left" VerticalAlignment="Top" />
 					</Border>
-					<ControlTemplate.Triggers>
-						<Trigger Property="HasDropShadow" Value="true">
-							<Setter TargetName="Border" Property="CornerRadius" Value="4"/>
-							<Setter TargetName="Border" Property="SnapsToDevicePixels" Value="true"/>
-						</Trigger>
-					</ControlTemplate.Triggers>
 				</ControlTemplate>
 			</Setter.Value>
 		</Setter>
 	</Style>
-	
+
 </ResourceDictionary>

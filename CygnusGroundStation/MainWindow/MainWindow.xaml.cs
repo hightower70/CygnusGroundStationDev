@@ -4,8 +4,6 @@ using CygnusControls;
 using CygnusGroundStation.Dialogs;
 using System;
 using System.Windows;
-using System.Windows.Threading;
-using CommonClassLibrary.DeviceCommunication;
 
 namespace CygnusGroundStation
 {
@@ -35,6 +33,8 @@ namespace CygnusGroundStation
 			udp_communicator.UDPDeviceReceiverPort = 9601;
 
 			CommunicationManager.Default.AddCommunicator(udp_communicator);
+
+			CommunicationManager.Default.PacketLogCreate("packet_log.txt");
 
 			// create realtime objects
 			CreateRealtimeObjects();
@@ -93,6 +93,7 @@ namespace CygnusGroundStation
 		private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
 		{
 			CommunicationManager.Default.Stop();
+			CommunicationManager.Default.PacketLogClose();
 			FormManager.Default.ObjectRefreshStop();
 			FormManager.Default.CloseCurrentForm();
 
@@ -117,6 +118,9 @@ namespace CygnusGroundStation
 			setup.Owner = this;
 			if (setup.ShowDialog() ?? false)
 			{
+				// save settings if dialog result was success
+				FrameworkSettingsFile.Default.CopySettingsFrom(DeviceSettingsDialog.CurrentSettings);
+				FrameworkSettingsFile.Default.Save();
 			}
 		}
 

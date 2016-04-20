@@ -7,7 +7,7 @@
 				x:Class="CygnusGroundStation.Dialogs.SetupDialog"
         Title="Setup"
 				Style="{DynamicResource WindowStyle}"
-				WindowStartupLocation="CenterOwner" ShowInTaskbar="False" ResizeMode="CanMinimize" Closing="Window_Closing" Initialized="Window_Initialized" 
+				ShowInTaskbar="False" ResizeMode="CanMinimize" Closing="Window_Closing" Initialized="Window_Initialized" 
 				d:DesignWidth="550" d:DesignHeight="300">
 	<Grid Background="{DynamicResource Background}">
 		<Grid.RowDefinitions>

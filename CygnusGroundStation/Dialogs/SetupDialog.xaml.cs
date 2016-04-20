@@ -147,16 +147,16 @@ namespace CygnusGroundStation.Dialogs
 
 			SetupDialogSettings settings = m_current_settings.GetSettings<SetupDialogSettings>();
 
-			settings.SetupDialogPos.SaveWindowPosition(this);
+			settings.DialogPos.SaveWindowPosition(this);
 
 			m_current_settings.SetSettings(settings);
 		}
 
 		private void Window_Initialized(object sender, System.EventArgs e)
 		{
-			SetupDialogSettings settings = FrameworkSettingsFile.Default.GetSettings<SetupDialogSettings>();
+			SetupDialogSettings settings = m_current_settings.GetSettings<SetupDialogSettings>();
 
-			settings.SetupDialogPos.LoadWindowPosition(this);
+			settings.DialogPos.LoadWindowPosition(this);
 
 			m_current_module_manager.SetupBuildTreeInfo();
 

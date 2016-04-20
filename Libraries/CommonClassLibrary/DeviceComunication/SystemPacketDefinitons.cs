@@ -122,6 +122,22 @@ namespace CommonClassLibrary.DeviceCommunication
 
 			return Encoding.ASCII.GetString(in_buffer, 0, count);
 		}
+
+		protected static void ConvertToZeroTerminatedString(ref byte[] out_buffer, string in_string)
+		{
+			byte[] bytes = Encoding.ASCII.GetBytes(in_string);
+
+			if (bytes.Length + 1 >= out_buffer.Length)
+				throw new ArgumentOutOfRangeException();
+
+			bytes.CopyTo(out_buffer, 0);
+			out_buffer[bytes.Length] = 0;
+		}
+
+		public override string ToString()
+		{
+			return "Len:" + m_length.ToString() + " " + m_type.ToString() + " Cnt:" + m_counter.ToString();
+		}
 	}
 
 	#endregion
@@ -162,13 +178,7 @@ namespace CommonClassLibrary.DeviceCommunication
 
 			set
 			{
-				byte[] bytes = Encoding.ASCII.GetBytes(value);
-
-				if (bytes.Length + 1 >= PacketConstants.DeviceNameLength)
-					throw new ArgumentOutOfRangeException();
-
-				bytes.CopyTo(m_device_name, 0);
-				m_device_name[bytes.Length] = 0;
+				ConvertToZeroTerminatedString(ref m_device_name, value);
 			}
 		}
 
@@ -227,13 +237,7 @@ namespace CommonClassLibrary.DeviceCommunication
 
 			set
 			{
-				byte[] bytes = Encoding.ASCII.GetBytes(value);
-
-				if (bytes.Length + 1 >= PacketConstants.DeviceNameLength)
-					throw new ArgumentOutOfRangeException();
-
-				bytes.CopyTo(m_host_name, 0);
-				m_host_name[bytes.Length] = 0;
+				ConvertToZeroTerminatedString(ref m_host_name, value);
 			}
 		}
 
@@ -389,19 +393,18 @@ namespace CommonClassLibrary.DeviceCommunication
 		{
 			get
 			{
-				return Encoding.ASCII.GetString(m_filename);
+				return PacketBase.ConvertFromZeroTerminatedString(m_filename);
 			}
 
 			set
 			{
-				byte[] bytes = Encoding.ASCII.GetBytes(value);
-
-				if (bytes.Length + 1 >= PacketConstants.FilenameLength)
-					throw new ArgumentOutOfRangeException();
-
-				bytes.CopyTo(m_filename, 0);
-				m_filename[bytes.Length] = 0;
+				ConvertToZeroTerminatedString(ref m_filename, value);
 			}
+		}
+
+		public override string ToString()
+		{
+			return base.ToString() + " " + FileName;
 		}
 	}
 	/// <summary>
@@ -445,6 +448,11 @@ namespace CommonClassLibrary.DeviceCommunication
 		{
 			get { return new MD5Hash(m_file_hash); }
 		}
+
+		public override string ToString()
+		{
+			return "Length:" + m_file_length.ToString() + " FileID:" + m_file_id.ToString();
+		}
 	}
 
 	[StructLayout(LayoutKind.Sequential, Pack = 1), Serializable]
@@ -486,6 +494,11 @@ namespace CommonClassLibrary.DeviceCommunication
 			get { return m_length; }
 			set { m_length = value; }
 		}
+
+		public override string ToString()
+		{
+			return base.ToString() + " ID:" + m_file_id + " Pos:" + m_file_pos;
+		}
 	}
 
 	[StructLayout(LayoutKind.Sequential, Pack = 1), Serializable]
@@ -510,6 +523,11 @@ namespace CommonClassLibrary.DeviceCommunication
 		{
 			get { return m_file_pos; }
 			set { m_file_pos = value; }
+		}
+
+		public override string ToString()
+		{
+			return base.ToString() + " ID:" + m_file_id + " Pos:" + m_file_pos;
 		}
 	}
 

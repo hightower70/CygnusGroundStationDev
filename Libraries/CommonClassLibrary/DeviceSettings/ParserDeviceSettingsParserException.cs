@@ -26,7 +26,7 @@ using System.Xml.XPath;
 
 namespace CommonClassLibrary.DeviceSettings
 {
-	public class DeviceSettingsParserException : Exception
+	public class ParserDeviceSettingsParserException : Exception
 	{
 		#region · Data mebers ·
 		public string ErrorMessage;
@@ -36,7 +36,7 @@ namespace CommonClassLibrary.DeviceSettings
 
 		#region · Public members ·
 
-		public DeviceSettingsParserException(XPathNavigator in_navigator)
+		public ParserDeviceSettingsParserException(XPathNavigator in_navigator)
     {
       IXmlLineInfo line_info = (IXmlLineInfo)in_navigator;
 

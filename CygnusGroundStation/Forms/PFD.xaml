@@ -403,7 +403,7 @@
                                 <Style TargetType="Border">
                                     <Setter Property="Background" Value="Transparent"/>
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding DeviceConnected}" Value="True">
+                                        <DataTrigger Binding="{Binding DeviceConnected}" Value="1">
                                             <Setter Property="Background" Value="Green" />
                                         </DataTrigger>
                                     </Style.Triggers>
@@ -416,11 +416,11 @@
                         <!-- UDP state -->
                         <TextBlock Grid.Row="2" Grid.Column="0" Text="UDP"/>
                         <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" >
-                            <TextBlock Width="30" Text="{Binding UDPUpStream, Converter={StaticResource NumberFormatter}, ConverterParameter={}{0:00.0;0.00;----}}"  TextAlignment="Right"/>
-                            <TextBlock Text="bps"/>
+                            <TextBlock Width="30" Text="{Binding UDPUpStream, Converter={StaticResource NumberFormatter}, ConverterParameter={}{0:0;0;----}}"  TextAlignment="Right"/>
+                            <TextBlock Text="B/s"/>
                             <Path Width="10" Height="10" Fill="Red" Data="M5,1 L9,9 1,9 Z" Margin="0,3,0,0"/>
-                            <TextBlock Width="30" Text="-.--" TextAlignment="Right"/>
-                            <TextBlock Text="bps"/>
+														<TextBlock Width="30" Text="{Binding UDPDownStream, Converter={StaticResource NumberFormatter}, ConverterParameter={}{0:0;0;----}}" TextAlignment="Right"/>
+                            <TextBlock Text="B/s"/>
                             <Path Width="10" Height="10" Fill="LightGreen" Data="M5,9 L9,1 1,1 Z" Margin="0,3,0,0"/>
                         </StackPanel>
                     </Grid>

@@ -21,6 +21,7 @@
 // Base class for XML parser
 ///////////////////////////////////////////////////////////////////////////////
 using System.IO;
+using System.IO.Compression;
 using System.Xml;
 using System.Xml.XPath;
 
@@ -101,19 +102,44 @@ namespace CommonClassLibrary
 		#region · Parser functions ·
 
 		/// <summary>
+		/// Parses a GZIP comressed XML file
+		/// </summary>
+		/// <param name="in_start_path"></param>
+		/// <param name="in_xml_file_name"></param>
+		/// <returns></returns>
+		public bool ParserXMLFileGZIP(string in_start_path, string in_xml_file_name)
+		{
+			bool retval = false;
+
+			using (FileStream compressed_stream = File.Open(in_xml_file_name, FileMode.Open))
+			{
+				using (GZipStream decompressed_stream = new GZipStream(compressed_stream, CompressionMode.Decompress))
+				{
+					using (StreamReader reader = new StreamReader(decompressed_stream))
+					{
+						retval = ParseXMLStream(in_start_path, reader);
+					}
+				}
+			}
+
+			return retval;
+		}
+
+		/// <summary>
 		/// Parses XML as a file
 		/// </summary>
 		/// <param name="in_xml"></param>
 		/// <returns></returns>
 		public bool ParseXMLFile(string in_start_path, string in_xml_file_name)
 		{
-			bool retval;
+			bool retval = false;
 
+			
 			using (TextReader reader = new StreamReader(in_xml_file_name))
 			{
 				retval = ParseXMLStream(in_start_path, reader);
 			}
-
+			
 			return retval;
 		}
 
@@ -134,10 +160,17 @@ namespace CommonClassLibrary
 				// parse XML file
 				XPathDocument document = new XPathDocument(in_xml_stream);
 				XPathNavigator navigator = document.CreateNavigator();
+
+#if false
+				XPathExpression xpath_expression = navigator.Compile("/sn:Settings");
+				XmlNamespaceManager namespace_manager = new XmlNamespaceManager(new NameTable());
+				namespace_manager.AddNamespace("xmlns", "http://cygnusuav.hu/ConfigurationXML.xsd");
+				xpath_expression.SetContext(namespace_manager);
+#endif
 				XPathNodeIterator nodes;
 
 				// parse root element
-				nodes = navigator.Select("/");
+				nodes = navigator.Select("/*");
 				ParseBase(nodes.Current, in_xml_stream);
 
 				// parse elements
@@ -213,7 +246,6 @@ namespace CommonClassLibrary
 
 			return exception;
 		}
-		#endregion
-
+#endregion
 	}
 }
