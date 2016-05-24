@@ -20,12 +20,15 @@
 // ----------------
 // Parser routines for enumeration value definition
 ///////////////////////////////////////////////////////////////////////////////
+using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using System.Xml.XPath;
 
 namespace CommonClassLibrary.DeviceSettings
 {
-	public class ParserDeviceSettingsEnumDefs : IParserDeviceSettingsType
+	public class ParserDeviceSettingsEnumDefs : IParserDeviceSettingsBase
 	{
 		#region · Data members ·
 		private string m_id;
@@ -98,6 +101,30 @@ namespace CommonClassLibrary.DeviceSettings
 		{
 			return ParserDeviceSettings.ClassType.EnumDefs;
 		}
+
+		public void GenerateOffsets(ref int inout_current_offset)
+		{
+			throw new NotSupportedException();
+		}
+
+		/// <summary>
+		/// Generates declaration and data files
+		/// </summary>
+		/// <param name="in_header_file"></param>
+		/// <param name="in_default_value_file"></param>
+		/// <param name="in_value_info_file"></param>
+		public void GenerateFiles(StringBuilder in_header_file, MemoryStream in_value_info_file, MemoryStream in_default_value_file)
+		{
+			for (int i = 0; i < m_values.Count; i++)
+			{
+				string declaration = "#define cfgENUM_" + m_id.ToUpper() + "_" +m_values[i].ID.ToUpper() + " " + i.ToString();
+
+				in_header_file.AppendLine(declaration);
+			}
+
+			in_header_file.AppendLine();
+		}
+
 		#endregion
 	}
 }

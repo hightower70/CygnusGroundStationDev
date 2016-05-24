@@ -20,17 +20,31 @@
 // ----------------
 // Device settings binary data handling
 ///////////////////////////////////////////////////////////////////////////////
+using System;
 using System.IO;
 
 namespace CommonClassLibrary.DeviceSettings
 {
-	public class DeviceSettingsBinaryData
+	public class DeviceSettingsBinaryDataFile
 	{
 		#region · Data members ·
 		private byte[] m_setting_data;
 		#endregion
 
+		#region · Properties ·
+
+		/// <summary>
+		/// Gets raw binary settings data
+		/// </summary>
+		public byte[] BinaryDataFile
+		{
+			get { return m_setting_data; }
+		}
+
+		#endregion
+
 		#region · File handling ·
+
 		/// <summary>
 		/// Loads settings binary data from a file
 		/// </summary>
@@ -42,6 +56,21 @@ namespace CommonClassLibrary.DeviceSettings
 			m_setting_data = new byte[binary_stream.Length];
 
 			binary_stream.Read(m_setting_data, 0, m_setting_data.Length);
+		}
+
+		/// <summary>
+		/// Gets binary data
+		/// </summary>
+		/// <param name="in_offset"></param>
+		/// <param name="in_length"></param>
+		/// <returns></returns>
+		public byte[] GetBinaryData(UInt16 in_offset, UInt16 in_length)
+		{
+			byte[] result = new byte[in_length];
+
+			Array.Copy(m_setting_data, result, in_length);
+
+			return result;
 		}
 		#endregion
 	}

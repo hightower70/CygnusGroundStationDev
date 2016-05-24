@@ -20,7 +20,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <PlatformTarget>x86</PlatformTarget>
+    <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -58,22 +58,24 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Console\CommandLine.cs" />
+    <Compile Include="Console\CommandLineParser.cs" />
+    <Compile Include="DeviceCommunication\UARTCommunicator.cs" />
+    <Compile Include="DeviceCommunication\UARTEnumerator.cs" />
     <Compile Include="DeviceSettings\DeviceSettingsBinaryData.cs" />
-    <Compile Include="DeviceSettings\IParserDeviceSettingsType.cs" />
+    <Compile Include="DeviceSettings\IParserDeviceSettingsBase.cs" />
     <Compile Include="DeviceSettings\ParserDeviceSettingsEnumDefs.cs" />
     <Compile Include="DeviceSettings\ParserDeviceSettingsEnumValue.cs" />
     <Compile Include="DeviceSettings\ParserDeviceSettingsRoot.cs" />
     <Compile Include="Helpers\RawBinarySerialization.cs" />
-    <Compile Include="DeviceComunication\CommunicationManager.cs" />
-    <Compile Include="DeviceComunication\DeviceFileCache.cs" />
-    <Compile Include="DeviceComunication\ICommunicationInterface.cs" />
-    <Compile Include="DeviceComunication\PacketQueue.cs" />
-    <Compile Include="DeviceComunication\SLIP.cs" />
-    <Compile Include="DeviceComunication\SystemPacketDefinitons.cs" />
-    <Compile Include="DeviceComunication\UDPCommunicator.cs" />
+    <Compile Include="DeviceCommunication\CommunicationManager.cs" />
+    <Compile Include="DeviceCommunication\DeviceFileCache.cs" />
+    <Compile Include="DeviceCommunication\ICommunicationInterface.cs" />
+    <Compile Include="DeviceCommunication\PacketQueue.cs" />
+    <Compile Include="DeviceCommunication\SLIP.cs" />
+    <Compile Include="DeviceCommunication\SystemPacketDefinitons.cs" />
+    <Compile Include="DeviceCommunication\UDPCommunicator.cs" />
     <Compile Include="DeviceSettings\ParserDeviceSettingsGroup.cs" />
-    <Compile Include="DeviceSettings\ParserDeviceSetting.cs" />
+    <Compile Include="DeviceSettings\ParserDeviceSettings.cs" />
     <Compile Include="DeviceSettings\ParserDeviceSettingsParserException.cs" />
     <Compile Include="DeviceSettings\ParserDeviceSettingValue.cs" />
     <Compile Include="DeviceSettings\ParserDeviceSettingsStringConstants.cs" />

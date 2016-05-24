@@ -126,9 +126,8 @@ namespace CommonClassLibrary.DeviceCommunication
 		#endregion
 
 		#region · Properties ·
-		public int UDPTransmiterPort { get; set; }
-		public int UDPReceiverPort { get; set; }
-		public int UDPDeviceReceiverPort { get; set; }
+		public int UDPLocalPort { get; set; }
+		public int UDPRemotePort { get; set; }
 		#endregion
 
 		#region · Constructor ·
@@ -283,7 +282,7 @@ namespace CommonClassLibrary.DeviceCommunication
 			{
 				if (m_detected_devices.Count > 0)
 				{
-					transmitter_endpoint = new IPEndPoint(m_detected_devices[0].Address, UDPDeviceReceiverPort);
+					transmitter_endpoint = new IPEndPoint(m_detected_devices[0].Address, UDPRemotePort);
 				}
 				else
 					return false;
@@ -349,6 +348,7 @@ namespace CommonClassLibrary.DeviceCommunication
 			bool event_occured;
 			int i;
 			UInt16 crc;
+			AsyncCallback receiver_callback = new AsyncCallback(ReceiveCallback);
 
 			// determine local IP address
 			IPAddress[] resolved_ip_address = Dns.GetHostAddresses("localhost");
@@ -361,7 +361,7 @@ namespace CommonClassLibrary.DeviceCommunication
 			}
 
 			// create endpoints
-			m_receiver_endpoint = new IPEndPoint(IPAddress.Any, UDPReceiverPort);
+			m_receiver_endpoint = new IPEndPoint(IPAddress.Any, UDPLocalPort);
 
 			// init socket
 			m_timestamp = DateTime.MinValue;
@@ -377,7 +377,7 @@ namespace CommonClassLibrary.DeviceCommunication
 			m_downstream_bytes = 0;
 
 			// start data reception
-			m_client.BeginReceive(m_receive_buffer, 0, m_receive_buffer.Length, 0, new AsyncCallback(ReceiveCallback), this);
+			m_client.BeginReceive(m_receive_buffer, 0, m_receive_buffer.Length, 0, receiver_callback, this);
 
 			// communication loop
 			while (!m_stop_requested)
@@ -453,7 +453,7 @@ namespace CommonClassLibrary.DeviceCommunication
 					try
 					{
 						m_received_data_length = 0;
-						m_client.BeginReceive(m_receive_buffer, 0, m_receive_buffer.Length, 0, new AsyncCallback(ReceiveCallback), this);
+						m_client.BeginReceive(m_receive_buffer, 0, m_receive_buffer.Length, 0, receiver_callback, this);
 					}
 					catch
 					{
@@ -476,7 +476,7 @@ namespace CommonClassLibrary.DeviceCommunication
 							byte[] packet = RawBinarySerialization.SerializeObject(info);
 
 							// send host info packet
-							EndPoint transmitter_endpoint = new IPEndPoint(m_detected_devices[i].Address, UDPDeviceReceiverPort);
+							EndPoint transmitter_endpoint = new IPEndPoint(m_detected_devices[i].Address, UDPRemotePort);
 
 							InternalPacketSend(transmitter_endpoint, packet);
 
@@ -600,6 +600,5 @@ namespace CommonClassLibrary.DeviceCommunication
 			m_client.BeginSendTo(m_transmit_buffer, 0, in_packet.Length + PacketConstants.PacketCRCLength, 0, in_endpoint, new AsyncCallback(SendCallback), this);
 		}
 		#endregion
-
 	}
 }

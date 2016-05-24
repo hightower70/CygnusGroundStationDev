@@ -41,6 +41,15 @@ namespace CommonClassLibrary.DeviceCommunication
 	}
 
 	/// <summary>
+	/// Mode codes for file operation finished packet
+	/// </summary>
+	public enum FileOperationFinishMode : byte
+	{
+		Success = 1,
+		Cancel = 2
+	};
+
+	/// <summary>
 	/// Packet types
 	/// </summary>
 	public enum PacketType : byte
@@ -67,9 +76,17 @@ namespace CommonClassLibrary.DeviceCommunication
 		FileInfoRequest = (FileInfo + FlagRequest),
 		FileInfoResponse = (FileInfo),
 
-		FileData = (FlagSystem + ClassFile + 2),
-		FileDataRequest = (FileData + FlagRequest),
-		FileDataResponse = (FileData)
+		FileDataRead = (FlagSystem + ClassFile + 2),
+		FileDataReadRequest = (FileDataRead + FlagRequest),
+		FileDataReadResponse = (FileDataRead),
+
+		FileDataWrite = (FlagSystem + ClassFile + 3),
+		FileDataWriteRequest = (FileDataWrite + FlagRequest),
+		FileDataWriteResponse = (FileDataWrite),
+
+		FileOperationFinished = (FlagSystem + ClassFile + 4),
+		FileOperationFinishedRequest = (FileOperationFinished + FlagRequest),
+		FileOperationFinishedResponse = (FileOperationFinished)
 	}
 
 
@@ -79,9 +96,9 @@ namespace CommonClassLibrary.DeviceCommunication
 	[StructLayout(LayoutKind.Sequential, Pack = 1), Serializable]
 	public class PacketBase
 	{
-		private byte m_length;
-		private PacketType m_type;
-		private byte m_counter;
+		protected byte m_packet_length;
+		private PacketType m_packet_type;
+		private byte m_packet_counter;
 
 		public PacketBase()
 		{
@@ -89,29 +106,29 @@ namespace CommonClassLibrary.DeviceCommunication
 
 		public PacketBase(PacketType in_type)
 		{
-			m_type = in_type;
-			m_length = (byte)(Marshal.SizeOf(this.GetType()) + PacketConstants.PacketCRCLength);
-			m_counter = 0;
+			m_packet_type = in_type;
+			m_packet_length = (byte)(Marshal.SizeOf(this.GetType()) + PacketConstants.PacketCRCLength);
+			m_packet_counter = 0;
 		}
 
-		public void SetCounter(byte in_id)
+		public void SetPacketCounter(byte in_id)
 		{
-			m_counter = in_id;
+			m_packet_counter = in_id;
 		}
 
-		public PacketType Type
+		public PacketType PacketType
 		{
-			get { return m_type; }
+			get { return m_packet_type; }
 		}
 
-		public byte Length
+		public byte PacketLength
 		{
-			get { return m_length; }
+			get { return m_packet_length; }
 		}
 
-		public byte Counter
+		public byte PacketCounter
 		{
-			get { return m_counter; }
+			get { return m_packet_counter; }
 		}
 
 		protected static string ConvertFromZeroTerminatedString(byte[] in_buffer)
@@ -136,7 +153,7 @@ namespace CommonClassLibrary.DeviceCommunication
 
 		public override string ToString()
 		{
-			return "Len:" + m_length.ToString() + " " + m_type.ToString() + " Cnt:" + m_counter.ToString();
+			return "Len:" + m_packet_length.ToString() + " " + m_packet_type.ToString() + " Cnt:" + m_packet_counter.ToString();
 		}
 	}
 
@@ -407,6 +424,7 @@ namespace CommonClassLibrary.DeviceCommunication
 			return base.ToString() + " " + FileName;
 		}
 	}
+
 	/// <summary>
 	/// File information response packet
 	/// </summary>
@@ -455,16 +473,19 @@ namespace CommonClassLibrary.DeviceCommunication
 		}
 	}
 
+	/// <summary>
+	/// File Data Read Request Packet
+	/// </summary>
 	[StructLayout(LayoutKind.Sequential, Pack = 1), Serializable]
-	public class PacketFileDataRequest : PacketBase
+	public class PacketFileDataReadRequest : PacketBase
 	{
 		private byte m_file_id;
 		private UInt32 m_file_pos;
-		private byte m_length;
+		private byte m_data_length;
 
 
-		public PacketFileDataRequest()
-		: base(PacketType.FileDataRequest)
+		public PacketFileDataReadRequest()
+		: base(PacketType.FileDataReadRequest)
 		{
 		}
 
@@ -491,8 +512,8 @@ namespace CommonClassLibrary.DeviceCommunication
 		/// </summary>
 		public byte DataLength
 		{
-			get { return m_length; }
-			set { m_length = value; }
+			get { return m_data_length; }
+			set { m_data_length = value; }
 		}
 
 		public override string ToString()
@@ -501,8 +522,11 @@ namespace CommonClassLibrary.DeviceCommunication
 		}
 	}
 
+	/// <summary>
+	/// File Data Read Response Packet
+	/// </summary>
 	[StructLayout(LayoutKind.Sequential, Pack = 1), Serializable]
-	public class PacketFileDataResponseHeader : PacketBase
+	public class PacketFileDataReadResponseHeader : PacketBase
 	{
 		private byte m_file_id;
 		private UInt32 m_file_pos;
@@ -531,7 +555,173 @@ namespace CommonClassLibrary.DeviceCommunication
 		}
 	}
 
+	/// <summary>
+	/// File Data Write Request Packet (paket header only)
+	/// </summary>
+	[StructLayout(LayoutKind.Sequential, Pack = 1), Serializable]
+	public class PacketFileDataWriteRequestHeader : PacketBase
+	{
+		private byte m_file_id;
+		private UInt32 m_file_pos;
+		private byte m_data_length;
 
+		public PacketFileDataWriteRequestHeader(byte in_data_length)
+		: base(PacketType.FileDataWriteRequest)
+		{
+			m_packet_length = (byte)(Marshal.SizeOf(this.GetType()) + in_data_length + PacketConstants.PacketCRCLength);
+			m_data_length = in_data_length;
+		}
+
+		/// <summary>
+		/// Gets/sets unique file ID
+		/// </summary>
+		public byte FileID
+		{
+			get { return m_file_id; }
+			set { m_file_id = value; }
+		}
+
+		/// <summary>
+		/// Gets/sets file position
+		/// </summary>
+		public UInt32 FilePos
+		{
+			get { return m_file_pos; }
+			set { m_file_pos = value; }
+		}
+
+		/// <summary>
+		/// Gets/sets data length of the packet
+		/// </summary>
+		public byte DataLength
+		{
+			get { return m_data_length; }
+		}
+
+		public override string ToString()
+		{
+			return base.ToString() + " ID:" + m_file_id + " Pos:" + m_file_pos;
+		}
+	}
+
+	/// <summary>
+	/// File Data Write Response Packet
+	/// </summary>
+	[StructLayout(LayoutKind.Sequential, Pack = 1), Serializable]
+	public class PacketFileDataWriteResponse : PacketBase
+	{
+		private byte m_file_id;
+		private byte m_error;
+
+		/// <summary>
+		/// Gets/sets unique file ID
+		/// </summary>
+		public byte FileID
+		{
+			get { return m_file_id; }
+			set { m_file_id = value; }
+		}
+
+		/// <summary>
+		/// Gets/sets file position
+		/// </summary>
+		public byte Error
+		{
+			get { return m_error; }
+			set { m_error = value; }
+		}
+
+		public override string ToString()
+		{
+			return base.ToString() + " ID:" + m_file_id + " Error:" + m_error;
+		}
+	}
+
+
+	/// <summary>
+	/// File Operation Finished Request Packet
+	/// </summary>
+	[StructLayout(LayoutKind.Sequential, Pack = 1), Serializable]
+	public class PacketFileOperationFinishedRequest : PacketBase
+	{
+		private byte m_file_id;
+		private byte m_finish_mode;
+
+		public PacketFileOperationFinishedRequest()
+		: base(PacketType.FileOperationFinishedRequest)
+		{
+		}
+
+		/// <summary>
+		/// Gets/sets unique file ID
+		/// </summary>
+		public byte FileID
+		{
+			get { return m_file_id; }
+			set { m_file_id = value; }
+		}
+
+		/// <summary>
+		/// Gets/sets unique file ID
+		/// </summary>
+		public FileOperationFinishMode FinishMode
+		{
+			get { return (FileOperationFinishMode)m_finish_mode; }
+			set { m_finish_mode = (byte)value; }
+		}
+
+		public override string ToString()
+		{
+			return base.ToString() + " ID:" + m_file_id + " Mode:" + m_finish_mode;
+		}
+	}
+
+	/// <summary>
+	/// File Operation Finished Response Packet
+	/// </summary>
+	[StructLayout(LayoutKind.Sequential, Pack = 1), Serializable]
+	public class PacketFileOperationFinishedResponse : PacketBase
+	{
+		public const byte NoError = 0;
+
+		private byte m_file_id;
+		private byte m_finish_mode;
+		private byte m_error;
+
+		public PacketFileOperationFinishedResponse()
+		: base(PacketType.FileOperationFinishedResponse)
+		{
+		}
+
+		/// <summary>
+		/// Gets unique file ID
+		/// </summary>
+		public byte FileID
+		{
+			get { return m_file_id; }
+		}
+
+		/// <summary>
+		/// Gets unique file ID
+		/// </summary>
+		public FileOperationFinishMode FinishMode
+		{
+			get { return (FileOperationFinishMode)m_finish_mode; }
+		}
+
+		/// <summary>
+		/// Gets error code
+		/// </summary>
+		public byte Error
+		{
+			get { return m_error; }
+		}
+
+		public override string ToString()
+		{
+			return base.ToString() + " ID:" + m_file_id + " Mode:" + m_finish_mode + " Error:" + m_error;
+		}
+	}
 
 	#endregion
 }

@@ -20,6 +20,7 @@
 // ----------------
 // Device communication manager (handles communication interfaces, packets, etc.) 
 ///////////////////////////////////////////////////////////////////////////////
+using CommonClassLibrary.Helpers;
 using CommonClassLibrary.RealtimeObjectExchange;
 using System;
 using System.Collections.Generic;
@@ -52,11 +53,13 @@ namespace CommonClassLibrary.DeviceCommunication
 		{
 			Idle,
 
-			DownoadInfo,
-			DownloadData
+			ReadInfo,
+			ReadData,
+
+			WriteData
 		};
 
-		public enum FileOperationResult
+		public enum FileOperationResultState
 		{
 			Success,
 
@@ -64,7 +67,26 @@ namespace CommonClassLibrary.DeviceCommunication
 			NoConnection
 		}
 
-		public delegate void FileOperationCallback(FileOperationResult in_result, string in_file_path);
+		public class FileOperationResultInfo
+		{
+			public FileOperationResultInfo(FileOperationResultState in_state)
+			{
+				State = in_state;
+			}
+
+			public FileOperationResultInfo(FileOperationResultState in_state, byte in_file_id, string in_full_path)
+			{
+				State = in_state;
+				FileID = in_file_id;
+				FullPath = in_full_path;
+			}
+
+			public FileOperationResultState State;
+			public string FullPath;
+			public byte FileID;
+		}
+
+		public delegate void FileOperationCallback(FileOperationResultInfo in_result);
 
 		#endregion
 
@@ -305,7 +327,6 @@ namespace CommonClassLibrary.DeviceCommunication
 			}
 		}
 
-
 		/// <summary>
 		/// Adds new communication device to the list of the communicators
 		/// </summary>
@@ -331,12 +352,30 @@ namespace CommonClassLibrary.DeviceCommunication
 		{
 			byte counter = (byte)((UInt32)(Interlocked.Increment(ref m_packet_counter)) & 0xff);
 
-			in_packet.SetCounter(counter);
+			in_packet.SetPacketCounter(counter);
 
 			m_transmitter_queue.Push(InvalidInterface, in_packet);
 
 			// notify thread about the new packet to send
 			m_thread_event.Set();
+		}
+
+		/// <summary>
+		/// Pushes packet with additional data bytes into the transmitter queue to send on all interfaces
+		/// </summary>
+		/// <param name="in_packet_header"></param>
+		/// <param name="in_packet_data"></param>
+		public void SendPacket(PacketBase in_packet_header, byte[] in_packet_data)
+		{
+			byte counter = (byte)((UInt32)(Interlocked.Increment(ref m_packet_counter)) & 0xff);
+
+			in_packet_header.SetPacketCounter(counter);
+
+			m_transmitter_queue.Push(InvalidInterface, in_packet_header, in_packet_data);
+
+			// notify thread about the new packet to send
+			m_thread_event.Set();
+
 		}
 
 		/// <summary>
@@ -547,8 +586,19 @@ namespace CommonClassLibrary.DeviceCommunication
 						ProcessFileInfoResponse();
 						break;
 
-					case PacketType.FileDataResponse:
-						ProcessFileDataResponse();
+					// process file read response packet
+					case PacketType.FileDataReadResponse:
+						ProcessFileDataReadResponse();
+						break;
+
+					// process file write response packet
+					case PacketType.FileDataWriteResponse:
+						ProcessFileDataWriteResponse();
+						break;
+
+					// process file operation finished response
+					case PacketType.FileOperationFinishedResponse:
+						ProcessFileOperationFinishedResponse();
 						break;
 				}
 			}
@@ -614,10 +664,10 @@ namespace CommonClassLibrary.DeviceCommunication
 		#region · File operation ·
 
 		/// <summary>
-		/// Starts file download operation
+		/// Starts file read (download from device) operation
 		/// </summary>
 		/// <param name="in_file_name"></param>
-		public bool StartFileDownload(string in_file_name, FileOperationCallback in_callback)
+		public bool StartFileRead(string in_file_name, FileOperationCallback in_callback)
 		{
 			// sanity check
 			if (m_file_operation_state != FileOperationState.Idle)
@@ -627,7 +677,7 @@ namespace CommonClassLibrary.DeviceCommunication
 
 			m_file_operation_callback = in_callback;
 
-			m_file_operation_state = FileOperationState.DownoadInfo;
+			m_file_operation_state = FileOperationState.ReadInfo;
 			m_file_operation_retry_count = 0;
 			m_file_operation_current_name = in_file_name;
 
@@ -642,6 +692,35 @@ namespace CommonClassLibrary.DeviceCommunication
 		}
 
 		/// <summary>
+		/// Starts file write operation
+		/// </summary>
+		/// <param name="in_file_id"></param>
+		/// <param name="in_file_pos"></param>
+		/// <param name="in_data"></param>
+		/// <param name="in_callback"></param>
+		/// <returns></returns>
+		public bool StartFileWrite(byte in_file_id, UInt32 in_file_pos, byte[] in_data, FileOperationCallback in_callback)
+		{
+			// sanity check
+			if (m_file_operation_state != FileOperationState.Idle)
+				return false;
+
+			m_file_operation_timestamp = DateTime.Now;
+
+			m_file_operation_callback = in_callback;
+
+			m_file_operation_state = FileOperationState.WriteData;
+			m_file_operation_retry_count = 0;
+
+			m_file_operation_current_position = in_file_pos;
+			m_file_operation_current_id = in_file_id;
+
+			SendFileWriteRequestPacket(in_data);
+
+			return true;
+		}
+
+		/// <summary>
 		/// Send file information request packet
 		/// </summary>
 		/// <param name="in_file_name"></param>
@@ -651,9 +730,8 @@ namespace CommonClassLibrary.DeviceCommunication
 
 			request_packet.FileName = in_file_name;
 
-			PacketLogWrite('S', request_packet);
-
 			SendPacket(request_packet);
+			PacketLogWrite('S', request_packet);
 		}
 
 
@@ -671,7 +749,7 @@ namespace CommonClassLibrary.DeviceCommunication
 				// if file not found -> error
 				m_file_operation_state = FileOperationState.Idle;
 
-				CallFileOperationCallback(FileOperationResult.NotFound, null);
+				CallFileOperationCallback(new FileOperationResultInfo(FileOperationResultState.NotFound));
 			}
 			else
 			{
@@ -692,7 +770,7 @@ namespace CommonClassLibrary.DeviceCommunication
 
 					UpdateFileTransferState();
 
-					CallFileOperationCallback(FileOperationResult.Success, file_path);
+					CallFileOperationCallback(new FileOperationResultInfo(FileOperationResultState.Success, m_file_operation_current_id, file_path));
 				}
 				else
 				{
@@ -700,48 +778,53 @@ namespace CommonClassLibrary.DeviceCommunication
 					m_file_operation_current_file = DeviceFileCache.CreateFile(m_file_operation_current_name, 0);
 
 					// start download
-					m_file_operation_state = FileOperationState.DownloadData;
+					m_file_operation_state = FileOperationState.ReadData;
 
 					UpdateFileTransferState();
 
-					SendFileDataPacketRequest();
+					SendFileDataReadRequest();
 				}
 			}
 		}
 
-		private void SendFileDataPacketRequest()
+		/// <summary>
+		/// Reads file data block from the device
+		/// </summary>
+		private void SendFileDataReadRequest()
 		{
 			UInt32 request_data_length;
 			UInt32 max_data_length;
-			PacketFileDataRequest request_packet;
+			PacketFileDataReadRequest request_packet;
 
 			// determine data length
-			max_data_length = (uint)(PacketConstants.PacketMaxLength - PacketConstants.PacketCRCLength - Marshal.SizeOf(typeof(PacketFileDataResponseHeader)));
+			max_data_length = (uint)(PacketConstants.PacketMaxLength - PacketConstants.PacketCRCLength - Marshal.SizeOf(typeof(PacketFileDataReadResponseHeader)));
 			request_data_length = m_file_operation_current_size - m_file_operation_current_position;
 
 			if (request_data_length > max_data_length)
 				request_data_length = max_data_length;
 
 			// create packet
-			request_packet = new PacketFileDataRequest();
+			request_packet = new PacketFileDataReadRequest();
 			request_packet.FileID = m_file_operation_current_id;
 			request_packet.FilePos = m_file_operation_current_position;
 			request_packet.DataLength = (byte)request_data_length;
 
 			m_file_operation_timestamp = DateTime.Now;
 
-			PacketLogWrite('S', request_packet);
-
 			SendPacket(request_packet);
+			PacketLogWrite('S', request_packet);
 		}
 
-		private void ProcessFileDataResponse()
+		/// <summary>
+		/// Processes received file data block
+		/// </summary>
+		private void ProcessFileDataReadResponse()
 		{
 			byte[] packet;
 			byte packet_length;
 			byte interface_index;
 			DateTime packet_timestamp;
-			PacketFileDataResponseHeader packet_header;
+			PacketFileDataReadResponseHeader packet_header;
 			int data_offset;
 			int data_length;
 
@@ -749,12 +832,12 @@ namespace CommonClassLibrary.DeviceCommunication
 			{
 				if (m_file_operation_current_file != null)
 				{
-					packet_header = (PacketFileDataResponseHeader)RawBinarySerialization.DeserializeObject(packet, typeof(PacketFileDataResponseHeader));
+					packet_header = (PacketFileDataReadResponseHeader)RawBinarySerialization.DeserializeObject(packet, typeof(PacketFileDataReadResponseHeader));
 
 					PacketLogWrite('R', packet_header);
 
-					data_offset = Marshal.SizeOf(typeof(PacketFileDataResponseHeader));
-					data_length = packet_header.Length - PacketConstants.PacketCRCLength - Marshal.SizeOf(typeof(PacketFileDataResponseHeader));
+					data_offset = Marshal.SizeOf(typeof(PacketFileDataReadResponseHeader));
+					data_length = packet_header.PacketLength - PacketConstants.PacketCRCLength - Marshal.SizeOf(typeof(PacketFileDataReadResponseHeader));
 
 					m_file_operation_current_file.Write(packet, data_offset, data_length);
 
@@ -764,7 +847,7 @@ namespace CommonClassLibrary.DeviceCommunication
 
 					if (m_file_operation_current_position < m_file_operation_current_size)
 					{
-						SendFileDataPacketRequest();
+						SendFileDataReadRequest();
 					}
 					else
 					{
@@ -772,7 +855,7 @@ namespace CommonClassLibrary.DeviceCommunication
 
 						m_file_operation_state = FileOperationState.Idle;
 
-						CallFileOperationCallback(FileOperationResult.Success, m_file_operation_current_file.FullFilePath);
+						CallFileOperationCallback(new FileOperationResultInfo(FileOperationResultState.Success, m_file_operation_current_id, m_file_operation_current_file.FullFilePath));
 						m_file_operation_current_file.Dispose();
 						m_file_operation_current_file = null;
 					}
@@ -780,6 +863,34 @@ namespace CommonClassLibrary.DeviceCommunication
 
 				m_receiver_queue.PopEnd();
 			}
+		}
+
+		private void ProcessFileDataWriteResponse()
+		{
+			PacketFileDataWriteResponse packet = (PacketFileDataWriteResponse)m_receiver_queue.Pop(typeof(PacketFileDataWriteResponse));
+
+			PacketLogWrite('R', packet);
+
+		}
+
+		/// <summary>
+		/// Sends file data block write packet
+		/// </summary>
+		/// <param name="in_data"></param>
+		private void SendFileWriteRequestPacket(byte[] in_data)
+		{
+			PacketFileDataWriteRequestHeader request_packet;
+
+			// create packet
+			request_packet = new PacketFileDataWriteRequestHeader((byte)in_data.Length);
+			request_packet.FileID = m_file_operation_current_id;
+			request_packet.FilePos = m_file_operation_current_position;
+
+			m_file_operation_timestamp = DateTime.Now;
+
+			SendPacket(request_packet, in_data);
+
+			PacketLogWrite('S', request_packet);
 		}
 
 
@@ -807,14 +918,58 @@ namespace CommonClassLibrary.DeviceCommunication
 					m_file_operation_current_file.Close();
 
 				m_file_operation_state = FileOperationState.Idle;
-				CallFileOperationCallback(FileOperationResult.NoConnection, m_file_operation_current_name);
+
+				CallFileOperationCallback(new FileOperationResultInfo(FileOperationResultState.NoConnection));
 			}
 		}
 
-		private void CallFileOperationCallback(FileOperationResult in_result, string in_file_path)
+		/// <summary>
+		/// Send file operation finish request
+		/// </summary>
+		/// <param name="in_file_id"></param>
+		/// <param name="in_request_code"></param>
+		public void SendFileFinishRequest(FileOperationFinishMode in_finish_mode, FileOperationCallback in_callback)
+		{
+			PacketFileOperationFinishedRequest request_packet;
+
+			// create packet
+			request_packet = new PacketFileOperationFinishedRequest();
+			request_packet.FileID = m_file_operation_current_id;
+			request_packet.FinishMode = in_finish_mode;
+
+			m_file_operation_callback = in_callback;
+
+			m_file_operation_timestamp = DateTime.Now;
+
+			SendPacket(request_packet);
+			PacketLogWrite('S', request_packet);
+		}
+
+		private void ProcessFileOperationFinishedResponse()
+		{
+			PacketFileOperationFinishedResponse packet = (PacketFileOperationFinishedResponse)m_receiver_queue.Pop(typeof(PacketFileOperationFinishedResponse));
+
+			PacketLogWrite('R', packet);
+
+			if(packet.Error == PacketFileOperationFinishedResponse.NoError)
+			{
+				CallFileOperationCallback(new FileOperationResultInfo(FileOperationResultState.Success));
+			}
+			else
+			{
+				CallFileOperationCallback(new FileOperationResultInfo(FileOperationResultState.NotFound));
+			}
+		}
+
+		/// <summary>
+		/// Calls file operation callback function when file operation endeed
+		/// </summary>
+		/// <param name="in_result"></param>
+		/// <param name="in_file_path"></param>
+		private void CallFileOperationCallback(FileOperationResultInfo in_result)
 		{
 			if (m_file_operation_callback != null)
-				m_file_operation_callback(in_result, in_file_path);
+				m_file_operation_callback(in_result);
 		}
 		#endregion
 	}

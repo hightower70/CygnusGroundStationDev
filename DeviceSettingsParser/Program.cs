@@ -23,28 +23,53 @@
 using CommonClassLibrary.Console;
 using CommonClassLibrary.DeviceSettings;
 using System;
+using System.IO;
 
 namespace DeviceSettingsParser
 {
 	class Program
 	{
+		static ParserDeviceSettings.GeneratedFileNames m_file_names;
+
 		static bool ProcessCommandLineSwitches(CommandLineParser  in_command_line)
 		{
-			foreach (CommandLineParser.CommandLineParameters parameter in in_command_line.Parameters)
+			for (int i = 0; i < in_command_line.Parameters.Length; i++)
 			{
-				switch (parameter.Command.ToLower())
+				switch (in_command_line.Parameters[i].Command.ToLower())
 				{
-					case "param":
+					case "config":
+						m_file_names.ConfigFileName = in_command_line.Parameters[i].Parameter;
+						in_command_line.Parameters[i].Used = true;
+						break;
+
+					case "header":
+						m_file_names.HeaderFileName = in_command_line.Parameters[i].Parameter;
+						in_command_line.Parameters[i].Used = true;
+						break;
+
+					case "defaultdata":
+						m_file_names.DefaultDataFileName = in_command_line.Parameters[i].Parameter;
+						in_command_line.Parameters[i].Used = true;
+						break;
+
+					case "xmldata":
+						m_file_names.XmlDataFileName = in_command_line.Parameters[i].Parameter;
+						in_command_line.Parameters[i].Used = true;
+						break;
+
+					case "valueinfo":
+						m_file_names.ValueInfoFileName = in_command_line.Parameters[i].Parameter;
+						in_command_line.Parameters[i].Used = true;
 						break;
 				}
 			}
-			return true;
 
+			return true;
 		}
 
 		static void Main(string[] args)
 		{
-			string xml_file_name = @"d:\Projects\CygnusFCS\Resources\ConfigurationXML.xml";
+			m_file_names = new ParserDeviceSettings.GeneratedFileNames();
 
 			// display title
 			Console.Write(ParserDeviceSettingsStringConstants.ProgramTitle);
@@ -59,7 +84,7 @@ namespace DeviceSettingsParser
 			}
 
 			// display help text
-			if (command_line.IsHelpRequested())
+			if (command_line.IsHelpRequested() || command_line.Parameters.Length == 0)
 			{
 				Console.WriteLine(ParserDeviceSettingsStringConstants.Usage);
 
@@ -72,14 +97,39 @@ namespace DeviceSettingsParser
 				return;
 			}
 
+			// process command line file names
 			ParserDeviceSettings parser = new ParserDeviceSettings();
-			parser.ParseXMLFile("/Settings/*", xml_file_name);
-
+			parser.ParseXMLFile("/Settings/*", m_file_names.ConfigFileName);
 
 			if (string.IsNullOrEmpty(parser.ErrorMessage))
 			{
-				parser.CreateCFiles(xml_file_name);
+				// generate file names
+				string config_file_name_without_extension;
+				config_file_name_without_extension = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(m_file_names.ConfigFileName)), Path.GetFileNameWithoutExtension(m_file_names.ConfigFileName));
+
+				if (m_file_names.HeaderFileName == null)
+					m_file_names.HeaderFileName = config_file_name_without_extension + ".h";
+
+				if (m_file_names.DefaultDataFileName == null)
+					m_file_names.DefaultDataFileName = config_file_name_without_extension + "_default.inl";
+
+				if (m_file_names.XmlDataFileName == null)
+					m_file_names.XmlDataFileName = config_file_name_without_extension + "_xml.inl";
+
+				if (m_file_names.ValueInfoFileName == null)
+					m_file_names.ValueInfoFileName = config_file_name_without_extension + "_info.inl";
 			}
+
+			// Generate output files
+			if (string.IsNullOrEmpty(parser.ErrorMessage))
+			{
+				// update value offsets
+				parser.GenerateBinaryValueOffset();
+
+				// files
+				parser.CreateFiles(m_file_names);
+			}
+
 
 			if (!string.IsNullOrEmpty(parser.ErrorMessage))
 			{
@@ -87,8 +137,6 @@ namespace DeviceSettingsParser
 				Console.ReadKey();
 				return;
 			}
-
-			Console.ReadKey();
 		}
 	}
 }

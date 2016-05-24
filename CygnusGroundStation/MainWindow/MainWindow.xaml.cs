@@ -25,14 +25,8 @@ namespace CygnusGroundStation
 
 			FormManager.Default.SetFormParent(FormContainer);
 
-
-			// init communication manager
-			UDPCommunicator udp_communicator = new UDPCommunicator();
-			udp_communicator.UDPReceiverPort = 9602;
-			udp_communicator.UDPTransmiterPort = 9601;
-			udp_communicator.UDPDeviceReceiverPort = 9601;
-
-			CommunicationManager.Default.AddCommunicator(udp_communicator);
+			//CreateUDPCommunicator();
+			CreateUARTCommunicator();
 
 			CommunicationManager.Default.PacketLogCreate("packet_log.txt");
 
@@ -48,6 +42,30 @@ namespace CygnusGroundStation
 			// start communication manager
 			CommunicationManager.Default.Start();
 
+		}
+
+		private void CreateUDPCommunicator()
+		{
+			SetupCommunicationSettings com_settings = FrameworkSettingsFile.Default.GetSettings<SetupCommunicationSettings>();
+
+			// init communication manager
+			UDPCommunicator udp_communicator = new UDPCommunicator();
+			udp_communicator.UDPLocalPort = com_settings.UDPLocalPort;
+			udp_communicator.UDPRemotePort = com_settings.UDPRemotePort;
+
+			CommunicationManager.Default.AddCommunicator(udp_communicator);
+		}
+
+		private void CreateUARTCommunicator()
+		{
+			SetupCommunicationSettings com_settings = FrameworkSettingsFile.Default.GetSettings<SetupCommunicationSettings>();
+
+			// init communication manager
+			UARTCommunicator uart_communicator = new UARTCommunicator();
+			uart_communicator.PortName = com_settings.UARTPort;
+			uart_communicator.BaudRate = com_settings.UARTBaud;
+
+			CommunicationManager.Default.AddCommunicator(uart_communicator);
 		}
 
 		private void About_Click(object sender, RoutedEventArgs e)

@@ -20,14 +20,20 @@
 // ----------------
 // Parser routines for XML elements attributes
 ///////////////////////////////////////////////////////////////////////////////
+using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using System.Xml.XPath;
 
 namespace CommonClassLibrary.DeviceSettings
 {
-	public class ParserDeviceSettingsGroup : IParserDeviceSettingsType
+	public class ParserDeviceSettingsGroup : IParserDeviceSettingsBase
 	{
 		#region · Data members ·
+
+		private ParserDeviceSettingsRoot m_root;
+
 		private string m_id;
 		private string m_name;
 		private string m_display_name;
@@ -51,6 +57,14 @@ namespace CommonClassLibrary.DeviceSettings
 		public string Name
 		{
 			get { return m_name; }
+		}
+
+		/// <summary>
+		/// Gets root (parent) of this group
+		/// </summary>
+		public ParserDeviceSettingsRoot Root
+		{
+			get { return m_root; }
 		}
 
 		/// <summary>
@@ -102,6 +116,29 @@ namespace CommonClassLibrary.DeviceSettings
 		{
 			// store value
 			m_values.Add(in_value);
+			in_value.SetParentGroup(this);
+		}
+
+		/// <summary>
+		/// Sets root device settings for this group
+		/// </summary>
+		/// <param name="in_root"></param>
+		internal void SetRoot(ParserDeviceSettingsRoot in_root)
+		{
+			m_root = in_root;
+		}
+
+		/// <summary>
+		/// Updates current settings values from raw binary file
+		/// </summary>
+		/// <param name="in_binary_value_file"></param>
+		public void UpdateValuesFromBinaryFile(byte[] in_binary_value_file)
+		{
+			// process all groups
+			for (int i = 0; i < m_values.Count; i++)
+			{
+				m_values[i].UpdateValuesFromBinaryFile(in_binary_value_file);
+			}
 		}
 		#endregion
 
@@ -115,6 +152,35 @@ namespace CommonClassLibrary.DeviceSettings
 		{
 			return ParserDeviceSettings.ClassType.Group;
 		}
+
+		/// <summary>
+		/// Generates value offsets
+		/// </summary>
+		/// <param name="inout_current_value_offset"></param>
+		public void GenerateOffsets(ref int inout_current_offset)
+		{
+			// process all groups
+			for (int i = 0; i < m_values.Count; i++)
+			{
+				m_values[i].GenerateOffsets(ref inout_current_offset);
+			}
+		}
+
+		/// <summary>
+		/// Generates declaration and data files
+		/// </summary>
+		/// <param name="in_header_file"></param>
+		/// <param name="in_default_value_file"></param>
+		/// <param name="in_value_info_file"></param>
+		public void GenerateFiles(StringBuilder in_header_file, MemoryStream in_value_info_file, MemoryStream in_default_value_file)
+		{
+			// process all groups
+			for (int i = 0; i < m_values.Count; i++)
+			{
+				m_values[i].GenerateFiles(in_header_file, in_value_info_file, in_default_value_file);
+			}
+		}
+
 		#endregion
 	}
 }

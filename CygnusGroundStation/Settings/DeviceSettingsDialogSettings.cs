@@ -1,15 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Windows;
 
 namespace CygnusGroundStation
 {
-	class DeviceSettinsgDialogSettings : SettingsBase
+	public class DeviceSettinsgDialogSettings : SettingsBase
 	{
 		// Dialog position settings
 		public WindowPosSettings DialogPos;
+
+		public double GroupDisplayWidth { set; get; }
+		public double DescriptionDisplayHeight { set; get; }
 
 		public DeviceSettinsgDialogSettings() : base("Main", "DeviceSettingsDialog")
 		{
@@ -20,6 +19,8 @@ namespace CygnusGroundStation
 		override public void SetDefaultValues()
 		{
 			DialogPos.SetDefault(400, 300);
+			GroupDisplayWidth = 150.0;
+			DescriptionDisplayHeight = 50.0;
 		}
 	}
 }

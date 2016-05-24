@@ -92,20 +92,20 @@ namespace CommonClassLibrary.DeviceCommunication
 		}
 
 		/// <summary>
-		/// Decodes SLIP ecoded blick
+		/// Decodes SLIP encoded block
 		/// </summary>
 		/// <param name="in_source_buffer"></param>
 		/// <param name="in_source_pos"></param>
 		/// <param name="in_source_length"></param>
 		/// <param name="in_destination_buffer"></param>
-		/// <param name="in_destination_pos"></param>
+		/// <param name="inout_destination_pos"></param>
 		/// <returns></returns>
-		public bool DecodeBlock(byte[] in_source_buffer, ref int in_source_pos,int in_source_length, byte[] in_destination_buffer, ref int in_destination_pos)
+		public bool DecodeBlock(byte[] in_source_buffer, ref int in_source_pos,int in_source_length, byte[] in_destination_buffer, ref int inout_destination_pos)
 		{
 			byte data;
 			int destination_length = in_destination_buffer.Length;
 
-			while (in_source_pos < in_source_length && in_destination_pos < destination_length)
+			while (in_source_pos < in_source_length && inout_destination_pos < destination_length)
 			{
 				// get data
 				data = in_source_buffer[in_source_pos++];
@@ -129,15 +129,19 @@ namespace CommonClassLibrary.DeviceCommunication
 						{
 							if (data == SLIP_END)
 							{
-								// packet end found
-								m_decoder_status = DecoderStatus.NoPacket;
+								// drop zero length packets
+								if (inout_destination_pos != 0)
+								{
+									// packet end found
+									m_decoder_status = DecoderStatus.NoPacket;
 
-								return true;
+									return true;
+								}
 							}
 							else
 							{
 								// store if not escaped
-								in_destination_buffer[in_destination_pos++] = data;
+								in_destination_buffer[inout_destination_pos++] = data;
 							}
 						}
 						break;
@@ -158,7 +162,7 @@ namespace CommonClassLibrary.DeviceCommunication
 						}
 
 						// store data
-						in_destination_buffer[in_destination_pos++] = data;
+						in_destination_buffer[inout_destination_pos++] = data;
 						break;
 				}
 			}

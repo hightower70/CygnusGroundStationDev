@@ -23,11 +23,11 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace CommonClassLibrary.DeviceCommunication
+namespace CommonClassLibrary.Helpers
 {
 	public class RawBinarySerialization
 	{
-		#region · Packet-Object serialization/deserialization ·
+		#region · Object serialization/deserialization ·
 
 		/// <summary>
 		/// Deserialize object from raw binary data
@@ -64,7 +64,5 @@ namespace CommonClassLibrary.DeviceCommunication
 		}
 
 		#endregion
-
-
 	}
 }

@@ -111,6 +111,7 @@
     <Compile Include="Settings\MainGeneralSettings.cs" />
     <Compile Include="Settings\SettingsBase.cs" />
     <Compile Include="Settings\SettingsFileBase.cs" />
+    <Compile Include="Settings\SetupCommunicationDataProvider.cs" />
     <Compile Include="Settings\SetupCommunicationSettings.cs" />
     <Compile Include="Settings\SetupDialogSettings.cs" />
     <Compile Include="Settings\SetupFormsDataProvider.cs" />

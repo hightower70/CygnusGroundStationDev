@@ -1,5 +1,5 @@
 ﻿///////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2013-2015 Laszlo Arvai. All rights reserved.
+// Copyright (c) 2013 Laszlo Arvai. All rights reserved.
 //
 // This library is free software; you can redistribute it and/or modify it 
 // under the terms of the GNU Lesser General Public License as published
@@ -18,13 +18,42 @@
 ///////////////////////////////////////////////////////////////////////////////
 // File description
 // ----------------
-// Type interface for all device settings parser class
+// Data provider class for SetupCommunication dialog
 ///////////////////////////////////////////////////////////////////////////////
+using CommonClassLibrary.DeviceCommunication;
+using CygnusControls;
+using CygnusGroundStation.Dialogs;
+using System.Collections.Generic;
 
-namespace CommonClassLibrary.DeviceSettings
+namespace CygnusGroundStation
 {
-	public interface IParserDeviceSettingsType
+	class SetupCommunicationDataProvider
 	{
-		ParserDeviceSettings.ClassType GetClassType();
+		private SetupCommunicationSettings m_settings;
+
+		public List<UARTEnumerator.DeviceInfo> AvailablePorts
+		{
+			get { return UARTEnumerator.GetAllCOMPorts(); }
+		}
+
+		public SetupCommunicationSettings Settings
+		{
+			get { return m_settings; }
+		}
+
+		public SetupCommunicationDataProvider()
+		{
+			Load();
+		}
+
+		public void Load()
+		{
+			m_settings = SetupDialog.CurrentSettings.GetSettings<SetupCommunicationSettings>();
+		}
+
+		public void Save()
+		{
+			SetupDialog.CurrentSettings.SetSettings(m_settings);
+		}
 	}
 }

@@ -20,12 +20,15 @@ namespace CygnusGroundStation.Dialogs
 		public DataTemplate IntegerTemplate
 		{ get; set; }
 
+		public DataTemplate EnumTemplate
+		{ get; set; }
+
 		public string PropertyName
 		{ get; set; }
 
 		public override DataTemplate SelectTemplate(object item, DependencyObject container)
 		{
-			DeviceSettingsDialog.DeviceSettingsValueInfo obj = item as DeviceSettingsDialog.DeviceSettingsValueInfo;
+			ParserDeviceSettingValue obj = item as ParserDeviceSettingValue;
 
 			if (obj != null)
 			{
@@ -46,6 +49,9 @@ namespace CygnusGroundStation.Dialogs
 					case ParserDeviceSettingValue.ValueType.StringValue:
 						return StringTemplate;
 
+					case ParserDeviceSettingValue.ValueType.EnumValue:
+						return EnumTemplate;
+
 					default:
 						return base.SelectTemplate(item, container);
 				}
@@ -63,89 +69,19 @@ namespace CygnusGroundStation.Dialogs
 	{
 		#region · Types ·
 		/// <summary>
-		/// device settings group information
-		/// </summary>
-		public class DeviceSettingsGroupInfo : TreeViewItemBase
-		{
-			private ParserDeviceSettingsGroup m_device_settings_group;
-
-			public DeviceSettingsGroupInfo(ParserDeviceSettingsGroup in_group)
-			{
-				m_device_settings_group = in_group;
-			}
-
-			public string DisplayName { get { return m_device_settings_group.DisplayName; } }
-			public ParserDeviceSettingsGroup Group { get { return m_device_settings_group; } }
-		}
-
-		public delegate void DeviceSettingsValueChangedCallback(DeviceSettingsValueInfo in_value_info);
-
-		/// <summary>
-		/// Device settings values info
-		/// </summary>
-		public class DeviceSettingsValueInfo : INotifyPropertyChanged
-		{
-			private ParserDeviceSettingValue m_device_settings_value;
-			private DeviceSettingsValueChangedCallback m_value_changed_callback;
-
-			public event PropertyChangedEventHandler PropertyChanged;
-
-			public DeviceSettingsValueInfo(ParserDeviceSettingValue in_value, DeviceSettingsValueChangedCallback in_callback)
-			{
-				m_device_settings_value = in_value;
-				m_value_changed_callback = in_callback;
-			}
-
-			public string DisplayName { get { return m_device_settings_value.Name; } }
-
-			public string Units { get { return m_device_settings_value.Units; } }
-
-			public string Description { get { return m_device_settings_value.Description; } }
-
-			public ParserDeviceSettingValue.ValueType Type { get { return m_device_settings_value.Type; } }
-
-			public int Min { get { return m_device_settings_value.Min; } }
-			public int Max { get { return m_device_settings_value.Max; } }
-
-			public object Value
-			{
-				get { return m_device_settings_value.Value; }
-				set
-				{
-					m_device_settings_value.Value = value;
-					OnPropertyChanged("Value");
-					if (m_value_changed_callback != null)
-						m_value_changed_callback(this);
-				}
-			}
-
-			public ParserDeviceSettingValue ValueInfo
-			{
-				get { return m_device_settings_value; }
-			}
-
-			protected void OnPropertyChanged(string name)
-			{
-				PropertyChangedEventHandler handler = PropertyChanged;
-				if (handler != null)
-				{
-					handler(this, new PropertyChangedEventArgs(name));
-				}
-			}
-		}
-
-		/// <summary>
 		/// Files (used for device settings) information
 		/// </summary>
 		private class FileInfo
 		{
 			public string Name;
 			public string FullPath;
+			public byte FileID;
 
 			public FileInfo(string in_name)
 			{
 				Name = in_name;
 				FullPath = string.Empty;
+				FileID = 0;
 			}
 		}
 
@@ -157,29 +93,38 @@ namespace CygnusGroundStation.Dialogs
 
 		private readonly SynchronizationContext m_synchronization_context;
 
-		private ParserDeviceSettings m_device_settings;
-		private DeviceSettingsBinaryData m_device_settings_binary_data = new DeviceSettingsBinaryData();
 		static SettingsFileBase m_current_settings;
-		private volatile bool m_updating;
-		private ObservableCollection<DeviceSettingsGroupInfo> m_device_settings_group_info = new ObservableCollection<DeviceSettingsGroupInfo>();
-		private ObservableCollection<DeviceSettingsValueInfo> m_device_settings_value_info = new ObservableCollection<DeviceSettingsValueInfo>();
 
+		private ParserDeviceSettings m_device_settings;
+		private ObservableCollection<ParserDeviceSettingsGroup> m_device_settings_group = new ObservableCollection<ParserDeviceSettingsGroup>();
+		private ObservableCollection<ParserDeviceSettingValue> m_device_settings_value = new ObservableCollection<ParserDeviceSettingValue>();
+		private DeviceSettingsBinaryDataFile m_device_settings_binary_data = new DeviceSettingsBinaryDataFile();
+
+		private DeviceSettinsgDialogSettings m_dialog_settings;
+
+		private bool? m_dialog_result = null;
 		#endregion
 
 		#region · Properties ·
+
+		public DeviceSettinsgDialogSettings DialogSettings
+		{
+			get { return m_dialog_settings; }
+		}
+
 		public static SettingsFileBase CurrentSettings
 		{
 			get { return m_current_settings; }
 		}
 
-		public ObservableCollection<DeviceSettingsGroupInfo> TreeInfo
+		public ObservableCollection<ParserDeviceSettingsGroup> Groups
 		{
-			get { return m_device_settings_group_info; }
+			get { return m_device_settings_group; }
 		}
 
-		public ObservableCollection<DeviceSettingsValueInfo> ValueInfo
+		public ObservableCollection<ParserDeviceSettingValue> Values
 		{
-			get { return m_device_settings_value_info; }
+			get { return m_device_settings_value; }
 		}
 
 		public int TotalFileCount
@@ -205,7 +150,7 @@ namespace CygnusGroundStation.Dialogs
 			}
 		}
 
-		#endregion
+#endregion
 
 		public DeviceSettingsDialog()
 		{
@@ -215,9 +160,13 @@ namespace CygnusGroundStation.Dialogs
 			m_current_settings = new SettingsFileBase();
 			m_current_settings.CopySettingsFrom(FrameworkSettingsFile.Default);
 
+			m_dialog_settings = m_current_settings.GetSettings<DeviceSettinsgDialogSettings>();
+
 			m_device_settings = new ParserDeviceSettings();
+			m_device_settings.SetValueChangedCallback(OnDeviceSettingValueChanged);
 
 			InitializeComponent();
+			DataContext = this;
 
 			gFileTransferIndicator.Visibility = Visibility.Visible;
 			gSettings.Visibility = Visibility.Hidden;
@@ -229,34 +178,28 @@ namespace CygnusGroundStation.Dialogs
 			OnPropertyChanged("TotalFileCount");
 			OnPropertyChanged("CurrentFileIndex");
 
-			//CommunicationManager.Default.StartFileDownload(m_files_info[m_current_file_index].Name, OnFileOperationFinished);
+			CommunicationManager.Default.StartFileRead(m_files_info[m_current_file_index].Name, OnFileReadOperationFinished);
 
-			m_device_settings.ParseXMLFile("/Settings/*", @"d:\Projects\CygnusFCS\Resources\ConfigurationXML.xml");
-			//m_device_settings_binary_data.Load(m_files_info[1].FullPath);
-
-			//m_device_current_values
-			UpdateDisplayedTree();
-
-			//m_device_settings.UpdateValueOffset();
-
+			//FileOperationFinishedSync(null);
 		}
 
-		private void OnFileOperationFinished(CommunicationManager.FileOperationResult in_result, string in_file_path)
+		private void OnFileReadOperationFinished(CommunicationManager.FileOperationResultInfo in_result)
 		{
-			if (in_result == CommunicationManager.FileOperationResult.Success)
+			if (in_result.State == CommunicationManager.FileOperationResultState.Success)
 			{
-				m_files_info[m_current_file_index].FullPath = in_file_path;
+				m_files_info[m_current_file_index].FullPath = in_result.FullPath;
+				m_files_info[m_current_file_index].FileID = in_result.FileID;
 
 				if (m_current_file_index < m_files_info.Length - 1)
 				{
 					m_current_file_index++;
 					OnPropertyChanged("CurrentFileIndex");
 
-					CommunicationManager.Default.StartFileDownload(m_files_info[m_current_file_index].Name, OnFileOperationFinished);
+					CommunicationManager.Default.StartFileRead(m_files_info[m_current_file_index].Name, OnFileReadOperationFinished);
 				}
 				else
 				{
-					m_synchronization_context.Send(FileOperationFinishedSync, null);
+					m_synchronization_context.Send(FileReadOperationFinishedSync, null);
 				}
 			}
 			else
@@ -265,7 +208,7 @@ namespace CygnusGroundStation.Dialogs
 			}
 		}
 
-		private void FileOperationFinishedSync(object in_param)
+		private void FileReadOperationFinishedSync(object in_param)
 		{
 			gFileTransferIndicator.Visibility = Visibility.Hidden;
 			gSettings.Visibility = Visibility.Visible;
@@ -274,105 +217,54 @@ namespace CygnusGroundStation.Dialogs
 			m_device_settings.ParserXMLFileGZIP("/Settings/*", m_files_info[0].FullPath);
 			m_device_settings_binary_data.Load(m_files_info[1].FullPath);
 
-			//m_device_current_values
-			UpdateDisplayedTree();
+			//m_device_settings.ParseXMLFile("/Settings/*", @"d:\Projects\CygnusFCS\Resources\ConfigurationXML.xml");
 
-			m_device_settings.UpdateValueOffset();
-		}
+			m_device_settings.GenerateBinaryValueOffset();
+			m_device_settings.UpdateValuesFromBinaryFile(m_device_settings_binary_data.BinaryDataFile);
 
-		private void DeviceSettingsValueChanged(DeviceSettingsValueInfo in_value_info)
-		{
-
-		}
-
-
-		private void bOK_Click(object sender, RoutedEventArgs e)
-		{
-			this.DialogResult = true;
-		}
-
-		private void tvSetupTree_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
-		{
-			if (e.NewValue is DeviceSettingsGroupInfo)
+			// update group list
+			m_device_settings_group.Clear();
+			for (int i = 0; i < m_device_settings.DeviceSettingsRoot.Groups.Count; i++)
 			{
-				DeviceSettingsGroupInfo selected_item = (DeviceSettingsGroupInfo)e.NewValue;
-				m_device_settings_value_info.Clear();
-
-				for (int index = 0; index < selected_item.Group.Values.Count && m_updating; index++)
-				{
-					DeviceSettingsValueInfo info = new DeviceSettingsValueInfo(selected_item.Group.Values[index], DeviceSettingsValueChanged);
-
-					m_device_settings_value_info.Add(info);
-				}
-				//object t = sender.SelectedItem;
+				m_device_settings_group.Add(m_device_settings.DeviceSettingsRoot.Groups[i]);
 			}
+
+			// update selected index
+			if (m_device_settings_group.Count != 0)
+				lbDeviceSetupGroup.SelectedIndex = 0;
+		}
+
+		private void Window_Initialized(object sender, System.EventArgs e)
+		{
+			m_dialog_settings.DialogPos.LoadWindowPosition(this);
 		}
 
 		private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
 		{
 			FormManager.RealtimeObjectProviderRemove(this);
 
-			DeviceSettinsgDialogSettings settings = m_current_settings.GetSettings<DeviceSettinsgDialogSettings>();
+			m_dialog_settings.DialogPos.SaveWindowPosition(this);
 
-			settings.DialogPos.SaveWindowPosition(this);
-
-			m_current_settings.SetSettings(settings);
+			m_current_settings.SetSettings(m_dialog_settings);
 		}
 
-		private void Window_Initialized(object sender, System.EventArgs e)
+		private void lbDeviceSetupGroup_SelectionChanged(object sender, SelectionChangedEventArgs e)
 		{
-			DeviceSettinsgDialogSettings settings = m_current_settings.GetSettings<DeviceSettinsgDialogSettings>();
-
-			settings.DialogPos.LoadWindowPosition(this);
-
-			tvDeviceSetupTree.DataContext = this;
-			dgValueList.DataContext = this;
-		}
-
-		private void UpdateDisplayedTree()
-		{
-			if (m_device_settings.DeviceSettingsRoot == null)
-				return;
-
-			m_updating = true;
-
-			int index;
-
-			index = 0;
-			while (index < m_device_settings.DeviceSettingsRoot.Groups.Count && m_updating)
+			if (e.AddedItems.Count == 1)
 			{
-				DeviceSettingsGroupInfo group_info = new DeviceSettingsGroupInfo(m_device_settings.DeviceSettingsRoot.Groups[index]);
+				ParserDeviceSettingsGroup group = (ParserDeviceSettingsGroup)e.AddedItems[0];
+				m_device_settings_value.Clear();
 
-				if (index == 0)
+				for (int index = 0; index < group.Values.Count; index++)
 				{
-					group_info.IsSelected = true;
+					m_device_settings_value.Add(group.Values[index]);
 				}
-
-				UpdateDisplayedTreeRecursively(group_info, m_device_settings.DeviceSettingsRoot.Groups[index]);
-
-				m_device_settings_group_info.Add(group_info);
-
-				index++;
 			}
-
-			tvDeviceSetupTree.Focus();
 		}
 
-		private void UpdateDisplayedTreeRecursively(DeviceSettingsGroupInfo in_parent, ParserDeviceSettingsGroup in_group)
+		private void OnDeviceSettingValueChanged(ParserDeviceSettingValue in_value_info)
 		{
-			int index;
-
-			index = 0;
-			while (index < in_group.Groups.Count && m_updating)
-			{
-				DeviceSettingsGroupInfo group_info = new DeviceSettingsGroupInfo(m_device_settings.DeviceSettingsRoot.Groups[index]);
-
-				UpdateDisplayedTreeRecursively(group_info, in_group.Groups[index]);
-
-				in_parent.AddChild(group_info);
-
-				index++;
-			}
+			CommunicationManager.Default.StartFileWrite(m_files_info[1].FileID, (uint)in_value_info.BinaryOffset, in_value_info.GetBinaryData(), null);
 		}
 
 		#region · INotifyPropertyChange ·
@@ -385,5 +277,35 @@ namespace CygnusGroundStation.Dialogs
 		}
 		#endregion
 
+		private void bOK_Click(object sender, RoutedEventArgs e)
+		{
+			m_dialog_result = true;
+			CommunicationManager.Default.SendFileFinishRequest(FileOperationFinishMode.Success, OnFileOperationFinished);
+		}
+
+		private void bCancel_Click(object sender, RoutedEventArgs e)
+		{
+			m_dialog_result = true;
+			CommunicationManager.Default.SendFileFinishRequest(FileOperationFinishMode.Cancel, OnFileOperationFinished);
+		}
+
+		private void OnFileOperationFinished(CommunicationManager.FileOperationResultInfo in_result)
+		{
+			if(in_result.State == CommunicationManager.FileOperationResultState.Success)
+			{
+				m_synchronization_context.Send(FileOperationFinishedSync, null);
+			}
+			else
+			{
+				//TODO: error handling
+			}
+
+		}
+
+		private void FileOperationFinishedSync(object in_param)
+		{
+			this.DialogResult = m_dialog_result;
+
+		}
 	}
 }

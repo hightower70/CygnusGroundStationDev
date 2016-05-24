@@ -383,48 +383,59 @@
 
             <StackPanel>
                 <Border BorderThickness="1" Margin="3" BorderBrush="{DynamicResource BorderBrushNormal}">
-                    <Grid Margin="2" DataContext="{StaticResource DeviceCommunicationStateProvider}" >
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="50" />
-                            <ColumnDefinition Width="130" />
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition />
-                            <RowDefinition />
-                            <RowDefinition />
-                            <RowDefinition />
-                        </Grid.RowDefinitions>
-                        <TextBlock Grid.Row="0" Grid.Column="0"  Text="Communication" Grid.ColumnSpan="2" HorizontalAlignment="Stretch" TextAlignment="Center" Background="{DynamicResource LightBackground}"/>
+					<Grid Margin="2" DataContext="{StaticResource DeviceCommunicationStateProvider}" >
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="50" />
+							<ColumnDefinition Width="130" />
+						</Grid.ColumnDefinitions>
+						<Grid.RowDefinitions>
+							<RowDefinition />
+							<RowDefinition />
+							<RowDefinition />
+							<RowDefinition />
+						</Grid.RowDefinitions>
+						<TextBlock Grid.Row="0" Grid.Column="0"  Text="Communication" Grid.ColumnSpan="2" HorizontalAlignment="Stretch" TextAlignment="Center" Background="{DynamicResource LightBackground}"/>
 
-                        <!-- Communication state -->
-                        <TextBlock Grid.Row="1" Grid.Column="0"  Text="State" VerticalAlignment="Center"/>
-                        <Border Grid.Row="1" Grid.Column="1" BorderBrush="Gray" BorderThickness="1" Margin="2" Height="18" SnapsToDevicePixels="True">
-                            <Border.Style>
-                                <Style TargetType="Border">
-                                    <Setter Property="Background" Value="Transparent"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding DeviceConnected}" Value="1">
-                                            <Setter Property="Background" Value="Green" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Border.Style>
+						<!-- Communication state -->
+						<TextBlock Grid.Row="1" Grid.Column="0"  Text="State" VerticalAlignment="Center"/>
+						<Border Grid.Row="1" Grid.Column="1" BorderBrush="Gray" BorderThickness="1" Margin="2" Height="18" SnapsToDevicePixels="True">
+							<Border.Style>
+								<Style TargetType="Border">
+									<Setter Property="Background" Value="Transparent"/>
+									<Style.Triggers>
+										<DataTrigger Binding="{Binding DeviceConnected}" Value="1">
+											<Setter Property="Background" Value="Green" />
+										</DataTrigger>
+									</Style.Triggers>
+								</Style>
+							</Border.Style>
 
-                            <TextBlock Text="{Binding DeviceName}" TextAlignment="Center" VerticalAlignment="Top"/>
-                        </Border>
+							<TextBlock Text="{Binding DeviceName}" TextAlignment="Center" VerticalAlignment="Top"/>
+						</Border>
 
-                        <!-- UDP state -->
-                        <TextBlock Grid.Row="2" Grid.Column="0" Text="UDP"/>
-                        <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" >
-                            <TextBlock Width="30" Text="{Binding UDPUpStream, Converter={StaticResource NumberFormatter}, ConverterParameter={}{0:0;0;----}}"  TextAlignment="Right"/>
-                            <TextBlock Text="B/s"/>
-                            <Path Width="10" Height="10" Fill="Red" Data="M5,1 L9,9 1,9 Z" Margin="0,3,0,0"/>
-														<TextBlock Width="30" Text="{Binding UDPDownStream, Converter={StaticResource NumberFormatter}, ConverterParameter={}{0:0;0;----}}" TextAlignment="Right"/>
-                            <TextBlock Text="B/s"/>
-                            <Path Width="10" Height="10" Fill="LightGreen" Data="M5,9 L9,1 1,1 Z" Margin="0,3,0,0"/>
-                        </StackPanel>
-                    </Grid>
-                </Border>
+						<!-- UDP state -->
+						<TextBlock Grid.Row="2" Grid.Column="0" Text="UDP"/>
+						<StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" >
+							<TextBlock Width="30" Text="{Binding UDPUpStream, Converter={StaticResource NumberFormatter}, ConverterParameter={}{0:0;0;----}}"  TextAlignment="Right"/>
+							<TextBlock Text="B/s"/>
+							<Path Width="10" Height="10" Fill="Red" Data="M5,1 L9,9 1,9 Z" Margin="0,3,0,0"/>
+							<TextBlock Width="30" Text="{Binding UDPDownStream, Converter={StaticResource NumberFormatter}, ConverterParameter={}{0:0;0;----}}" TextAlignment="Right"/>
+							<TextBlock Text="B/s"/>
+							<Path Width="10" Height="10" Fill="LightGreen" Data="M5,9 L9,1 1,1 Z" Margin="0,3,0,0"/>
+						</StackPanel>
+						
+						<!-- UART state -->
+						<TextBlock Grid.Row="3" Grid.Column="0" Text="UART"/>
+						<StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal" >
+							<TextBlock Width="30" Text="{Binding UARTUpStream, Converter={StaticResource NumberFormatter}, ConverterParameter={}{0:0;0;----}}"  TextAlignment="Right"/>
+							<TextBlock Text="B/s"/>
+							<Path Width="10" Height="10" Fill="Red" Data="M5,1 L9,9 1,9 Z" Margin="0,3,0,0"/>
+							<TextBlock Width="30" Text="{Binding UARTDownStream, Converter={StaticResource NumberFormatter}, ConverterParameter={}{0:0;0;----}}" TextAlignment="Right"/>
+							<TextBlock Text="B/s"/>
+							<Path Width="10" Height="10" Fill="LightGreen" Data="M5,9 L9,1 1,1 Z" Margin="0,3,0,0"/>
+						</StackPanel>
+					</Grid>
+				</Border>
             </StackPanel>
         </StackPanel>
 

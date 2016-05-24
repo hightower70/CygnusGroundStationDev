@@ -12,6 +12,11 @@
 				d:DesignWidth="550" d:DesignHeight="300">
 	<Window.Resources>
 		<cc:RealtimeObjectProvider x:Key="FileTransferStateProvider" RealtimeObjectName="FileTransferState"/>
+
+		<Style x:Key="Body_Content_DataGrid_Centering" TargetType="TextBlock">
+			<Setter Property="VerticalAlignment" Value="Center" />
+		</Style>
+
 	</Window.Resources>
 	<Grid Background="{DynamicResource Background}">
 		<Grid.RowDefinitions>
@@ -21,55 +26,50 @@
 
 		<Grid Grid.Row="0" x:Name="gSettings">
 			<Grid.ColumnDefinitions>
-				<ColumnDefinition Width="220" MinWidth="210"/>
+				<ColumnDefinition Width="{Binding DialogSettings.GroupDisplayWidth, Mode=TwoWay, Converter={x:Static cc:GridLengthConverter.Instance}}" MinWidth="100"/>
 				<ColumnDefinition Width="5"/>
 				<ColumnDefinition Width="1*" MinWidth="200"/>
 			</Grid.ColumnDefinitions>
 
-			<TreeView x:Name="tvDeviceSetupTree" Grid.Column="0" Margin="1" ItemsSource="{Binding TreeInfo}" ItemContainerStyle="{DynamicResource TreeViewItemFullRowSelect}" SelectedItemChanged="tvSetupTree_SelectedItemChanged">
-				<TreeView.ItemTemplate>
-					<HierarchicalDataTemplate ItemsSource="{Binding Children}">
-						<TextBlock Text="{Binding Name}" />
-					</HierarchicalDataTemplate>
-				</TreeView.ItemTemplate>
-			</TreeView>
+			<ListBox x:Name="lbDeviceSetupGroup" Grid.Column="0" Margin="1" ItemsSource="{Binding Groups}" DisplayMemberPath="Name" SelectionMode="Single" SelectionChanged="lbDeviceSetupGroup_SelectionChanged"/>
 
 			<GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" ResizeDirection="Columns"/>
 
 			<Grid Grid.Column="2">
 				<Grid.RowDefinitions>
-					<RowDefinition />
+					<RowDefinition  />
 					<RowDefinition Height="5"/>
-					<RowDefinition />
+					<RowDefinition Height="{Binding DialogSettings.DescriptionDisplayHeight, Mode=TwoWay, Converter={x:Static cc:GridLengthConverter.Instance}}" MinHeight="20" />
 				</Grid.RowDefinitions>
 
-				<DataGrid x:Name="dgValueList" ItemsSource="{Binding ValueInfo}" Grid.Row="0" AutoGenerateColumns="False" SelectionUnit="FullRow" AlternationCount="2" AlternatingRowBackground="{DynamicResource Background}" HorizontalGridLinesBrush="Gray" VerticalGridLinesBrush="Gray" GridLinesVisibility="All">
+				<DataGrid x:Name="dgValueList" ItemsSource="{Binding Values}" Grid.Row="0" AutoGenerateColumns="False" SelectionUnit="FullRow" AlternationCount="2" AlternatingRowBackground="{DynamicResource Background}" HorizontalGridLinesBrush="Gray" VerticalGridLinesBrush="Gray" GridLinesVisibility="All">
 					<DataGrid.Resources>
 						<DataTemplate x:Key="StringTemplate">
-							<TextBox Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+							<TextBox Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" VerticalAlignment="Center"/>
 						</DataTemplate>
 						<DataTemplate x:Key="IntegerTemplate">
-							<cc:NumericUpDown IntValue="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+							<cc:NumericUpDown IntValue="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
 						</DataTemplate>
 						<DataTemplate x:Key="EnumTemplate">
-							<ComboBox SelectedIndex="{Binding Value, Mode=TwoWay}" ItemsSource="{Binding EnumValues, Mode=OneTime}" />
+							<ComboBox SelectedIndex="{Binding Value, Mode=TwoWay, Converter={x:Static cc:IntegerToByteValueConverter.Instance}, UpdateSourceTrigger=PropertyChanged }" ItemsSource="{Binding EnumValues, Mode=OneTime}" DisplayMemberPath="Value" VerticalAlignment="Center"/>
 						</DataTemplate>
 					</DataGrid.Resources>
 					<DataGrid.Columns>
 
-						<DataGridTextColumn Header="Name" Binding="{Binding DisplayName}" />
+						<DataGridTextColumn Header="Name" Binding="{Binding Name}" ElementStyle="{StaticResource Body_Content_DataGrid_Centering}" />
 
 						<DataGridTemplateColumn Header="Value">
 							<DataGridTemplateColumn.CellTemplateSelector>
 								<local:DeviceSettingsTemplateSelector
                          StringTemplate = "{StaticResource StringTemplate}"
                          IntegerTemplate = "{StaticResource IntegerTemplate}"
+												 EnumTemplate = "{StaticResource EnumTemplate}"
                          PropertyName = "Type"
                         />
 							</DataGridTemplateColumn.CellTemplateSelector>
 						</DataGridTemplateColumn>
 
-						<DataGridTextColumn Header="Unit" Binding="{Binding Units}" MinWidth="50"/>
+						<DataGridTextColumn Header="Unit" Binding="{Binding Units}" MinWidth="50" ElementStyle="{StaticResource Body_Content_DataGrid_Centering}" />
 
 					</DataGrid.Columns>
 				</DataGrid>
@@ -101,7 +101,7 @@
 		<Grid Grid.Row="1" Background="{DynamicResource WindowTitleBackground}">
 			<WrapPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" >
 				<Button Content="OK" Width="70" Height="24" Margin="0,0,10,0" Click="bOK_Click"/>
-				<Button Content="Cancel" Width="70" Height="24" IsCancel="True"/>
+				<Button Content="Cancel" Width="70" Height="24" Click="bCancel_Click"/>
 			</WrapPanel>
 		</Grid>
 

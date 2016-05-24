@@ -1,9 +1,9 @@
 ﻿///////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2016 Laszlo Arvai. All rights reserved.
+// Copyright (c) 2013-2015 Laszlo Arvai. All rights reserved.
 //
-// This library is free software; you can redistribute it and/or modify it
+// This library is free software; you can redistribute it and/or modify it 
 // under the terms of the GNU Lesser General Public License as published
-// by the Free Software Foundation; either version 2.1 of the License,
+// by the Free Software Foundation; either version 2.1 of the License, 
 // or (at your option) any later version.
 //
 // This library is distributed in the hope that it will be useful,
@@ -18,23 +18,20 @@
 ///////////////////////////////////////////////////////////////////////////////
 // File description
 // ----------------
-// Interface class for communication interface implementation
+// Type interface for all device settings parser class
 ///////////////////////////////////////////////////////////////////////////////
 
-using CommonClassLibrary.RealtimeObjectExchange;
+using System;
+using System.IO;
+using System.Text;
 
-namespace CommonClassLibrary.DeviceCommunication
+namespace CommonClassLibrary.DeviceSettings
 {
-	public interface ICommunicationInterface
+	public interface IParserDeviceSettingsBase
 	{
-		void AddToManager(CommunicationManager in_communication_manager, byte in_communication_channel_index);
+		ParserDeviceSettings.ClassType GetClassType();
 
-		void Start();
-		void Stop();
-
-		bool SendPacket(byte[] in_packet, int in_packet_length);
-
-		void CreateRealtimeObjects(RealtimeObject in_realtime_object_index);
-		void UpdateCommunicationStatistics(int in_ellapsed_time);
+		void GenerateOffsets(ref int inout_current_offset);
+		void GenerateFiles(StringBuilder in_header_file, MemoryStream in_value_info_file, MemoryStream in_default_value_file);
 	}
 }

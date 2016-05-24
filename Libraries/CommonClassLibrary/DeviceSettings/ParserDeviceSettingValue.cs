@@ -20,30 +20,73 @@
 // ----------------
 // Class for storing settings value
 ///////////////////////////////////////////////////////////////////////////////
+using CommonClassLibrary.Helpers;
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Xml.XPath;
 
 namespace CommonClassLibrary.DeviceSettings
 {
-	public class ParserDeviceSettingValue : IParserDeviceSettingsType
+	public class ParserDeviceSettingValue : IParserDeviceSettingsBase
 	{
 		#region · Types ·
 
-   /// <summary>
-   /// Type of the value
-   /// </summary>
-		public enum ValueType
+		/// <summary>
+		/// Type of the value
+		/// </summary>
+		public enum ValueType : byte
 		{
-			StringValue,
-			IntValue,
-			EnumValue,
-			FloatValue
+			IntValue = 1,
+			EnumValue = 2,
+			FloatValue = 3,
+			StringValue = 4
 		}
-   
+
+		/// <summary>
+		/// Binary value info
+		/// </summary>
+		[StructLayout(LayoutKind.Sequential, Pack = 1), Serializable]
+		public class BinaryValueInfo
+		{
+			private UInt16 m_offset;
+			private byte m_size;
+			private ValueType m_type;
+
+			public BinaryValueInfo(UInt16 in_offset, byte in_size, ValueType in_type)
+			{
+				m_offset = in_offset;
+				m_size = in_size;
+				m_type = in_type;
+			}
+		}
+
+		#endregion
+
+		#region · Data members ·
+
+		private ParserDeviceSettingsGroup m_parent_group;
+
+		private string m_id;
+		private string m_name;
+		private ValueType m_value_type;
+		private int m_value_index;
+		private int m_binary_length;
+		private int m_binary_value_offset;
+		private object m_value;
+		private string m_units;
+		private string m_description;
+		private int m_min;
+		private int m_max;
+
+		private string m_enumdef_ref;
+
 		#endregion
 
 		#region · Constructor ·
+
 		/// <summary>
 		/// Default constructor
 		/// </summary>
@@ -55,21 +98,6 @@ namespace CommonClassLibrary.DeviceSettings
 			m_min = int.MinValue;
 			m_max = int.MaxValue;
 		}
-		#endregion
-
-		#region · Data members ·
-
-		private string m_id;
-		private string m_name;
-		private ValueType m_value_type;
-		private int m_binary_length;
-		private int m_binary_offset;
-		private object m_value;
-		private string m_units;
-		private string m_description;
-		private int m_min;
-		private int m_max;
-		private string m_enum_ref;
 
 		#endregion
 
@@ -121,7 +149,23 @@ namespace CommonClassLibrary.DeviceSettings
 		public object Value
 		{
 			get { return m_value; }
-			set { m_value = value; }
+			set
+			{
+				// set value
+				m_value = value;
+
+				// call callback
+				if (m_parent_group != null && m_parent_group.Root != null && m_parent_group.Root.Parent != null)
+					m_parent_group.Root.Parent.OnValueChanged(this);
+			}
+		}
+
+		/// <summary>
+		/// Gets list of the enum values
+		/// </summary>
+		public List<ParserDeviceSettingsEnumValue> EnumValues
+		{
+			get { return m_parent_group.Root.EnumDefs[m_parent_group.Root.GetEnumDefIndex(m_enumdef_ref)].Values; }
 		}
 
 		/// <summary>
@@ -130,7 +174,8 @@ namespace CommonClassLibrary.DeviceSettings
 		public int Min
 		{
 			get { return m_min; }
-			set { m_min = value; }
+			set
+			{ m_min = value; }
 		}
 
 		/// <summary>
@@ -156,7 +201,15 @@ namespace CommonClassLibrary.DeviceSettings
 		/// </summary>
 		public int BinaryOffset
 		{
-			get { return m_binary_offset; }
+			get { return m_binary_value_offset; }
+		}
+
+		/// <summary>
+		/// Gets value index (unique index of this settings value)
+		/// </summary>
+		public int ValueIndex
+		{
+			get { return m_value_index; }
 		}
 
 		#endregion
@@ -233,20 +286,22 @@ namespace CommonClassLibrary.DeviceSettings
 					break;
 
 				case ValueType.EnumValue:
-					m_binary_length = sizeof(byte);
-
-					m_enum_ref = XMLAttributeParser.ConvertAttributeToString(in_element, "Enum", XMLAttributeParser.atObligatory);
-
-					try
 					{
-						m_value = (byte)in_element.ValueAsInt;
-					}
-					catch
-					{
-						// throw an exception if value is invalid
-						XMLParserException exception = new XMLParserException(in_element);
-						exception.SetInvalidTypeError(m_name);
-						throw exception;
+						m_binary_length = sizeof(byte);
+
+						m_enumdef_ref = XMLAttributeParser.ConvertAttributeToString(in_element, "Enum", XMLAttributeParser.atObligatory);
+
+						try
+						{
+							m_value = (byte)in_element.ValueAsInt;
+						}
+						catch
+						{
+							// throw an exception if value is invalid
+							XMLParserException exception = new XMLParserException(in_element);
+							exception.SetInvalidTypeError(m_name);
+							throw exception;
+						}
 					}
 					break;
 
@@ -256,13 +311,12 @@ namespace CommonClassLibrary.DeviceSettings
 		}
 
 		/// <summary>
-		/// Sets the binary offset value
+		/// Sets index of this value
 		/// </summary>
-		/// <param name="in_offset"></param>
-		/// <returns></returns>
-		internal int SetBinaryOffset(int in_offset)
+		/// <param name="in_index"></param>
+		internal void SetValueIndex(int in_index)
 		{
-			return m_binary_offset = in_offset;
+			m_value_index = in_index;
 		}
 
 		/// <summary>
@@ -274,7 +328,13 @@ namespace CommonClassLibrary.DeviceSettings
 			switch (m_value_type)
 			{
 				case ValueType.StringValue:
-					return Encoding.ASCII.GetBytes(((string)m_value));
+					{
+						byte[] retval = new byte[m_binary_length];
+						byte[] str = Encoding.ASCII.GetBytes(((string)m_value));
+
+						Array.Copy(str, retval, str.Length);
+						return retval;
+					}
 
 				case ValueType.IntValue:
 					return BitConverter.GetBytes((int)m_value);
@@ -296,6 +356,56 @@ namespace CommonClassLibrary.DeviceSettings
 			}
 		}
 
+		/// <summary>
+		/// Sets value from the raw binary bytes
+		/// </summary>
+		/// <param name="in_binary_data"></param>
+		public void SetBinaryData(byte[] in_binary_data, int in_offset)
+		{
+
+		}
+
+		/// <summary>
+		/// Sets parent group of this value
+		/// </summary>
+		/// <param name="in_parent_group"></param>
+		internal void SetParentGroup(ParserDeviceSettingsGroup in_parent_group)
+		{
+			m_parent_group = in_parent_group;
+		}
+
+		/// <summary>
+		/// Updates current settings values from raw binary file
+		/// </summary>
+		/// <param name="in_binary_value_file"></param>
+		public void UpdateValuesFromBinaryFile(byte[] in_binary_value_file)
+		{
+			switch (m_value_type)
+			{
+				case ValueType.StringValue:
+					{
+						int count = Array.IndexOf<byte>(in_binary_value_file, 0, m_binary_value_offset, m_binary_length) - m_binary_value_offset;
+						if (count < 0)
+							count = m_binary_length;
+
+						m_value = Encoding.ASCII.GetString(in_binary_value_file, m_binary_value_offset, count);
+					}
+					break;
+
+				case ValueType.IntValue:
+					m_value = BitConverter.ToInt32(in_binary_value_file, m_binary_value_offset);
+					break;
+
+				case ValueType.FloatValue:
+					m_value = BitConverter.ToSingle(in_binary_value_file, m_binary_value_offset);
+					break;
+
+				case ValueType.EnumValue:
+					m_value = in_binary_value_file[m_binary_value_offset];
+					break;
+			}
+		}
+
 		#endregion
 
 		#region · IParserDeviceSettingsType interface ·
@@ -308,6 +418,40 @@ namespace CommonClassLibrary.DeviceSettings
 		{
 			return ParserDeviceSettings.ClassType.Value;
 		}
+
+		/// <summary>
+		/// Generates value offset
+		/// </summary>
+		/// <param name="inout_current_offset"></param>
+		public void GenerateOffsets(ref int inout_current_offset)
+		{
+			m_binary_value_offset = inout_current_offset;
+			inout_current_offset += m_binary_length;
+		}
+
+		/// <summary>
+		/// Generates declaration and data files
+		/// </summary>
+		/// <param name="in_header_file"></param>
+		/// <param name="in_default_value_file"></param>
+		/// <param name="in_value_info_file"></param>
+		public void GenerateFiles(StringBuilder in_header_file, MemoryStream in_value_info_file, MemoryStream in_default_value_file)
+		{
+			// generate header declaration
+			string declaration = "#define cfgVAL_" + m_parent_group.ID.ToUpper() + "_" + m_id.ToUpper() + " " + m_value_index.ToString();
+
+			in_header_file.AppendLine(declaration);
+
+			// generate value info file
+			BinaryValueInfo value_info = new BinaryValueInfo((UInt16)m_binary_value_offset, (byte)m_binary_length, m_value_type);
+			byte[] value_info_binary = RawBinarySerialization.SerializeObject(value_info);
+			in_value_info_file.Write(value_info_binary, 0, value_info_binary.Length);
+
+			// generate default data
+			byte[] default_value = GetBinaryData();
+			in_default_value_file.Write(default_value, 0, default_value.Length);
+		}
+
 		#endregion
 
 	}

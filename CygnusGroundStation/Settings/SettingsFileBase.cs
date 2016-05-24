@@ -31,6 +31,7 @@ using System.Reflection;
 using System.Runtime.Serialization;
 using System.Xml;
 
+
 namespace CygnusGroundStation
 {
 	public class SettingsFileBase
@@ -560,8 +561,8 @@ namespace CygnusGroundStation
 				else
 				{
 					// no attribute specified -> select public members
-					member_info = in_type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.SetField | BindingFlags.GetField );
-					member_info = member_info.Concat(in_type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.SetProperty | BindingFlags.GetProperty)).ToArray();
+					member_info = in_type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.SetField | BindingFlags.GetField ).Where(p => p.GetCustomAttributes(typeof(NonSerializedAttribute), true).Count() == 0).ToArray(); 
+					member_info = member_info.Concat(in_type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.SetProperty | BindingFlags.GetProperty)).ToArray().Where(p => p.GetCustomAttributes(typeof(IgnoreDataMemberAttribute), true).Count() == 0).ToArray();
 				}
 			}
 

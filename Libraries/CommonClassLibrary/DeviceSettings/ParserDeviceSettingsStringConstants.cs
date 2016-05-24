@@ -25,10 +25,15 @@ namespace CommonClassLibrary.DeviceSettings
   public class ParserDeviceSettingsStringConstants
   {
     // program title
-    public const string ProgramTitle = "*** Settings parser v:0.1  Copyright by Laszlo Arvai 2012-2016 ***\n";
+    public const string ProgramTitle = "*** Device Settings Parser v:0.1  Copyright by Laszlo Arvai 2012-2016 ***\n";
 
-    // usage messages
-    public const string Usage = "Usage: SettingsParser <-switches> <switchfile>\n The 'switchfile' is a text file and one line of the file must contain one\n command line switch.\n Supported switches:\n -help or -? - Displays help message\n -packetdecl:<packetdeclaration> - Specifies packet declaration file name\n -cdecl:<headerfilename> - Creates C style header file using the given name\n -types:<typefilename> - Specifies the file name of the type declaration file\n";
+		// usage messages
+		public const string Usage = "Usage: DeviceSettingsParser <-switches> <switchfile>\n The 'switchfile' is a text file and one line of the file must contain one\n command line switch.\n\n" +
+			"Supported switches:\n -help or -? - Displays this help message\n" +
+			" -config:<filename>      - Specifies device settings definition XML file name\n" +
+			" -header:<filename>      - Name of C style header file for settings constants\n" +
+			" -defaultdata:<filename> - File name for default settings storage inline file\n" +
+			" -xmldata:<filename>     - File name for XML storage inline file\n";
 
 		// error messages
 		public const string ErrorInvalidElementType = "Invalid element type. ({0})";

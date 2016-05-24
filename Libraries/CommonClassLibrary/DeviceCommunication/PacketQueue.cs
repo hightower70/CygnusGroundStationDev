@@ -85,7 +85,7 @@ namespace CommonClassLibrary.DeviceCommunication
 		#region · Push/Pop routines ·
 
 		/// <summary>
-		/// Pushes raw (byte array) packet
+		/// Pushes raw (byte array) packet without calculating CRC
 		/// </summary>
 		/// <param name="in_packet"></param>
 		/// <param name="in_packet_length"></param>
@@ -112,11 +112,11 @@ namespace CommonClassLibrary.DeviceCommunication
 		}
 
 		/// <summary>
-		/// Serializes and pushed object to thje queue
+		/// Serializes and pushes object to the queue with CRC calculation
 		/// </summary>
 		/// <param name="in_object">Object to push (must be Serializable)</param>
 		/// <returns>True if success, false if there is no space left in the queue</returns>
-		public bool Push(byte in_interfce, object in_object)
+		public bool Push(byte in_interface, object in_object)
 		{
 			int packet_index;
 			UInt16 crc;
@@ -127,7 +127,6 @@ namespace CommonClassLibrary.DeviceCommunication
 				return false;
 
 			// serialize packet
-			int raw_packet_size = Marshal.SizeOf(in_object);
 			byte[] raw_packet_buffer = m_packets[packet_index].Buffer;
 			GCHandle handle = GCHandle.Alloc(raw_packet_buffer, GCHandleType.Pinned);
 			IntPtr buffer = handle.AddrOfPinnedObject();
@@ -135,12 +134,13 @@ namespace CommonClassLibrary.DeviceCommunication
 			handle.Free();
 
 			// update CRC
+			int raw_packet_size = Marshal.SizeOf(in_object);
 			crc = CRC16.CalculateForBlock(CRC16.InitValue, raw_packet_buffer, raw_packet_size);
 			raw_packet_buffer[raw_packet_size + 0] = ByteAccess.LowByte(crc);
 			raw_packet_buffer[raw_packet_size + 1] = ByteAccess.HighByte(crc);
 
 			// change buffer state
-			m_packets[packet_index].Interface = in_interfce;
+			m_packets[packet_index].Interface = in_interface;
 			m_packets[packet_index].Length = (byte)(raw_packet_size + PacketConstants.PacketCRCLength);
 			m_packets[packet_index].Timestamp = DateTime.Now;
 			m_packets[packet_index].State = PacketBufferState.Valid;
@@ -148,6 +148,50 @@ namespace CommonClassLibrary.DeviceCommunication
 			return true;
 		}
 
+		/// <summary>
+		/// Serializes packet header and pushes header and packet data into the queue with CRC calculation
+		/// </summary>
+		/// <param name="in_interface"></param>
+		/// <param name="in_packet_header"></param>
+		/// <param name="in_packet_data"></param>
+		/// <returns></returns>
+		public bool Push(byte in_interface, object in_packet_header, byte[] in_packet_data)
+		{
+			int packet_index;
+			UInt16 crc;
+
+			// reserve storage for packet
+			packet_index = ReservePushBuffer();
+			if (packet_index == InvalidPacketIndex)
+				return false;
+
+			// calculate packet size
+			int raw_packet_size = Marshal.SizeOf(in_packet_header) + in_packet_data.Length;
+
+			// serialize packet header
+			byte[] raw_packet_buffer = m_packets[packet_index].Buffer;
+			GCHandle handle = GCHandle.Alloc(raw_packet_buffer, GCHandleType.Pinned);
+			IntPtr buffer = handle.AddrOfPinnedObject();
+			Marshal.StructureToPtr(in_packet_header, buffer, false);
+			handle.Free();
+
+			// copy packet data
+			in_packet_data.CopyTo(raw_packet_buffer, Marshal.SizeOf(in_packet_header));
+
+			// update CRC
+			crc = CRC16.CalculateForBlock(CRC16.InitValue, raw_packet_buffer, raw_packet_size);
+			raw_packet_buffer[raw_packet_size + 0] = ByteAccess.LowByte(crc);
+			raw_packet_buffer[raw_packet_size + 1] = ByteAccess.HighByte(crc);
+
+			// change buffer state
+			m_packets[packet_index].Interface = in_interface;
+			m_packets[packet_index].Length = (byte)(raw_packet_size + PacketConstants.PacketCRCLength);
+			m_packets[packet_index].Timestamp = DateTime.Now;
+			m_packets[packet_index].State = PacketBufferState.Valid;
+
+			return true;
+
+		}
 
 		/// <summary>
 		/// Returns true when queue is empty
@@ -250,6 +294,7 @@ namespace CommonClassLibrary.DeviceCommunication
 		public object Pop(Type in_type)
 		{
 			int new_pop_index;
+			object result_object = null;
 
 			// return if there is no packet to pop
 			if (m_pop_index == m_push_index)
@@ -264,15 +309,16 @@ namespace CommonClassLibrary.DeviceCommunication
 			if (m_packets[m_pop_index].State != PacketBufferState.Valid)
 				return null;
 
-			// deserialize packet
+			// deserialize packet if size is correct
 			int raw_packet_size = Marshal.SizeOf(in_type);
-			if (raw_packet_size + PacketConstants.PacketCRCLength != m_packets[m_pop_index].Length)
-				return null;
-			byte[] raw_packet_buffer = m_packets[m_pop_index].Buffer;
-			GCHandle handle = GCHandle.Alloc(raw_packet_buffer, GCHandleType.Pinned);
-			IntPtr buffer = handle.AddrOfPinnedObject();
-			object result_object = Marshal.PtrToStructure(buffer, in_type);
-			handle.Free();
+			if (raw_packet_size + PacketConstants.PacketCRCLength == m_packets[m_pop_index].Length)
+			{
+				byte[] raw_packet_buffer = m_packets[m_pop_index].Buffer;
+				GCHandle handle = GCHandle.Alloc(raw_packet_buffer, GCHandleType.Pinned);
+				IntPtr buffer = handle.AddrOfPinnedObject();
+				result_object = Marshal.PtrToStructure(buffer, in_type);
+				handle.Free();
+			}
 
 			// remove packet from the queue
 			m_packets[m_pop_index].State = PacketBufferState.Empty;

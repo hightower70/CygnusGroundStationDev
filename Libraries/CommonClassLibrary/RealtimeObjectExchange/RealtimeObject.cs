@@ -178,7 +178,10 @@ namespace CommonClassLibrary.RealtimeObjectExchange
 		/// <returns></returns>
 		public int MemberGetIndex(string in_name)
 		{
-			return m_member_lookup[in_name];
+			if (m_member_lookup.ContainsKey(in_name))
+				return m_member_lookup[in_name];
+			else
+				return -1;
 		}
 
 		/// <summary>
@@ -250,7 +253,10 @@ namespace CommonClassLibrary.RealtimeObjectExchange
 		/// <returns></returns>
 		public object MemberRead(int in_member_index)
 		{
-			return m_member_values[m_read_storage_index, in_member_index];
+			if (in_member_index >= 0)
+				return m_member_values[m_read_storage_index, in_member_index];
+			else
+				return null;
 		}
 
 		#endregion
