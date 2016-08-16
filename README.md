@@ -10,6 +10,6 @@ Gauge type instrument panel
 
 Primary Flight Display type panel
 
-![alt tag](https://cloud.githubusercontent.com/assets/6670256/17699683/65c9da42-63c2-11e6-8c55-24277b76da62.png "Rover GUI")
+![alt tag](https://cloud.githubusercontent.com/assets/6670256/17699858/7acecb2c-63c3-11e6-9705-ab4fc4f98489.png "Rover GUI")
 
 Rover GUI
