@@ -1,0 +1,122 @@
+﻿<Window x:Class="CygnusAuxBoardMonitor.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:c ="clr-namespace:CygnusControls;assembly=CygnusControls"
+        xmlns:local="clr-namespace:CygnusAuxBoardMonitor"
+        mc:Ignorable="d"
+				Style="{DynamicResource WindowStyle}"
+        Title="CygnusAuxBoard Monitor" Height="350" Width="525" Initialized="Window_Initialized" Closing="Window_Closing">
+	<Window.Resources>
+		<c:RealtimeObjectProvider x:Key="UltrasonicDistanceProvider" RealtimeObjectName="UltrasonicDistance"/>
+		<c:RealtimeObjectProvider x:Key="AirTemperatureProvider" RealtimeObjectName="AirTemperature"/>
+	</Window.Resources>
+	<Grid Background="{DynamicResource Background}">
+		<Grid.RowDefinitions>
+			<RowDefinition Height="22"/>
+			<RowDefinition Height="130"/>
+			<RowDefinition Height="62*"/>
+		</Grid.RowDefinitions>
+
+		<Menu  IsMainMenu="True" Height="22" VerticalAlignment="Top" Grid.Row="0">
+			<Menu.ItemsPanel>
+				<ItemsPanelTemplate>
+					<DockPanel HorizontalAlignment="Stretch"/>
+				</ItemsPanelTemplate>
+			</Menu.ItemsPanel>
+			<MenuItem Header="_File">
+				<MenuItem Header="_Exit" Click="Exit_Click" />
+			</MenuItem>
+			<MenuItem Header="_Tools">
+				<MenuItem Header="Options" Click="Options_Click" />
+				<MenuItem Header="Device Settings" Click="DeviceSettings_Click" />
+			</MenuItem>
+			<MenuItem Header="_Help" HorizontalAlignment="Right">
+				<MenuItem Header="_About" />
+			</MenuItem>
+		</Menu>
+
+		<Border Grid.Row="1" BorderThickness="1" Margin="3" BorderBrush="{DynamicResource BorderBrushNormal}">
+			<Grid Margin="2" DataContext="{StaticResource UltrasonicDistanceProvider}" >
+				<Grid>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="100"/>
+						<ColumnDefinition Width="50"/>
+						<ColumnDefinition Width="20"/>
+						<ColumnDefinition Width="*"/>
+						<ColumnDefinition/>
+					</Grid.ColumnDefinitions>
+					<Grid.RowDefinitions>
+						<RowDefinition Height="22"/>
+						<RowDefinition Height="22"/>
+						<RowDefinition Height="22"/>
+						<RowDefinition Height="22"/>
+						<RowDefinition Height="22"/>
+					</Grid.RowDefinitions>
+
+					<TextBlock Grid.Row="0" Grid.Column="0"  Text="Ultrasonic Distances" Grid.ColumnSpan="5" HorizontalAlignment="Stretch" TextAlignment="Center" Background="{DynamicResource LightBackground}"/>
+
+					<!-- Distance 1 -->
+					<TextBlock Grid.Row="1" Grid.Column="0"  Text="Distance1:" VerticalAlignment="Center" />
+					<TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Distance1, StringFormat={}{0:N1}}" TextAlignment="Right" VerticalAlignment="Center"/>
+					<TextBlock Grid.Row="1" Grid.Column="2" Text="cm" VerticalAlignment="Center"/>
+					<ProgressBar Grid.Row="1" Grid.Column="3" Value="{Binding Distance1, Converter={x:Static c:FloatToDoubleValueConverter.Instance}}" Minimum="0" Maximum="500" Height="6" Margin="4"/>
+
+					<!-- Distance 2 -->
+					<TextBlock Grid.Row="2" Grid.Column="0"  Text="Distance2:" VerticalAlignment="Center" />
+					<TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Distance2, StringFormat={}{0:N1}}" TextAlignment="Right" VerticalAlignment="Center"/>
+					<TextBlock Grid.Row="2" Grid.Column="2" Text="cm" VerticalAlignment="Center"/>
+					<ProgressBar Grid.Row="2" Grid.Column="3" Value="{Binding Distance2, Converter={x:Static c:FloatToDoubleValueConverter.Instance}}" Minimum="0" Maximum="500" Height="6" Margin="4"/>
+
+					<!-- Distance 3 -->
+					<TextBlock Grid.Row="3" Grid.Column="0"  Text="Distance3:" VerticalAlignment="Center" />
+					<TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Distance3, StringFormat={}{0:N1}}" TextAlignment="Right" VerticalAlignment="Center"/>
+					<TextBlock Grid.Row="3" Grid.Column="2" Text="cm" VerticalAlignment="Center"/>
+					<ProgressBar Grid.Row="3" Grid.Column="3" Value="{Binding Distance3, Converter={x:Static c:FloatToDoubleValueConverter.Instance}}" Minimum="0" Maximum="500" Height="6" Margin="4"/>
+					
+					<!-- Distance 4 -->
+					<TextBlock Grid.Row="4" Grid.Column="0"  Text="Distance4:" VerticalAlignment="Center" />
+					<TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding Distance4, StringFormat={}{0:N1}}" TextAlignment="Right" VerticalAlignment="Center"/>
+					<TextBlock Grid.Row="4" Grid.Column="2" Text="cm" VerticalAlignment="Center"/>
+					<ProgressBar Grid.Row="4" Grid.Column="3" Value="{Binding Distance4, Converter={x:Static c:FloatToDoubleValueConverter.Instance}}" Minimum="0" Maximum="500" Height="6" Margin="4"/>
+				</Grid>
+			</Grid>
+		</Border>
+
+		<Border Grid.Row="2" BorderThickness="1" Margin="3" BorderBrush="{DynamicResource BorderBrushNormal}">
+			<Grid Margin="2" DataContext="{StaticResource AirTemperatureProvider}" >
+				<Grid>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="100"/>
+						<ColumnDefinition Width="50"/>
+						<ColumnDefinition Width="20"/>
+						<ColumnDefinition Width="*"/>
+						<ColumnDefinition/>
+					</Grid.ColumnDefinitions>
+					<Grid.RowDefinitions>
+						<RowDefinition Height="22"/>
+						<RowDefinition Height="22"/>
+						<RowDefinition Height="22"/>
+						<RowDefinition Height="22"/>
+						<RowDefinition Height="22"/>
+					</Grid.RowDefinitions>
+
+					<TextBlock Grid.Row="0" Grid.Column="0"  Text="Air Temperature" Grid.ColumnSpan="5" HorizontalAlignment="Stretch" TextAlignment="Center" Background="{DynamicResource LightBackground}"/>
+
+					<!-- Air temperature -->
+					<TextBlock Grid.Row="1" Grid.Column="0"  Text="Temperature:" VerticalAlignment="Center" />
+					<TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Temperature, StringFormat={}{0:N1}}" TextAlignment="Right" VerticalAlignment="Center"/>
+					<TextBlock Grid.Row="1" Grid.Column="2" Text="°C" VerticalAlignment="Center"/>
+					<ProgressBar Grid.Row="1" Grid.Column="3" Value="{Binding Temperature, Converter={x:Static c:FloatToDoubleValueConverter.Instance}}" Minimum="0" Maximum="50" Height="6" Margin="4"/>
+
+					<!-- Distance 2 -->
+					<TextBlock Grid.Row="2" Grid.Column="0"  Text="TemperatureADC:" VerticalAlignment="Center" />
+					<TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding TemperatureADC}" TextAlignment="Right" VerticalAlignment="Center"/>
+					<ProgressBar Grid.Row="2" Grid.Column="3" Value="{Binding TemperatureADC, Converter={x:Static c:FloatToDoubleValueConverter.Instance}}" Minimum="0" Maximum="1024" Height="6" Margin="4"/>
+
+				</Grid>
+			</Grid>
+		</Border>
+	</Grid>
+</Window>

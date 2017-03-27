@@ -4,7 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="clr-namespace:CygnusControls;assembly=CygnusControls">
 
-	<Style x:Key="{x:Type local:NumericUpDown}" TargetType="local:NumericUpDown">
+	<Style x:Key="StandardNumericUpDown" TargetType="local:NumericUpDownBase">
 		<Style.Resources>
 			<Style TargetType="TextBox" x:Key="NumericUpDownTextBox">
 				<Setter Property="Background" Value="{DynamicResource TextBoxBackground}"/>
@@ -29,34 +29,11 @@
 				</Setter>
 			</Style>
 		</Style.Resources>
-    <Setter Property="Template">
+		<Setter Property="Focusable" Value="False" />
+		<Setter Property="Template">
       <Setter.Value>
-        <ControlTemplate TargetType="local:NumericUpDown">
-          <Grid Background="{TemplateBinding Background}">
-            <VisualStateManager.VisualStateGroups>
-              <VisualStateGroup Name="FocusStates">
-
-                <!--Add a focus rectangle to highlight the entire control
-                    when it has focus.-->
-                <VisualState Name="Focused">
-                  <Storyboard>
-                    <ObjectAnimationUsingKeyFrames Storyboard.TargetName="PART_FocusVisual" 
-                                                   Storyboard.TargetProperty="Visibility" Duration="0">
-                      <DiscreteObjectKeyFrame KeyTime="0">
-                        <DiscreteObjectKeyFrame.Value>
-                          <Visibility>Visible</Visibility>
-                        </DiscreteObjectKeyFrame.Value>
-                      </DiscreteObjectKeyFrame>
-                    </ObjectAnimationUsingKeyFrames>
-                  </Storyboard>
-                </VisualState>
-
-                <!--Return the control to its initial state by
-                    hiding the focus rectangle.-->
-                <VisualState Name="Unfocused"/>
-              </VisualStateGroup>
-            </VisualStateManager.VisualStateGroups>
-            <Grid>
+        <ControlTemplate TargetType="local:NumericUpDownBase">
+            <Grid Focusable="False">
               <Grid.RowDefinitions>
                 <RowDefinition/>
                 <RowDefinition/>
@@ -69,23 +46,22 @@
               <Border BorderThickness="1" BorderBrush="Gray" 
                 Grid.RowSpan="2" 
                 VerticalAlignment="Stretch" 
-                HorizontalAlignment="Stretch">
+                HorizontalAlignment="Stretch" Focusable="False">
                 <!--Bind the TextBlock to the Value property-->
-								<TextBox Name="PART_tbValue" TextAlignment="Right" Padding="1" VerticalAlignment="Stretch"  Style="{DynamicResource NumericUpDownTextBox}"/>
+								<TextBox Name="PART_TextBox" TextAlignment="Right" Padding="1" VerticalAlignment="Stretch" Focusable="True" Style="{DynamicResource NumericUpDownTextBox}"/>
               </Border>
 
-              <RepeatButton Name="PART_btnUp" Grid.Column="1" Grid.Row="0">
+							<RepeatButton Name="PART_IncreaseButton" Grid.Column="1" Grid.Row="0">
                 <Path  Fill="{TemplateBinding Foreground}" Data="M 0,4 L 8,4 L 4,0 L 0,4" />
               </RepeatButton>
-              <RepeatButton Name="PART_btnDown" Grid.Column="1" Grid.Row="1">
+							<RepeatButton Name="PART_DecreaseButton" Grid.Column="1" Grid.Row="1">
                 <Path  Fill="{TemplateBinding Foreground}" Data="M 0,0 L 8,0 L 4,4 L 0,0" />
               </RepeatButton>
 
               <Rectangle Name="PART_FocusVisual" Grid.ColumnSpan="2" Grid.RowSpan="2" 
-                Stroke="Black" StrokeThickness="1"  
+                Stroke="Red" StrokeThickness="5"  
                 Visibility="Collapsed"/>
             </Grid>
-          </Grid>
 				</ControlTemplate>
       </Setter.Value>
     </Setter>

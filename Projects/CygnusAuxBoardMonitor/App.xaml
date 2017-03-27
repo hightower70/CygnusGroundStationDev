@@ -1,0 +1,9 @@
+﻿<Application x:Class="CygnusAuxBoardMonitor.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:CygnusAuxBoardMonitor"
+             StartupUri="MainWindow/MainWindow.xaml">
+    <Application.Resources>
+			<ResourceDictionary Source="pack://application:,,,/DarkSkin;component/MetroDarkStyle.xaml" />
+		</Application.Resources>
+</Application>

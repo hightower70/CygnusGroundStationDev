@@ -20,26 +20,21 @@
 // ----------------
 // Communication class over UART
 ///////////////////////////////////////////////////////////////////////////////
-using CommonClassLibrary.DeviceCommunication;
 using CommonClassLibrary.Helpers;
 using CommonClassLibrary.RealtimeObjectExchange;
 using System;
-using System.Collections.Generic;
 using System.IO.Ports;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace CommonClassLibrary.DeviceCommunication
 {
-	public class UARTCommunicator : IDisposable, ICommunicationInterface
+	public class UARTCommunicator : IDisposable, ICommunicator
 	{
 		#region · Constants ·
-		public int ReceiveBufferSize = 512;
-		public int TransmitBufferSize = 512;
-		public int DeviceAnnounceTimeout = 3000;
+		private const int ReceiveBufferSize = 512;
+		private const int TransmitBufferSize = 512;
+		private const int ThreadWaitTimeout = 100;
 		#endregion
 
 		#region · Data members ·
@@ -52,7 +47,7 @@ namespace CommonClassLibrary.DeviceCommunication
 		private Thread m_thread;
 		private volatile bool m_stop_requested; // external request to stop the thread
 		private ManualResetEvent m_thread_stopped;  // Worker thread sets this event when it is stopped
-		private AutoResetEvent m_event_occured;
+		private AutoResetEvent m_thread_event;
 		private SemaphoreSlim m_sender_lock;
 
 		private byte[] m_receive_data_buffer;
@@ -84,10 +79,10 @@ namespace CommonClassLibrary.DeviceCommunication
 		/// </summary>
 		public UARTCommunicator()
 		{
-			m_stop_requested = false;
 			m_thread_stopped = new ManualResetEvent(false);
 			m_sender_lock = new SemaphoreSlim(1, 1);
-			m_event_occured = new AutoResetEvent(false);
+			m_thread_event = new AutoResetEvent(false);
+			m_stop_requested = false;
 			m_thread = null;
 			m_receive_data_buffer = new byte[ReceiveBufferSize];
 			m_receive_packet_buffer = new byte[ReceiveBufferSize];
@@ -116,7 +111,7 @@ namespace CommonClassLibrary.DeviceCommunication
 			// reset events
 			m_stop_requested = false;
 			m_thread_stopped.Reset();
-			m_event_occured.Reset();
+			m_thread_event.Reset();
 
 			// create worker thread instance
 			m_thread = new Thread(new ThreadStart(Run));
@@ -137,7 +132,7 @@ namespace CommonClassLibrary.DeviceCommunication
 			{
 				// set event "Stop"
 				m_stop_requested = true;
-				m_event_occured.Set();
+				m_thread_event.Set();
 
 				// wait when thread  will stop or finish
 				while (m_thread.IsAlive)
@@ -199,12 +194,17 @@ namespace CommonClassLibrary.DeviceCommunication
 				{
 					// stop thread because of the unexpected error
 					m_stop_requested = true;
-					m_event_occured.Set();
+					m_thread_event.Set();
 				}
 			}
 
 			return false;
 		}
+
+		public void ConnectionLost()
+		{
+		}
+
 
 		/// <summary>
 		/// Gets currently connected client ID
@@ -243,7 +243,6 @@ namespace CommonClassLibrary.DeviceCommunication
 		public void Run()
 		{
 			bool event_occured;
-			int i;
 			UInt16 crc;
 			int received_data_pos;
 			int received_packet_pos;
@@ -278,7 +277,7 @@ namespace CommonClassLibrary.DeviceCommunication
 			while (!m_stop_requested)
 			{
 				// wait for event
-				event_occured = m_event_occured.WaitOne(100);
+				event_occured = m_thread_event.WaitOne(ThreadWaitTimeout);
 
 				// exit loop if thread must be stopped
 				if (m_stop_requested)
@@ -333,7 +332,7 @@ namespace CommonClassLibrary.DeviceCommunication
 					{
 						// stop thread because of the unexpected error
 						m_stop_requested = true;
-						m_event_occured.Set();
+						m_thread_event.Set();
 					}
 				}
 			}
@@ -373,12 +372,12 @@ namespace CommonClassLibrary.DeviceCommunication
 					if (bytes_read > 0)
 					{
 						communicator.m_received_data_length = bytes_read;
-						communicator.m_event_occured.Set();
+						communicator.m_thread_event.Set();
 					}
 					else
 					{
 						communicator.m_read_pending = false;
-						communicator.m_event_occured.Set();
+						communicator.m_thread_event.Set();
 					}
 				}
 			}
@@ -386,7 +385,7 @@ namespace CommonClassLibrary.DeviceCommunication
 			{
 				// stop thread because of the unexpected error
 				communicator.m_stop_requested = true;
-				communicator.m_event_occured.Set();
+				communicator.m_thread_event.Set();
 			}
 		}
 
@@ -419,7 +418,7 @@ namespace CommonClassLibrary.DeviceCommunication
 			{
 				// stop thread because of the unexpected error
 				communicator.m_stop_requested = true;
-				communicator.m_event_occured.Set();
+				communicator.m_thread_event.Set();
 			}
 		}
 

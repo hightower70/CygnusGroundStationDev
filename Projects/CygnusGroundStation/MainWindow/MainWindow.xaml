@@ -1,0 +1,40 @@
+﻿<Window x:Class="CygnusGroundStation.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+				xmlns:cc="clr-namespace:CygnusControls;assembly=CygnusControls"
+        Title="Cygnus Ground Station" 
+				Style="{DynamicResource WindowStyle}" 
+				Icon="../Images/logo_large_64.png" Closing="Window_Closing" Initialized="Window_Initialized">
+	<Grid Background="{DynamicResource Background}">
+		<Grid.RowDefinitions>
+			<RowDefinition Height="22"/>
+			<RowDefinition />
+		</Grid.RowDefinitions>
+		<Menu IsMainMenu="True" Height="22" VerticalAlignment="Top" Grid.Row="0">
+			<Menu.ItemsPanel>
+				<ItemsPanelTemplate>
+					<DockPanel HorizontalAlignment="Stretch"/>
+				</ItemsPanelTemplate>
+			</Menu.ItemsPanel>
+			<MenuItem Header="_File" Height="22" VerticalAlignment="Top">
+				<MenuItem Header="_New..." />
+				<Separator />
+				<MenuItem Header="_Open..." />
+				<Separator />
+				<MenuItem Header="_Save" />
+				<MenuItem Header="_Save As..." />
+				<Separator />
+				<MenuItem Header="_Exit" />
+			</MenuItem>
+			<MenuItem Header="_Tools">
+				<MenuItem Header="Options" Click="Options_Click"/>
+				<MenuItem Header="Device Settings" Click="DeviceSettings_Click" />
+			</MenuItem>
+			<MenuItem Header="_Help" HorizontalAlignment="Right">
+				<MenuItem Header="_About" Click="About_Click"/>
+			</MenuItem>
+		</Menu>
+		
+		<Grid x:Name="FormContainer" Margin="0,21,0,1" Grid.RowSpan="2"/>
+	</Grid>
+</Window>

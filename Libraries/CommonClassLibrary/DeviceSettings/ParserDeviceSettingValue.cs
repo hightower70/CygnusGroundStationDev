@@ -21,6 +21,7 @@
 // Class for storing settings value
 ///////////////////////////////////////////////////////////////////////////////
 using CommonClassLibrary.Helpers;
+using CommonClassLibrary.XMLParser;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -39,10 +40,23 @@ namespace CommonClassLibrary.DeviceSettings
 		/// </summary>
 		public enum ValueType : byte
 		{
-			IntValue = 1,
-			EnumValue = 2,
-			FloatValue = 3,
-			StringValue = 4
+			UInt8Value = 1,
+			Int8Value = 2,
+			UInt16Value = 3,
+			Int16Value = 4,
+			//UInt32Value = 5,
+			Int32Value = 6,
+
+			UInt8FixedValue = 7,
+			Int8FixedValue = 8,
+			UInt16FixedValue = 9,
+			Int16FixedValue = 10,
+
+			EnumValue = 11,
+
+			FloatValue = 12,
+
+			StringValue = 13
 		}
 
 		/// <summary>
@@ -78,10 +92,13 @@ namespace CommonClassLibrary.DeviceSettings
 		private object m_value;
 		private string m_units;
 		private string m_description;
-		private int m_min;
-		private int m_max;
-
+		private int m_int_min;
+		private int m_int_max;
+		private int m_multiplier;
 		private string m_enumdef_ref;
+		private float m_float_min;
+		private float m_float_max;
+		private int m_fractional_digits;
 
 		#endregion
 
@@ -95,8 +112,68 @@ namespace CommonClassLibrary.DeviceSettings
 		{
 			m_value_type = in_type;
 
-			m_min = int.MinValue;
-			m_max = int.MaxValue;
+			switch (in_type)
+			{
+				case ValueType.UInt8Value:
+					m_int_min = Byte.MinValue;
+					m_int_max = Byte.MaxValue;
+					break;
+
+				case ValueType.Int8Value:
+					m_int_min = SByte.MinValue;
+					m_int_max = SByte.MaxValue;
+					break;
+
+				case ValueType.UInt16Value:
+					m_int_min = UInt16.MinValue;
+					m_int_max = UInt16.MaxValue;
+					break;
+
+				case ValueType.Int16Value:
+					m_int_min = Int16.MinValue;
+					m_int_max = Int16.MaxValue;
+					break;
+
+				case ValueType.Int32Value:
+					m_int_min = int.MinValue;
+					m_int_max = int.MaxValue;
+					break;
+
+				case ValueType.UInt8FixedValue:
+					m_float_min = byte.MinValue;
+					m_float_max = byte.MaxValue;
+					break;
+
+				case ValueType.Int8FixedValue:
+					m_float_min = SByte.MinValue;
+					m_float_max = SByte.MaxValue;
+					break;
+
+				case ValueType.UInt16FixedValue:
+					m_float_min = UInt16.MinValue;
+					m_float_max = UInt16.MaxValue;
+					break;
+
+				case ValueType.Int16FixedValue:
+					m_float_min = Int16.MinValue;
+					m_float_max = Int16.MaxValue;
+					break;
+
+				case ValueType.EnumValue:
+					break;
+
+				case ValueType.FloatValue:
+					break;
+
+				case ValueType.StringValue:
+					break;
+
+				default:
+					throw new InvalidDataException();
+			}
+
+			m_multiplier = 1;
+			m_fractional_digits = 0;
 		}
 
 		#endregion
@@ -144,20 +221,131 @@ namespace CommonClassLibrary.DeviceSettings
 		}
 
 		/// <summary>
-		/// Gets/sets value
+		/// Gets/sets value as the stored type
 		/// </summary>
 		public object Value
 		{
-			get { return m_value; }
+			get
+			{
+				switch (m_value_type)
+				{
+					case ValueType.UInt8FixedValue:
+						return (float)((byte)m_value / m_multiplier);
+
+					case ValueType.Int8FixedValue:
+						return (float)((SByte)m_value / m_multiplier);
+
+					case ValueType.UInt16FixedValue:
+						return (float)((UInt16)m_value / m_multiplier);
+
+					case ValueType.Int16FixedValue:
+						return (float)((Int16)m_value / m_multiplier);
+
+					default:
+						return m_value;
+				}
+			}
+
 			set
 			{
-				// set value
-				m_value = value;
+				switch(m_value_type)
+				{
+					case ValueType.UInt8FixedValue:
+						m_value = (byte)Math.Round((float)value * m_multiplier);
+						break;
+
+					case ValueType.Int8FixedValue:
+						m_value = (sbyte)Math.Round((float)value * m_multiplier);
+						break;
+
+					case ValueType.UInt16FixedValue:
+						m_value = (UInt16)Math.Round((float)value * m_multiplier);
+						break;
+
+					case ValueType.Int16FixedValue:
+						m_value = (Int16)Math.Round((float)value * m_multiplier);
+						break;
+
+					default:
+						// set value
+						m_value = value;
+						break;
+				}
 
 				// call callback
 				if (m_parent_group != null && m_parent_group.Root != null && m_parent_group.Root.Parent != null)
 					m_parent_group.Root.Parent.OnValueChanged(this);
 			}
+		}
+
+		/// <summary>
+		/// Gets/sets value as integer (if possible, otherwise it returns zero and sets nothing)
+		/// </summary>
+		public int IntValue
+		{
+			get
+			{
+				switch(m_value_type)
+				{
+					case ValueType.UInt8Value:
+						return (byte)m_value;
+
+					case ValueType.Int8Value:
+						return (SByte)m_value;
+
+					case ValueType.UInt16Value:
+						return (UInt16)m_value;
+
+					case ValueType.Int16Value:
+						return (Int16)m_value;
+
+					case ValueType.Int32Value:
+						return (Int32)m_value;
+				}
+
+				return 0;
+			}
+			set
+			{
+				switch(m_value_type)
+				{
+					case ValueType.UInt8Value:
+						m_value = (byte)value;
+						break;
+
+					case ValueType.Int8Value:
+						m_value = (sbyte)value;
+						break;
+
+					case ValueType.UInt16Value:
+						m_value = (UInt16)value;
+						break;
+
+					case ValueType.Int16Value:
+						m_value = (Int16)value;
+						break;
+
+					case ValueType.Int32Value:
+						m_value = (Int32)value;
+						break;
+
+					default:
+						throw new InvalidDataException();
+				}
+
+				// call callback
+				if (m_parent_group != null && m_parent_group.Root != null && m_parent_group.Root.Parent != null)
+					m_parent_group.Root.Parent.OnValueChanged(this);
+			}
+		}
+
+
+		/// <summary>
+		/// Gets decimal places for floating numbers (used for user interface only)
+		/// </summary>
+		public int FractionalDigits
+		{
+			get { return m_fractional_digits; }
 		}
 
 		/// <summary>
@@ -169,22 +357,49 @@ namespace CommonClassLibrary.DeviceSettings
 		}
 
 		/// <summary>
+		/// Multiplier for fixed value
+		/// </summary>
+		public int Multiplier
+		{
+			get { return m_multiplier; }
+			set { m_multiplier = value; }
+		}
+
+		/// <summary>
 		/// Minimum value for int data type
 		/// </summary>
-		public int Min
+		public int IntMin
 		{
-			get { return m_min; }
+			get { return m_int_min; }
 			set
-			{ m_min = value; }
+			{ m_int_min = value; }
 		}
 
 		/// <summary>
 		/// Maximum value for int data type
 		/// </summary>
-		public int Max
+		public int IntMax
 		{
-			get { return m_max; }
-			set { m_max = value; }
+			get { return m_int_max; }
+			set { m_int_max = value; }
+		}
+
+		/// <summary>
+		/// Minimum value for float data type
+		/// </summary>
+		public float FloatMin
+		{
+			get { return m_float_min; }
+			set	{ m_float_min = value; }
+		}
+
+		/// <summary>
+		/// Maximum value for float data type
+		/// </summary>
+		public float FloatMax
+		{
+			get { return m_float_max; }
+			set { m_float_max = value; }
 		}
 
 		/// <summary>
@@ -255,7 +470,7 @@ namespace CommonClassLibrary.DeviceSettings
 					}
 					break;
 
-				case ValueType.IntValue:
+				case ValueType.Int32Value:
 					m_binary_length = sizeof(Int32);
 					try
 					{
@@ -269,6 +484,136 @@ namespace CommonClassLibrary.DeviceSettings
 						throw exception;
 					}
 					break;
+
+				case ValueType.Int8Value:
+					m_binary_length = sizeof(SByte);
+					try
+					{
+						m_value = (SByte)in_element.ValueAsInt;
+					}
+					catch
+					{
+						// throw an exception if value is invalid
+						XMLParserException exception = new XMLParserException(in_element);
+						exception.SetInvalidTypeError(m_name);
+						throw exception;
+					}
+					break;
+
+				case ValueType.UInt8Value:
+					{
+						int value;
+						m_binary_length = sizeof(SByte);
+						try
+						{
+							value = in_element.ValueAsInt;
+						}
+						catch
+						{
+							// throw an exception if value is invalid
+							XMLParserException exception = new XMLParserException(in_element);
+							exception.SetInvalidTypeError(m_name);
+							throw exception;
+						}
+
+						GetAndCheckMinMaxInt(in_element, value);
+
+						m_value = (byte)value;
+					}
+					break;
+
+				case ValueType.UInt16Value:
+					{
+						int value;
+						m_binary_length = sizeof(UInt16);
+						try
+						{
+							value = in_element.ValueAsInt;
+						}
+						catch
+						{
+							// throw an exception if value is invalid
+							XMLParserException exception = new XMLParserException(in_element);
+							exception.SetInvalidTypeError(m_name);
+							throw exception;
+						}
+
+						GetAndCheckMinMaxInt(in_element, value);
+
+						m_value = (UInt16)value;
+					}
+					break;
+
+					// Fixed values
+				case ValueType.UInt8FixedValue:
+				case ValueType.Int8FixedValue:
+				case ValueType.UInt16FixedValue:
+				case ValueType.Int16FixedValue:
+					{
+						float float_value;
+						object value = 0;
+
+						m_binary_length = sizeof(Int16);
+
+						// get multiplier
+						m_multiplier = XMLAttributeParser.ConvertAttributeToInt(in_element, "Multiplier", XMLAttributeParser.atObligatory);
+
+						if(m_multiplier < 1)
+						{
+							XMLParserException exception = new XMLParserException(in_element);
+							exception.SetInvalidAttributeValue("Multiplier");
+							throw exception;
+						}
+						m_float_min /= m_multiplier;
+						m_float_max /= m_multiplier; 
+
+						// get fractional digits number
+						m_fractional_digits = XMLAttributeParser.ConvertAttributeToInt(in_element, "FractionalDigits", XMLAttributeParser.atOptional);
+						if (m_fractional_digits < 0)
+						{
+							XMLParserException exception = new XMLParserException(in_element);
+							exception.SetInvalidAttributeValue("FractionalDigits");
+							throw exception;
+						}
+
+						// store value
+						try
+						{
+							float_value = (float)in_element.ValueAsDouble;
+
+							switch (m_value_type)
+							{
+								case ValueType.UInt8FixedValue:
+									value = (byte)Math.Round(float_value * m_multiplier);
+									break;
+
+								case ValueType.Int8FixedValue:
+									value = (SByte)Math.Round(float_value * m_multiplier);
+									break;
+
+								case ValueType.UInt16FixedValue:
+									value = (UInt16)Math.Round(float_value * m_multiplier);
+									break;
+
+								case ValueType.Int16FixedValue:
+									value = (Int16)Math.Round(float_value * m_multiplier);
+									break;
+							}
+						}
+						catch
+						{
+							// throw an exception if value is invalid
+							XMLParserException exception = new XMLParserException(in_element);
+							exception.SetInvalidTypeError(m_name);
+							throw exception;
+						}
+
+						GetAndCheckMinMaxFloat(in_element, float_value);
+
+						m_value = value;
+					}
+					break;
+					
 
 				case ValueType.FloatValue:
 					m_binary_length = sizeof(float);
@@ -306,7 +651,43 @@ namespace CommonClassLibrary.DeviceSettings
 					break;
 
 				default:
-					break;
+					throw new InvalidDataException();
+			}
+		}
+
+		/// <summary>
+		/// Gets min, max values 
+		/// </summary>
+		/// <param name="in_element"></param>
+		/// <param name="in_value"></param>
+		private void GetAndCheckMinMaxInt(XPathNavigator in_element, int in_value)
+		{
+			m_int_min = XMLAttributeParser.ConvertAttributeToInt(in_element, "Min", XMLAttributeParser.atOptional, m_int_min);
+			m_int_max = XMLAttributeParser.ConvertAttributeToInt(in_element, "Max", XMLAttributeParser.atOptional, m_int_max);
+
+			if (in_value < m_int_min && in_value > m_int_max)
+			{
+				XMLParserException exception = new XMLParserException(in_element);
+				exception.SetOutOfRangeError();
+				throw exception;
+			}
+		}
+
+		/// <summary>
+		/// Gets min, max values 
+		/// </summary>
+		/// <param name="in_element"></param>
+		/// <param name="in_value"></param>
+		private void GetAndCheckMinMaxFloat(XPathNavigator in_element, float in_value)
+		{
+			m_float_min = (float)XMLAttributeParser.ConvertAttributeToDouble(in_element, "Min", XMLAttributeParser.atOptional, m_float_min);
+			m_float_max = (float)XMLAttributeParser.ConvertAttributeToDouble(in_element, "Max", XMLAttributeParser.atOptional, m_float_max);
+
+			if (in_value < m_float_min && in_value > m_float_max)
+			{
+				XMLParserException exception = new XMLParserException(in_element);
+				exception.SetOutOfRangeError();
+				throw exception;
 			}
 		}
 
@@ -327,20 +708,56 @@ namespace CommonClassLibrary.DeviceSettings
 		{
 			switch (m_value_type)
 			{
-				case ValueType.StringValue:
+				case ValueType.UInt8Value:
 					{
-						byte[] retval = new byte[m_binary_length];
-						byte[] str = Encoding.ASCII.GetBytes(((string)m_value));
+						byte[] retval = new byte[1];
 
-						Array.Copy(str, retval, str.Length);
+						retval[0] = (byte)m_value;
+
 						return retval;
 					}
 
-				case ValueType.IntValue:
+				case ValueType.Int8Value:
+					{
+						byte[] retval = new byte[1];
+
+						retval[0] = (byte)((sbyte)m_value);
+
+						return retval;
+					}
+
+				case ValueType.UInt16Value:
+					return BitConverter.GetBytes((UInt16)m_value);
+
+				case ValueType.Int16Value:
+					return BitConverter.GetBytes((Int16)m_value);
+
+				case ValueType.Int32Value:
 					return BitConverter.GetBytes((int)m_value);
 
-				case ValueType.FloatValue:
-					return BitConverter.GetBytes((float)m_value);
+				case ValueType.UInt8FixedValue:
+					{
+						byte[] retval = new byte[1];
+
+						retval[0] = (byte)m_value;
+
+						return retval;
+					}
+
+				case ValueType.Int8FixedValue:
+					{
+						byte[] retval = new byte[1];
+
+						retval[0] = (byte)((sbyte)m_value);
+
+						return retval;
+					}
+
+				case ValueType.UInt16FixedValue:
+					return BitConverter.GetBytes((UInt16)m_value);
+
+				case ValueType.Int16FixedValue:
+					return BitConverter.GetBytes((Int16)m_value);
 
 				case ValueType.EnumValue:
 					{
@@ -351,8 +768,20 @@ namespace CommonClassLibrary.DeviceSettings
 						return retval;
 					}
 
+				case ValueType.FloatValue:
+					return BitConverter.GetBytes((float)m_value);
+
+				case ValueType.StringValue:
+					{
+						byte[] retval = new byte[m_binary_length];
+						byte[] str = Encoding.ASCII.GetBytes(((string)m_value));
+
+						Array.Copy(str, retval, str.Length);
+						return retval;
+					}
+
 				default:
-					return null;
+					throw new InvalidDataException();
 			}
 		}
 
@@ -382,6 +811,54 @@ namespace CommonClassLibrary.DeviceSettings
 		{
 			switch (m_value_type)
 			{
+				case ValueType.UInt8Value:
+					m_value = in_binary_value_file[m_binary_value_offset];
+					break;
+
+				case ValueType.Int8Value:
+					m_value = (SByte)in_binary_value_file[m_binary_value_offset];
+					break;
+
+				case ValueType.UInt16Value:
+					m_value = BitConverter.ToUInt16(in_binary_value_file, m_binary_value_offset);
+					break;
+
+				case ValueType.Int16Value:
+					m_value = BitConverter.ToInt16(in_binary_value_file, m_binary_value_offset);
+					break;
+
+/*				case ValueType.UInt32Value:
+					m_value = BitConverter.ToUInt32(in_binary_value_file, m_binary_value_offset);
+					break;*/
+
+				case ValueType.Int32Value:
+					m_value = BitConverter.ToInt32(in_binary_value_file, m_binary_value_offset);
+					break;
+
+				case ValueType.UInt8FixedValue:
+					m_value = in_binary_value_file[m_binary_value_offset];
+					break;
+
+				case ValueType.Int8FixedValue:
+					m_value = (SByte)in_binary_value_file[m_binary_value_offset];
+					break;
+
+				case ValueType.UInt16FixedValue:
+					m_value = BitConverter.ToUInt16(in_binary_value_file, m_binary_value_offset);
+					break;
+
+				case ValueType.Int16FixedValue:
+					m_value = BitConverter.ToInt16(in_binary_value_file, m_binary_value_offset);
+					break;
+
+				case ValueType.EnumValue:
+					m_value = in_binary_value_file[m_binary_value_offset];
+					break;
+
+				case ValueType.FloatValue:
+					m_value = BitConverter.ToSingle(in_binary_value_file, m_binary_value_offset);
+					break;
+
 				case ValueType.StringValue:
 					{
 						int count = Array.IndexOf<byte>(in_binary_value_file, 0, m_binary_value_offset, m_binary_length) - m_binary_value_offset;
@@ -392,18 +869,99 @@ namespace CommonClassLibrary.DeviceSettings
 					}
 					break;
 
-				case ValueType.IntValue:
-					m_value = BitConverter.ToInt32(in_binary_value_file, m_binary_value_offset);
-					break;
-
-				case ValueType.FloatValue:
-					m_value = BitConverter.ToSingle(in_binary_value_file, m_binary_value_offset);
-					break;
-
-				case ValueType.EnumValue:
-					m_value = in_binary_value_file[m_binary_value_offset];
-					break;
+				default:
+					throw new InvalidDataException();
 			}
+		}
+
+		/// <summary>
+		/// Creates value class based on the XML content
+		/// </summary>
+		/// <param name="in_element"></param>
+		/// <param name="in_xml_stream"></param>
+		/// <param name="in_parent"></param>
+		/// <returns></returns>
+		public static ParserDeviceSettingValue ValueFactory(XPathNavigator in_element, TextReader in_xml_stream, ParserDeviceSettingsGroup in_parent)
+		{
+			ParserDeviceSettingValue value = null;
+
+			// create value class
+			switch (in_element.Name)
+			{
+				// UInt8 type
+				case "UInt8":
+					value = new ParserDeviceSettingValue(ParserDeviceSettingValue.ValueType.UInt8Value);
+					break;
+
+				// Int8 type
+				case "Int8":
+					value = new ParserDeviceSettingValue(ParserDeviceSettingValue.ValueType.Int8Value);
+					break;
+
+				// UInt16 type
+				case "UInt16":
+					value = new ParserDeviceSettingValue(ParserDeviceSettingValue.ValueType.UInt16Value);
+					break;
+
+				// UInt16 type
+				case "Int16":
+					value = new ParserDeviceSettingValue(ParserDeviceSettingValue.ValueType.Int16Value);
+					break;
+
+				case "Int32":
+				case "Int":
+					value = new ParserDeviceSettingValue(ParserDeviceSettingValue.ValueType.Int32Value);
+					break;
+
+				// Fixed UInt8 type
+				case "FixedUInt8":
+					value = new ParserDeviceSettingValue(ParserDeviceSettingValue.ValueType.UInt8FixedValue);
+					break;
+
+				// Fixed UInt8 type
+				case "Int8Fixed":
+					value = new ParserDeviceSettingValue(ParserDeviceSettingValue.ValueType.Int8FixedValue);
+					break;
+
+
+				// Fixed UInt16 type
+				case "UInt16Fixed":
+					value = new ParserDeviceSettingValue(ParserDeviceSettingValue.ValueType.UInt16FixedValue);
+					break;
+
+				// Fixed Int16 type
+				case "Int16Fixed":
+					value = new ParserDeviceSettingValue(ParserDeviceSettingValue.ValueType.Int16FixedValue);
+					break;
+
+				// enum type
+				case "Enum":
+					value = new ParserDeviceSettingValue(ParserDeviceSettingValue.ValueType.EnumValue);
+					break;
+
+				// float type
+				case "Float":
+					value = new ParserDeviceSettingValue(ParserDeviceSettingValue.ValueType.FloatValue);
+					break;
+
+				// string type
+				case "String":
+					value = new ParserDeviceSettingValue(ParserDeviceSettingValue.ValueType.StringValue);
+					break;
+
+				default:
+					throw XMLParserBase.CreateXMLParseException(string.Format(ParserDeviceSettingsStringConstants.ErrorInvalidElementType, in_element.Name), in_element);
+			}
+
+			// parse and store value class
+			if (value != null)
+			{
+				value.ParseXML(in_element);
+
+				in_parent.AddValue(in_element, value);
+			}
+
+			return value;
 		}
 
 		#endregion
@@ -435,21 +993,26 @@ namespace CommonClassLibrary.DeviceSettings
 		/// <param name="in_header_file"></param>
 		/// <param name="in_default_value_file"></param>
 		/// <param name="in_value_info_file"></param>
-		public void GenerateFiles(StringBuilder in_header_file, MemoryStream in_value_info_file, MemoryStream in_default_value_file)
+		public void GenerateFiles(ParserConfig in_parser_config)
 		{
-			// generate header declaration
-			string declaration = "#define cfgVAL_" + m_parent_group.ID.ToUpper() + "_" + m_id.ToUpper() + " " + m_value_index.ToString();
+			string declaration;
 
-			in_header_file.AppendLine(declaration);
+			// generate header declaration
+			if (in_parser_config.UseOffsets)
+				declaration = "#define cfgVAL_" + m_parent_group.ID.ToUpper() + "_" + m_id.ToUpper() + " " + m_binary_value_offset.ToString();
+			else
+				declaration = "#define cfgVAL_" + m_parent_group.ID.ToUpper() + "_" + m_id.ToUpper() + " " + m_value_index.ToString();
+
+			in_parser_config.HeaderFile.AppendLine(declaration);
 
 			// generate value info file
 			BinaryValueInfo value_info = new BinaryValueInfo((UInt16)m_binary_value_offset, (byte)m_binary_length, m_value_type);
 			byte[] value_info_binary = RawBinarySerialization.SerializeObject(value_info);
-			in_value_info_file.Write(value_info_binary, 0, value_info_binary.Length);
+			in_parser_config.ValueInfoFile.Write(value_info_binary, 0, value_info_binary.Length);
 
 			// generate default data
 			byte[] default_value = GetBinaryData();
-			in_default_value_file.Write(default_value, 0, default_value.Length);
+			in_parser_config.DefaultValueFile.Write(default_value, 0, default_value.Length);
 		}
 
 		#endregion

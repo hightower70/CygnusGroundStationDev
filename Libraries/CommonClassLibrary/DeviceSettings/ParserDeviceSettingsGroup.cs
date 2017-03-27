@@ -20,6 +20,7 @@
 // ----------------
 // Parser routines for XML elements attributes
 ///////////////////////////////////////////////////////////////////////////////
+using CommonClassLibrary.XMLParser;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -172,12 +173,12 @@ namespace CommonClassLibrary.DeviceSettings
 		/// <param name="in_header_file"></param>
 		/// <param name="in_default_value_file"></param>
 		/// <param name="in_value_info_file"></param>
-		public void GenerateFiles(StringBuilder in_header_file, MemoryStream in_value_info_file, MemoryStream in_default_value_file)
+		public void GenerateFiles(ParserConfig in_parser_config)
 		{
 			// process all groups
 			for (int i = 0; i < m_values.Count; i++)
 			{
-				m_values[i].GenerateFiles(in_header_file, in_value_info_file, in_default_value_file);
+				m_values[i].GenerateFiles(in_parser_config);
 			}
 		}
 

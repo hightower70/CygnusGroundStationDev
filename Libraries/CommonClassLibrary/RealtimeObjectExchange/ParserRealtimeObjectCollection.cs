@@ -20,7 +20,9 @@
 // ----------------
 // Collection storage for realtime objects
 ///////////////////////////////////////////////////////////////////////////////
+using CommonClassLibrary.XMLParser;
 using System.Collections.Generic;
+using System.Xml;
 using System.Xml.XPath;
 
 namespace CommonClassLibrary.RealtimeObjectExchange
@@ -77,51 +79,6 @@ namespace CommonClassLibrary.RealtimeObjectExchange
 			get { return m_objects; }
 		}
 
-		#endregion
-
-		#region · Object generation from code support ·
-
-		/// <summary>
-		/// Creates object in the collection. 
-		/// (This function is thread safe)
-		/// </summary>
-		/// <param name="in_name"></param>
-		/// <returns></returns>
-		public ParserRealtimeObject CreateObject(string in_name)
-		{
-			ParserRealtimeObject obj = new ParserRealtimeObject(in_name);
-
-			// adds object to the collection (thread safe)
-			lock(m_objects)
-			{
-				m_objects.Add(obj);
-				m_object_name_lookup.Add(obj.Name, m_objects.Count - 1);
-			}
-
-			return obj;
-		}
-
-
-		#endregion
-
-		#region · Realtime functions ·
-
-		/// <summary>
-		/// Initializes realtime operation
-		/// </summary>
-		public void RealtimeInitialization()
-		{
-			for(int i=0;i<m_objects.Count;i++)
-			{
-				m_objects[i].RealtimeInitialization();
-			}
-		}
-
-		public void ExchangeValues(ParserRealtimeObjectCollection in_new_values)
-		{
-
-
-		}
 		#endregion
 
 		#region · Parser functions ·

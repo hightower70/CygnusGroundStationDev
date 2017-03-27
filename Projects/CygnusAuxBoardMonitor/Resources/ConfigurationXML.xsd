@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="windows-1250"?>
+<xs:schema attributeFormDefault="unqualified" 
+           elementFormDefault="qualified" 
+           xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="Settings">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element maxOccurs="unbounded" minOccurs="0" name="EnumDefs">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element maxOccurs="unbounded" name="Title">
+                <xs:complexType>
+                  <xs:simpleContent>
+                    <xs:extension base="xs:string">
+                      <xs:attribute name="ID" type="xs:string" use="required" />
+                    </xs:extension>
+                  </xs:simpleContent>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+            <xs:attribute name="Name" type="xs:string" use="required" />
+            <xs:attribute name="ID" type="xs:ID" use="required" />
+          </xs:complexType>
+          <xs:unique name="UniqueTitleID">
+            <xs:selector xpath="Title"/>
+            <xs:field xpath="@ID"/>
+          </xs:unique>
+        </xs:element>
+        <xs:element maxOccurs="unbounded" minOccurs="1" name="Group">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:choice maxOccurs="unbounded">
+                <xs:element maxOccurs="unbounded" name="FixedUInt16">
+                  <xs:complexType>
+                    <xs:simpleContent>
+                      <xs:extension base="xs:float">
+                        <xs:attribute name="ID" type="xs:string" use="required" />
+                        <xs:attribute name="Name" type="xs:string" use="required" />
+                        <xs:attribute name="Description" type="xs:string" use="optional" />
+                        <xs:attribute name="Min" type="xs:float" use="optional" />
+                        <xs:attribute name="Max" type="xs:float" use="optional" />
+                        <xs:attribute name="Multiplier" type="xs:float" use="required"/>
+                        <xs:attribute name="FractionalDigits" type="xs:int" use="optional"/>
+                      </xs:extension>
+                    </xs:simpleContent>
+                  </xs:complexType>
+                </xs:element>
+                <xs:element maxOccurs="unbounded" name="Int16Fixed">
+                  <xs:complexType>
+                    <xs:simpleContent>
+                      <xs:extension base="xs:float">
+                        <xs:attribute name="ID" type="xs:string" use="required" />
+                        <xs:attribute name="Name" type="xs:string" use="required" />
+                        <xs:attribute name="Description" type="xs:string" use="optional" />
+                        <xs:attribute name="Min" type="xs:float" use="optional" />
+                        <xs:attribute name="Max" type="xs:float" use="optional" />
+                        <xs:attribute name="Multiplier" type="xs:float" use="required"/>
+                        <xs:attribute name="FractionalDigits" type="xs:int" use="optional"/>
+                      </xs:extension>
+                    </xs:simpleContent>
+                  </xs:complexType>
+                </xs:element>
+                <xs:element maxOccurs="unbounded" name="UInt8">
+                  <xs:complexType>
+                    <xs:simpleContent>
+                      <xs:extension base="xs:integer">
+                        <xs:attribute name="ID" type="xs:string" use="required" />
+                        <xs:attribute name="Name" type="xs:string" use="required" />
+                        <xs:attribute name="Description" type="xs:string" use="optional" />
+                        <xs:attribute name="Min" type="xs:byte" use="optional" />
+                        <xs:attribute name="Max" type="xs:byte" use="optional" />
+                      </xs:extension>
+                    </xs:simpleContent>
+                  </xs:complexType>
+                </xs:element>
+                <xs:element maxOccurs="unbounded" name="UInt16">
+                  <xs:complexType>
+                    <xs:simpleContent>
+                      <xs:extension base="xs:integer">
+                        <xs:attribute name="ID" type="xs:string" use="required" />
+                        <xs:attribute name="Name" type="xs:string" use="required" />
+                        <xs:attribute name="Description" type="xs:string" use="optional" />
+                        <xs:attribute name="Min" type="xs:unsignedShort" use="optional" />
+                        <xs:attribute name="Max" type="xs:unsignedShort" use="optional" />
+                      </xs:extension>
+                    </xs:simpleContent>
+                  </xs:complexType>
+                </xs:element>
+                <xs:element maxOccurs="unbounded" name="Int">
+                  <xs:complexType>
+                    <xs:simpleContent>
+                      <xs:extension base="xs:integer">
+                        <xs:attribute name="ID" type="xs:string" use="required" />
+                        <xs:attribute name="Name" type="xs:string" use="required" />
+                        <xs:attribute name="Description" type="xs:string" use="optional" />
+                      </xs:extension>
+                    </xs:simpleContent>
+                  </xs:complexType>
+                </xs:element>
+                <xs:element maxOccurs="unbounded" name="String">
+                  <xs:complexType>
+                    <xs:simpleContent>
+                      <xs:extension base="xs:string">
+                        <xs:attribute name="ID" type="xs:string" use="required" />
+                        <xs:attribute name="Name" type="xs:string" use="required" />
+                        <xs:attribute name="Length" type="xs:unsignedByte" use="required" />
+                        <xs:attribute name="Description" type="xs:string" use="optional" />
+                      </xs:extension>
+                    </xs:simpleContent>
+                  </xs:complexType>
+                </xs:element>
+                <xs:element maxOccurs="unbounded" name="Float">
+                  <xs:complexType>
+                    <xs:simpleContent>
+                      <xs:extension base="xs:decimal">
+                        <xs:attribute name="ID" type="xs:string" use="required" />
+                        <xs:attribute name="Name" type="xs:string" use="required" />
+                        <xs:attribute name="Description" type="xs:string" use="optional" />
+                      </xs:extension>
+                    </xs:simpleContent>
+                  </xs:complexType>
+                </xs:element>
+                <xs:element maxOccurs="unbounded" name="Enum">
+                  <xs:complexType>
+                    <xs:simpleContent>
+                      <xs:extension base="xs:decimal">
+                        <xs:attribute name="ID" type="xs:string" use="required" />
+                        <xs:attribute name="Name" type="xs:string" use="required" />
+                        <xs:attribute name="Description" type="xs:string" use="optional" />
+                        <xs:attribute name="Enum" type="xs:IDREF" use="required"/>
+                      </xs:extension>
+                    </xs:simpleContent>
+                  </xs:complexType>
+                </xs:element>
+              </xs:choice>
+            </xs:sequence>
+            <xs:attribute name="Name" type="xs:string" use="required" />
+            <xs:attribute name="ID" type="xs:string" use="required" />
+          </xs:complexType>
+          <xs:unique name="UniqueValueID">
+            <xs:selector xpath="Int|String|Float|Enum"/>
+            <xs:field xpath="@ID"/>
+          </xs:unique>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+      <xs:unique name="UniqueID">
+        <xs:selector xpath="EnumDefs|Group"/>
+        <xs:field xpath="@ID"/>
+      </xs:unique>
+  </xs:element>
+</xs:schema>

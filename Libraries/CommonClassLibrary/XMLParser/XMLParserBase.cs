@@ -22,10 +22,11 @@
 ///////////////////////////////////////////////////////////////////////////////
 using System.IO;
 using System.IO.Compression;
+using System.Reflection;
 using System.Xml;
 using System.Xml.XPath;
 
-namespace CommonClassLibrary
+namespace CommonClassLibrary.XMLParser
 {
 	/// <summary>
 	/// Base class for XML parsing
@@ -126,6 +127,28 @@ namespace CommonClassLibrary
 		}
 
 		/// <summary>
+		/// Parses XML file from resource
+		/// </summary>
+		/// <param name="in_start_path"></param>
+		/// <param name="in_resource_file_name"></param>
+		/// <returns></returns>
+		public bool ParseXMLFileFromResource(string in_start_path, string in_resource_file_name)
+		{
+			bool retval = false;
+
+
+			Assembly assembly = Assembly.GetEntryAssembly();
+			Stream stream = assembly.GetManifestResourceStream(in_resource_file_name);
+
+			using (StreamReader stream_reader = new StreamReader(stream))
+			{
+				retval = ParseXMLStream(in_start_path, stream_reader);
+			}
+
+			return retval;
+		}
+
+		/// <summary>
 		/// Parses XML as a file
 		/// </summary>
 		/// <param name="in_xml"></param>
@@ -134,7 +157,6 @@ namespace CommonClassLibrary
 		{
 			bool retval = false;
 
-			
 			using (TextReader reader = new StreamReader(in_xml_file_name))
 			{
 				retval = ParseXMLStream(in_start_path, reader);

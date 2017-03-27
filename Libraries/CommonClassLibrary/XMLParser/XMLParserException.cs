@@ -21,15 +21,12 @@
 // Exceptions used by parser
 ///////////////////////////////////////////////////////////////////////////////
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Xml;
 using System.Xml.XPath;
 
-namespace CommonClassLibrary
+namespace CommonClassLibrary.XMLParser
 {
-  public class XMLParserException : Exception
+	public class XMLParserException : Exception
 	{
 		#region · Data mebers ·
 		public string ErrorMessage;
@@ -71,9 +68,9 @@ namespace CommonClassLibrary
       ErrorMessage = "Attribute '" + in_attrbibute_name + "' must be defined";
     }
 
-	  public void SetInvalidAttributeValue(string in_attribute_value)
+	  public void SetInvalidAttributeValue(string in_attribute_name)
     {
-      ErrorMessage = "Invalid attribute value for '" + in_attribute_value + "'";
+      ErrorMessage = "Invalid attribute value for '" + in_attribute_name + "'";
     }
 
     public void SetNameAlreadyDefinedError(string in_name)
@@ -99,6 +96,11 @@ namespace CommonClassLibrary
 		public void SetInvalidTypeError(string in_name)
 		{
 			ErrorMessage = "Element type is invalid for '" + in_name + "'";
+		}
+
+		public void SetOutOfRangeError()
+		{
+			ErrorMessage = "Value is out of range";
 		}
 		#endregion
 	}

@@ -46,10 +46,12 @@
 	<Style TargetType="TreeView" BasedOn="{StaticResource StandardTreeView}"/>
 	<Style TargetType="GridSplitter" BasedOn="{StaticResource StandardGridSplitter}"/>
 	<Style TargetType="c:Title" BasedOn="{StaticResource StandardTitle}"/>
-    <Style TargetType="DataGrid" BasedOn="{StaticResource StandardDataGrid}"/>
-    <Style TargetType="ProgressBar" BasedOn="{StaticResource StandardProgressBar}"/>
+  <Style TargetType="DataGrid" BasedOn="{StaticResource StandardDataGrid}"/>
+  <Style TargetType="ProgressBar" BasedOn="{StaticResource StandardProgressBar}"/>
+	<Style TargetType="c:NumericUpDownInt" BasedOn="{StaticResource StandardNumericUpDown}"/>
+	<Style TargetType="c:NumericUpDownFloat" BasedOn="{StaticResource StandardNumericUpDown}"/>
 
-    <!--<Style TargetType="GridSplitter" BasedOn="{StaticResource StandardGridSplitter}"/>-->
+	<!--<Style TargetType="GridSplitter" BasedOn="{StaticResource StandardGridSplitter}"/>-->
     <!--
     <Style TargetType="TabControl" BasedOn="{StaticResource StandardTabControl}"/>
     <Style TargetType="ScrollBar" BasedOn="{StaticResource StandardScrollBar}"/>

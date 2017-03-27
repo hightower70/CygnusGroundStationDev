@@ -32,6 +32,6 @@ namespace CommonClassLibrary.DeviceSettings
 		ParserDeviceSettings.ClassType GetClassType();
 
 		void GenerateOffsets(ref int inout_current_offset);
-		void GenerateFiles(StringBuilder in_header_file, MemoryStream in_value_info_file, MemoryStream in_default_value_file);
+		void GenerateFiles(ParserConfig in_parser_config);
 	}
 }

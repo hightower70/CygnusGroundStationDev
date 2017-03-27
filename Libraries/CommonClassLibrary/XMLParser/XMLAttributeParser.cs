@@ -24,7 +24,7 @@ using System.Collections.Generic;
 using System.Xml;
 using System.Xml.XPath;
 
-namespace CommonClassLibrary
+namespace CommonClassLibrary.XMLParser
 {
   public class XMLAttributeParser
   {
@@ -100,6 +100,48 @@ namespace CommonClassLibrary
 			return in_default_value;
 		}
 
+		/// <summary>
+		/// Converts attribute value to int and sets the value of the given property. Or if the attributte value is variable name, store in the dependency list.
+		/// </summary>
+		/// <param name="in_element"></param>
+		/// <param name="in_attribute_name"></param>
+		/// <param name="in_attribute_type"></param>
+		static public int ConvertAttributeToInt(XPathNavigator in_element, string in_attribute_name, int in_attribute_type, int in_default_value)
+		{
+			string value = in_element.GetAttribute(in_attribute_name, "");
+
+			// check if attribute exists
+			if (!string.IsNullOrEmpty(value))
+			{
+				// convert string to int
+				int int_buffer = 0;
+				if (int.TryParse(value.Trim(), out int_buffer))
+				{
+					return int_buffer;
+				}
+				else
+				{
+					// throw an exception if value is invalid
+					IXmlLineInfo info = (IXmlLineInfo)in_element;
+					XMLParserException exception = new XMLParserException(info.LineNumber, info.LinePosition);
+					exception.SetInvalidAttributeValue(in_attribute_name);
+					throw exception;
+				}
+			}
+			else
+			{
+				// if attribute is obligatory throw an exception
+				if ((in_attribute_type & atObligatory) != 0)
+				{
+					IXmlLineInfo info = (IXmlLineInfo)in_element;
+					XMLParserException exception = new XMLParserException(info.LineNumber, info.LinePosition);
+					exception.SetAttributeNotFoundError(in_attribute_name);
+					throw exception;
+				}
+			}
+
+			return in_default_value;
+		}
 
 #if false
     /// <summary>

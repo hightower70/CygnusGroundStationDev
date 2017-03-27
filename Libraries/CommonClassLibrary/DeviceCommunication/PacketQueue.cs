@@ -221,7 +221,7 @@ namespace CommonClassLibrary.DeviceCommunication
 		}
 
 		/// <summary>
-		/// Deleete packet from the queue
+		/// Delete packet from the queue
 		/// </summary>
 		/// <returns>True if packet was deleted, false if queue is empty</returns>
 		public bool Pop()
@@ -384,32 +384,38 @@ namespace CommonClassLibrary.DeviceCommunication
 		private int ReservePushBuffer()
 		{
 			int new_push_index;
-			int packet_index;
+			int push_index;
 
 			lock (m_packets)
 			{
 				// check for empty space in the queue
-				packet_index = m_push_index;
-				if (m_packets[packet_index].State != PacketBufferState.Empty)
+				push_index = m_push_index;
+				if (m_packets[push_index].State != PacketBufferState.Empty)
 					return InvalidPacketIndex;
 
 				// reserve packet buffer
-				m_packets[packet_index].State = PacketBufferState.Reserved;
+				m_packets[push_index].State = PacketBufferState.Reserved;
 
 				// increment push pointer
-				new_push_index = packet_index + 1;
+				new_push_index = push_index + 1;
 
 				if (new_push_index >= m_packets.Length)
 					new_push_index = 0;
 
-				if (new_push_index != m_pop_index)
+				if (new_push_index == m_pop_index)
 				{
-					// update push pointer
+					// do not reserve the last slot of the buffer
+					m_packets[push_index].State = PacketBufferState.Empty;
+					push_index = InvalidPacketIndex;
+				}
+				else
+				{
+					// finish reservation, update push pointer
 					m_push_index = new_push_index;
 				}
 			}
 
-			return packet_index;
+			return push_index;
 		}
 		#endregion
 	}

@@ -30,12 +30,14 @@ using System.Threading;
 
 namespace CommonClassLibrary.DeviceCommunication
 {
-	public class UDPCommunicator : IDisposable, ICommunicationInterface
+	public class UDPCommunicator : IDisposable, ICommunicator
 	{
 		#region · Constants ·
-		public int ReceiveBufferSize = 512;
-		public int TransmitBufferSize = 512;
-		public int DeviceAnnounceTimeout = 3000;
+		private int ReceiveBufferSize = 512;
+		private int TransmitBufferSize = 512;
+		private int DeviceAnnounceTimeout = 3000;
+		private const int ThreadWaitTimeout = 100;
+
 		#endregion
 
 		#region · Types ·
@@ -44,24 +46,24 @@ namespace CommonClassLibrary.DeviceCommunication
 			public string Name;
 			public UInt32 UniqueID;
 			public IPAddress Address;
-			public bool HostInfoPending;
+			public bool HostAnnouncePending;
 
 			public DateTime LastInfoTimestamp;
 
 
-			public DeviceInfo(PacketDeviceInfo in_packet)
+			public DeviceInfo(PacketDeviceAnnounce in_packet)
 			{
 				Name = in_packet.DeviceName;
 				UniqueID = in_packet.UniqueID;
 				try
 				{
-					Address = new IPAddress(IPAddress.HostToNetworkOrder((int)in_packet.Address));
+					Address = new IPAddress((UInt32)IPAddress.HostToNetworkOrder((int)in_packet.Address));
 				}
 				catch
 				{
 					Address = IPAddress.None;
 				}
-				HostInfoPending = false;
+				HostAnnouncePending = false;
 				LastInfoTimestamp = DateTime.Now;
 			}
 
@@ -103,7 +105,7 @@ namespace CommonClassLibrary.DeviceCommunication
 		private Thread m_thread;
 		private volatile bool m_stop_requested; // external request to stop the thread
 		private ManualResetEvent m_thread_stopped;  // Worker thread sets this event when it is stopped
-		private AutoResetEvent m_event_occured;
+		private AutoResetEvent m_thread_event;
 		private SemaphoreSlim m_sender_lock;
 
 		private byte[] m_receive_buffer;
@@ -113,10 +115,9 @@ namespace CommonClassLibrary.DeviceCommunication
 
 		private Socket m_client;
 		private EndPoint m_receiver_endpoint;
-		private IPAddress m_local_ip_address = null;
-		private UInt32 m_client_unique_id;
 
 		private List<DeviceInfo> m_detected_devices = new List<DeviceInfo>();
+		private DeviceInfo m_current_device = null;
 
 		private volatile int m_upstream_bytes;
 		private volatile int m_downstream_bytes;
@@ -136,10 +137,10 @@ namespace CommonClassLibrary.DeviceCommunication
 		/// </summary>
 		public UDPCommunicator()
 		{
-			m_stop_requested = false;
 			m_thread_stopped = new ManualResetEvent(false);
 			m_sender_lock = new SemaphoreSlim(1, 1);
-			m_event_occured = new AutoResetEvent(false);
+			m_thread_event = new AutoResetEvent(false);
+			m_stop_requested = false;
 			m_thread = null;
 			m_receive_buffer = new byte[ReceiveBufferSize];
 			m_received_data_length = 0;
@@ -212,6 +213,13 @@ namespace CommonClassLibrary.DeviceCommunication
 			m_downstream_member.Write(downstream);
 		}
 
+		public void ConnectionLost()
+		{
+			lock (m_detected_devices)
+			{
+				m_current_device = null;
+			}
+		}
 
 		#endregion
 
@@ -225,7 +233,7 @@ namespace CommonClassLibrary.DeviceCommunication
 			// reset events
 			m_stop_requested = false;
 			m_thread_stopped.Reset();
-			m_event_occured.Reset();
+			m_thread_event.Reset();
 
 			// create worker thread instance
 			m_thread = new Thread(new ThreadStart(Run));
@@ -244,7 +252,7 @@ namespace CommonClassLibrary.DeviceCommunication
 			{
 				// set event "Stop"
 				m_stop_requested = true;
-				m_event_occured.Set();
+				m_thread_event.Set();
 
 				// wait when thread  will stop or finish
 				while (m_thread.IsAlive)
@@ -280,9 +288,9 @@ namespace CommonClassLibrary.DeviceCommunication
 			// get destination endpoint
 			lock(m_detected_devices)
 			{
-				if (m_detected_devices.Count > 0)
+				if (m_current_device != null)
 				{
-					transmitter_endpoint = new IPEndPoint(m_detected_devices[0].Address, UDPRemotePort);
+					transmitter_endpoint = new IPEndPoint(m_current_device.Address, UDPRemotePort);
 				}
 				else
 					return false;
@@ -313,28 +321,16 @@ namespace CommonClassLibrary.DeviceCommunication
 		/// <returns></returns>
 		public UInt32 GetClientID()
 		{
-			return m_client_unique_id;
-		}
+			UInt32 client_id = 0;
 
-		/// <summary>
-		/// Closes connection and resets communication
-		/// </summary>
-		private void CloseConnection()
-		{
-			m_client.Close();
-			m_client = null;
-			if (m_sender_lock.CurrentCount == 0)
+			lock (m_detected_devices)
 			{
-				try
-				{
-					m_sender_lock.Release();
-				}
-				catch
-				{
-				}
+				if (m_current_device != null)
+					client_id = m_current_device.UniqueID;
 			}
-		}
 
+			return client_id;
+		}
 
 		#endregion
 
@@ -349,16 +345,6 @@ namespace CommonClassLibrary.DeviceCommunication
 			int i;
 			UInt16 crc;
 			AsyncCallback receiver_callback = new AsyncCallback(ReceiveCallback);
-
-			// determine local IP address
-			IPAddress[] resolved_ip_address = Dns.GetHostAddresses("localhost");
-
-			// find first IPv4 address
-			for (i = 0; i < resolved_ip_address.Length; i++)
-			{
-				if (resolved_ip_address[i].AddressFamily == AddressFamily.InterNetwork)
-					m_local_ip_address = resolved_ip_address[i];
-			}
 
 			// create endpoints
 			m_receiver_endpoint = new IPEndPoint(IPAddress.Any, UDPLocalPort);
@@ -383,7 +369,7 @@ namespace CommonClassLibrary.DeviceCommunication
 			while (!m_stop_requested)
 			{
 				// wait for event
-				event_occured = m_event_occured.WaitOne(100);
+				event_occured = m_thread_event.WaitOne(ThreadWaitTimeout);
 
 				// exit loop if thread must be stopped
 				if (m_stop_requested)
@@ -408,32 +394,37 @@ namespace CommonClassLibrary.DeviceCommunication
 							// process received packet
 							switch (type)
 							{
-								case PacketType.CommDeviceInfo:
+								// process device annnounce packet
+								case PacketType.CommDeviceAnnounce:
 									{
-										PacketDeviceInfo device_info;
+										PacketDeviceAnnounce device_info;
 
-										// process device info
-										device_info = (PacketDeviceInfo)RawBinarySerialization.DeserializeObject(m_receive_buffer, typeof(PacketDeviceInfo));
+										// get announce packet
+										device_info = (PacketDeviceAnnounce)RawBinarySerialization.DeserializeObject(m_receive_buffer, typeof(PacketDeviceAnnounce));
 
-										// add device info into the collection
+										// check if it is already on the list of active devices
 										DeviceInfo current_device_info = m_detected_devices.Find(x => x.UniqueID == device_info.UniqueID);
 
 										if (current_device_info != null)
 										{
-											current_device_info.HostInfoPending = true;
+											// device is on the list
+											current_device_info.HostAnnouncePending = true;
 											current_device_info.LastInfoTimestamp = DateTime.Now;
 										}
 										else
 										{
 											DeviceInfo new_device = new DeviceInfo(device_info);
-											new_device.HostInfoPending = true;
+											new_device.HostAnnouncePending = true;
 
 											if (new_device.Address != IPAddress.None)
 											{
 												m_detected_devices.Add(new_device);
 												if(m_detected_devices.Count == 1)
 												{
-													m_client_unique_id = m_detected_devices[0].UniqueID;
+													lock (m_detected_devices)
+													{
+														m_current_device = m_detected_devices[0];
+													}
 												}
 											}
 										}
@@ -461,17 +452,21 @@ namespace CommonClassLibrary.DeviceCommunication
 					}
 				}
 
-				// send host info for devices
+				// send host announce for devices
 				for (i = 0; i < m_detected_devices.Count; i++)
 				{
-					if (m_detected_devices[i].HostInfoPending)
+					IPAddress address_mask = new IPAddress(new byte[] {255,255,255,0});
+
+					if (m_detected_devices[i].HostAnnouncePending)
 					{
+						IPAddress local_ip = GetLocalIPAddress(m_detected_devices[i].Address, address_mask);
+
 						if (m_sender_lock.Wait(0))
 						{
 							// create host info packet
-							PacketHostInfo info = new PacketHostInfo();
+							PacketHostAnnounce info = new PacketHostAnnounce();
 
-							info.Address = (uint)IPAddress.NetworkToHostOrder(BitConverter.ToInt32(m_local_ip_address.GetAddressBytes(), 0));
+							info.Address = (uint)IPAddress.NetworkToHostOrder(BitConverter.ToInt32(local_ip.GetAddressBytes(), 0));
 
 							byte[] packet = RawBinarySerialization.SerializeObject(info);
 
@@ -480,12 +475,12 @@ namespace CommonClassLibrary.DeviceCommunication
 
 							InternalPacketSend(transmitter_endpoint, packet);
 
-							m_detected_devices[i].HostInfoPending = false;
+							m_detected_devices[i].HostAnnouncePending = false;
 						}
 					}
 				}
 
-				// delete unreachable devices from the list
+				// delete unreachable or connectecd devices from the list
 				DateTime current_timestamp = DateTime.Now;
 				i = 0;
 				while(i<m_detected_devices.Count)
@@ -503,6 +498,8 @@ namespace CommonClassLibrary.DeviceCommunication
 			}
 
 			// close socket
+			m_client.Shutdown(SocketShutdown.Both);
+			Thread.Sleep(10);
 			m_client.Close();
 
 			// thread is finished
@@ -531,7 +528,7 @@ namespace CommonClassLibrary.DeviceCommunication
 				if (bytes_read > 0)
 				{
 					communicator.m_received_data_length = bytes_read;
-					communicator.m_event_occured.Set();
+					communicator.m_thread_event.Set();
 				}
 				else
 				{
@@ -577,6 +574,39 @@ namespace CommonClassLibrary.DeviceCommunication
 		#endregion
 
 		#region · Internal functions ·
+
+		/// <summary>
+		/// Gets local ip address of the given subnet
+		/// </summary>
+		/// <param name="in_network_address">Network address</param>
+		/// <param name="in_network_mask">Network mask</param>
+		/// <returns></returns>
+		private IPAddress GetLocalIPAddress(IPAddress in_network_address, IPAddress in_network_mask)
+		{
+			IPAddress local_address = null;
+			byte[] network_address = in_network_address.GetAddressBytes();
+			byte[] network_mask = in_network_mask.GetAddressBytes();
+			byte[] ip_address;
+
+			var host = Dns.GetHostEntry(Dns.GetHostName());
+			foreach (var ip in host.AddressList)
+			{
+				if (ip.AddressFamily == AddressFamily.InterNetwork)
+				{
+					ip_address = ip.GetAddressBytes();
+
+					if(((network_address[0] & network_mask[0]) == (ip_address[0] & network_mask[0])) &&
+						((network_address[1] & network_mask[1]) == (ip_address[1] & network_mask[1])) &&
+						((network_address[2] & network_mask[2]) == (ip_address[2] & network_mask[2])) &&
+						((network_address[3] & network_mask[3]) == (ip_address[3] & network_mask[3])))
+					{
+						local_address = ip;
+					}
+				}
+			}
+
+			return local_address;
+		}
 
 		/// <summary>
 		/// Send packets over the opened socket (internal function only, no error checking, locking, etc. mechanism is implemented)

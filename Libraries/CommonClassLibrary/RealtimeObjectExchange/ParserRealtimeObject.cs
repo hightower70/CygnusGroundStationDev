@@ -20,7 +20,9 @@
 // ----------------
 // Object for storing realtime values
 ///////////////////////////////////////////////////////////////////////////////
+using CommonClassLibrary.XMLParser;
 using System.Collections.Generic;
+using System.IO;
 using System.Xml.XPath;
 
 namespace CommonClassLibrary.RealtimeObjectExchange
@@ -33,27 +35,22 @@ namespace CommonClassLibrary.RealtimeObjectExchange
 		private List<ParserRealtimeObjectMember> m_members = new List<ParserRealtimeObjectMember>();
 		private Dictionary<string, int> m_members_lookup = new Dictionary<string, int>();
 
-		private int m_default_index;
+		private Dictionary<string, string> m_attributes = new Dictionary<string, string>();
 
-		private float[] m_values = null;
+		private int m_default_index =0;
+
+		private byte m_packet_id;
+
+
 		#endregion
 
 		#region · Constructor ·
 		/// <summary>
 		/// Default constructor
 		/// </summary>
-		public ParserRealtimeObject()
+		public ParserRealtimeObject(byte in_packet_id)
 		{
-
-		}
-
-		/// <summary>
-		/// Creates named object
-		/// </summary>
-		/// <param name="in_name"></param>
-		public ParserRealtimeObject(string in_name)
-		{
-			m_name = in_name;
+			m_packet_id = in_packet_id;
 		}
 
 		#endregion
@@ -86,6 +83,27 @@ namespace CommonClassLibrary.RealtimeObjectExchange
 		{
 			get { return m_members; }
 		}
+
+		/// <summary>
+		/// Gets packet ID
+		/// </summary>
+		public byte PacketID
+		{
+			get { return m_packet_id; }
+		}
+
+		/// <summary>
+		/// Gets object's attribute
+		/// </summary>
+		/// <param name="in_name"></param>
+		/// <returns>Attribute value or null if attribute is not defined</returns>
+		public string GetAttribute(string in_name)
+		{
+			if (m_attributes.ContainsKey(in_name))
+				return m_attributes[in_name];
+			else
+				return null;
+		}
 		#endregion
 
 		#region · Parser function ·
@@ -98,6 +116,18 @@ namespace CommonClassLibrary.RealtimeObjectExchange
 		{
 			// get name
 			m_name = XMLAttributeParser.ConvertAttributeToString(in_element, "Name", XMLAttributeParser.atObligatory);
+
+			// store attributes for further processing
+			XPathNavigator element = in_element.Clone();
+			if (element.MoveToFirstAttribute())
+			{
+				m_attributes.Add(element.Name, element.Value);
+			}
+
+			while (element.MoveToNextAttribute())
+			{
+				m_attributes.Add(element.Name, element.Value);
+			}
 		}
 
 		/// <summary>
@@ -110,51 +140,35 @@ namespace CommonClassLibrary.RealtimeObjectExchange
 			m_members.Add(in_member);
 			m_members_lookup.Add(in_member.Name, m_members.Count - 1);
 		}
+
 		#endregion
 
-		#region · Object generation from code support ·
+		#region · Header file generation ·
 
 		/// <summary>
-		/// Adds nem member to this object as a part of object generation from code functionality. The object generation must be initialized from RealtimeObjectColection class.
-		/// This function is thread safe.
+		/// Creates C type declaration header for this object
 		/// </summary>
-		/// <param name="in_name"></param>
-		/// <param name="in_member_type"></param>
-		public void AddMember(string in_name, RealtimeObjectMember.MemberType in_member_type)
+		/// <param name="in_header_file"></param>
+		public void CreateObjectDeclaration(ParserRealtimeObjectExchange.ParserParameters in_parameters)
 		{
-			ParserRealtimeObjectMember new_member = new ParserRealtimeObjectMember();
+			// declaration header
+			in_parameters.HeaderFile.WriteLine("///////////////////////////////////////////////////////////////////////////////");
+			in_parameters.HeaderFile.WriteLine("// " + m_name);
 
-			lock(m_members)
+			in_parameters.HeaderFile.WriteLine("typedef struct");
+			in_parameters.HeaderFile.WriteLine("{");
+			in_parameters.HeaderFile.WriteLine(in_parameters.Typedefs.PacketHeaderDeclaration);
+			in_parameters.HeaderFile.WriteLine();
+
+			// object members
+			foreach (ParserRealtimeObjectMember member in m_members)
 			{
-				
+				member.CreateMemberDeclaration(in_parameters);
 			}
-		}
-		#endregion
 
-		#region · Realtime access functions ·
-
-		/// <summary>
-		/// Initializes realtime access
-		/// </summary>
-		public void RealtimeInitialization()
-		{
-			// init array of values
-			m_values = new float[m_members.Count];
-
-			for (int i = 0; i < m_members.Count; i++)
-			{
-				m_values[i] = 0;
-			}
-		}
-
-		/// <summary>
-		/// Sets member value
-		/// </summary>
-		/// <param name="in_index"></param>
-		/// <param name="in_value"></param>
-		public void SetValue(int in_index, float in_value)
-		{
-			m_values[in_index] = in_value;
+			// declaration end
+			in_parameters.HeaderFile.WriteLine("} rox" + m_name + ";");
+			in_parameters.HeaderFile.WriteLine();
 		}
 
 		#endregion

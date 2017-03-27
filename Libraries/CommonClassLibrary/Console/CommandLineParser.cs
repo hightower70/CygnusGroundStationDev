@@ -20,6 +20,7 @@
 // ----------------
 // Command line parser routines for console applications
 ///////////////////////////////////////////////////////////////////////////////
+using CommonClassLibrary.XMLParser;
 using System;
 using System.IO;
 

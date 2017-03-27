@@ -21,7 +21,6 @@
 // File cache for system (flash) files
 ///////////////////////////////////////////////////////////////////////////////
 using CommonClassLibrary.Helpers;
-using CygnusGroundStation;
 using System;
 using System.IO;
 
@@ -103,6 +102,8 @@ namespace CommonClassLibrary.DeviceCommunication
 		}
 		#endregion
 
+		#region · Public members ·
+
 		/// <summary>
 		/// Gets file cache system path
 		/// </summary>
@@ -177,5 +178,7 @@ namespace CommonClassLibrary.DeviceCommunication
 
 			return cached_file;
 		}
+
+		#endregion
 	}
 }

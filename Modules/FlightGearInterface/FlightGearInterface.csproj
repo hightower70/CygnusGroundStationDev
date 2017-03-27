@@ -62,28 +62,36 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FlightGearThread.cs" />
     <Compile Include="FlightGearSettings.cs" />
     <Compile Include="Forms\SetupAbout.xaml.cs">
       <DependentUpon>SetupAbout.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Forms\SetupSettings.xaml.cs">
-      <DependentUpon>SetupSettings.xaml</DependentUpon>
+    <Compile Include="Forms\SetupConnection.xaml.cs">
+      <DependentUpon>SetupConnection.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\SetupConfigFile.xaml.cs">
+      <DependentUpon>SetupConfigFile.xaml</DependentUpon>
     </Compile>
     <Compile Include="ModuleInterface.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Libraries\Controls\CygnusControls.csproj">
+    <ProjectReference Include="..\..\Libraries\CommonClassLibrary\CommonClassLibrary.csproj">
+      <Project>{1ceced51-8cd3-4bba-a46c-f0ce6768334b}</Project>
+      <Name>CommonClassLibrary</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Libraries\CygnusControls\CygnusControls.csproj">
       <Project>{2a3c94d7-b9f2-4ddc-b593-308e1dabaab1}</Project>
       <Name>CygnusControls</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\CygnusGroundStation\CygnusGroundStation.csproj">
-      <Project>{336df8dd-0ad0-4d17-9c08-46689c192f80}</Project>
-      <Name>CygnusGroundStation</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\Libraries\Skins\DarkSkin\DarkSkin.csproj">
       <Project>{d18c8da5-f4ed-4774-a9eb-294cbe8ac340}</Project>
       <Name>DarkSkin</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Projects\CygnusGroundStation\CygnusGroundStation.csproj">
+      <Project>{336df8dd-0ad0-4d17-9c08-46689c192f80}</Project>
+      <Name>CygnusGroundStation</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup />
@@ -92,7 +100,11 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Forms\SetupSettings.xaml">
+    <Page Include="Forms\SetupConnection.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Forms\SetupConfigFile.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

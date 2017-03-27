@@ -20,6 +20,7 @@
 // ----------------
 // Realtime Object Exchange - Linear value converter class
 ///////////////////////////////////////////////////////////////////////////////
+using CommonClassLibrary.XMLParser;
 using System.Xml.XPath;
 
 namespace CommonClassLibrary.RealtimeObjectExchange

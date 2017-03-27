@@ -1,0 +1,5 @@
+-config:ConfigurationXML.xml
+-header:"cfgConstants.h"
+-defaultdata:"cfgDefault.inl"
+-xmldata:"cfgXML.inl"
+-useoffsets

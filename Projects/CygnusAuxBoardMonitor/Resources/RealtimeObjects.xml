@@ -1,0 +1,16 @@
+<RealtimeObjectExchangle>
+
+  <!-- Objects -->
+  <Object Name="UltrasonicDistance" EnabledByDefault="1">
+    <UInt16Fixed Name="Distance1" Multiplier="10"/>
+    <UInt16Fixed Name="Distance2" Multiplier="10"/>
+    <UInt16Fixed Name="Distance3" Multiplier="10"/>
+    <UInt16Fixed Name="Distance4" Multiplier="10"/>
+  </Object>
+
+  <Object Name="AirTemperature">
+    <UInt16 Name="TemperatureADC"/>
+    <UInt16Fixed Name="Temperature" Multiplier="10"/>
+  </Object>
+
+</RealtimeObjectExchangle>

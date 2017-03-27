@@ -20,6 +20,7 @@
 // ----------------
 // Value storage/parser for enumerated type
 ///////////////////////////////////////////////////////////////////////////////
+using CommonClassLibrary.XMLParser;
 using System.Xml.XPath;
 
 namespace CommonClassLibrary.DeviceSettings

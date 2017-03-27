@@ -165,27 +165,27 @@ public ParserDeviceSettings.ClassType GetClassType()
 		/// <param name="in_header_file"></param>
 		/// <param name="in_default_value_file"></param>
 		/// <param name="in_value_info_file"></param>
-		public void GenerateFiles(StringBuilder in_header_file, MemoryStream in_value_info_file, MemoryStream in_default_value_file)
+		public void GenerateFiles(ParserConfig in_parser_config)
 		{
 			// process enums
 			if (m_enum_defs.Count > 0)
 			{
-				in_header_file.AppendLine("// Enum definitions");
+				in_parser_config.HeaderFile.AppendLine("// Enum definitions");
 
 				for(int i=0; i< m_enum_defs.Count;i++)
 				{
-					m_enum_defs[i].GenerateFiles(in_header_file, in_value_info_file, in_default_value_file);
+					m_enum_defs[i].GenerateFiles(in_parser_config);
 				}
 			}
 
 			if (m_groups.Count > 0)
 			{
-				in_header_file.AppendLine("// Value definitions");
+				in_parser_config.HeaderFile.AppendLine("// Value definitions");
 
 				// process all groups
 				for (int i = 0; i < m_groups.Count; i++)
 				{
-					m_groups[i].GenerateFiles(in_header_file, in_value_info_file, in_default_value_file);
+					m_groups[i].GenerateFiles(in_parser_config);
 				}
 			}
 		}

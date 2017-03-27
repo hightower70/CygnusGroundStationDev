@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Type mapping from packet declaration to programming language declarations -->
+<Types>
+  <Type Name="PacketHeader" CDecl="  comPacketHeader Header;"/>
+
+  <Type Name="UInt8" CDecl="uint8_t"/>
+  <Type Name="Int8" CDecl="int8_t"/>
+  <Type Name="UInt16" CDecl="uint16_t"/>
+  <Type Name="Int16" CDecl="int16_t"/>
+  <Type Name="UInt32" CDecl="uint32_t"/>
+  <Type Name="Int32" CDecl="int32_t"/>
+
+  <Type Name="UInt8Fixed" CDecl="uint8_t"/>
+  <Type Name="Int8Fixed" CDecl="int8_t"/>
+  <Type Name="UInt16Fixed" CDecl="uint16_t"/>
+  <Type Name="Int16Fixed" CDecl="int16_t"/>
+  <Type Name="UInt32Fixed" CDecl="uint32_t"/>
+  <Type Name="Int32Fixed" CDecl="int32_t"/>
+  
+  <Type Name="Value" CDecl="float"/>
+</Types>
+

@@ -1,0 +1,555 @@
+﻿<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+						 xmlns:c ="clr-namespace:CygnusControls;assembly=CygnusControls"
+             mc:Ignorable="d" 
+             d:DesignHeight="600" d:DesignWidth="1000"
+						 Background="Black">
+    <UserControl.Resources>
+        <c:LinearMappingConverter x:Key="AirspeedMapper" InputMin="0" InputMax="200" OutputMin="-240" OutputMax="60"/>
+        <c:LinearMappingConverter x:Key="AltitudeMapper" InputMin="0" InputMax="100" OutputMin="-90" OutputMax="270" OverflowMode="Wrap"/>
+        <c:LinearMappingConverter x:Key="VerticalSpeedMapper" InputMin="-6" InputMax="6" OutputMin="66" OutputMax="-66" OverflowMode="Limit">
+            <c:LinearMappingConverter.Items>
+                <c:LinearMappingPoint Input="-2" Output="50"/>
+                <c:LinearMappingPoint Input="-1" Output="30"/>
+                <c:LinearMappingPoint Input="0" Output="0"/>
+                <c:LinearMappingPoint Input="1" Output="-30"/>
+                <c:LinearMappingPoint Input="2" Output="-50"/>
+            </c:LinearMappingConverter.Items>
+        </c:LinearMappingConverter>
+
+        <c:RealtimeObjectProvider x:Key="DeviceCommunicationStateProvider" RealtimeObjectName="DeviceCommunicationState"/>
+				<c:RealtimeObjectProvider x:Key="DeviceHeartBeatProvider" RealtimeObjectName="DeviceHeartBeat"/>
+				<c:LinearMappingConverter x:Key="PitchMapper" InputMin="-180" InputMax="180" OutputMin="-360" OutputMax="360" OverflowMode="Limit"/>
+
+        <c:NumericFormatConverter x:Key="NumberFormatter" />
+
+		<c:CircularConverter x:Key="BatteryVoltageConverter" CenterX="0" CenterY="-6" RadiusX="35" RadiusY="34" ValueMin="0" ValueMax="100" AngleMin="180" AngleMax="360"/>
+		<c:CircularConverter x:Key="BatteryCurrentConverter" CenterX="0" CenterY="6" RadiusX="35" RadiusY="34" ValueMin="0" ValueMax="10" AngleMin="180" AngleMax="0"/>
+
+
+		<!-- Colors for sky -->
+        <Color x:Key="SkyTopBlue">#0e2f62</Color>
+        <Color x:Key="SkyBottomBlue">#6ea2f6</Color>
+
+        <LinearGradientBrush x:Key="SkyBrush" StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="{StaticResource SkyTopBlue}" Offset="0"/>
+            <GradientStop Color="{StaticResource SkyBottomBlue}" Offset="1"/>
+        </LinearGradientBrush>
+
+        <!-- Colors for ground -->
+        <Color x:Key="GroundTopBrown">#ca8430</Color>
+        <Color x:Key="GroundBottomBrown">#503500</Color>
+
+        <LinearGradientBrush x:Key="GroundBrush" StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="{StaticResource GroundTopBrown}" Offset="0"/>
+            <GradientStop Color="{StaticResource GroundBottomBrown}" Offset="1"/>
+        </LinearGradientBrush>
+
+    </UserControl.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="320"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!--  Top grid -->
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="520"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- PFD -->
+            <Border Grid.Column="0" Grid.Row="0" BorderBrush="{DynamicResource BorderBrushNormal}" BorderThickness="1" Margin="3">
+                <Grid>
+
+                    <!-- Attitude strip -->
+                    <Canvas HorizontalAlignment="Center" VerticalAlignment="Center" ClipToBounds="True" Width="500" Height="300">
+                        <Canvas Canvas.Left="250" Canvas.Top="150">
+
+                            <!-- Sky -->
+                            <Rectangle Canvas.Left="-400" Canvas.Top="-660" Width="800" Height="301" >
+                                <Rectangle.Fill>
+                                    <SolidColorBrush Color="{StaticResource SkyTopBlue}"/>
+                                </Rectangle.Fill>
+                            </Rectangle>
+                            <Rectangle Canvas.Left="-400" Canvas.Top="-360" Width="800" Height="360" Fill="{DynamicResource SkyBrush}"/>
+
+                            <!-- Ground -->
+                            <Rectangle Canvas.Left="-400" Canvas.Top="0" Width="800" Height="360" Fill="{DynamicResource GroundBrush}"/>
+                            <Rectangle Canvas.Left="-400" Canvas.Top="359" Width="800" Height="301">
+                                <Rectangle.Fill>
+                                    <SolidColorBrush Color="{StaticResource GroundBottomBrown}"/>
+                                </Rectangle.Fill>
+                            </Rectangle>
+
+                            <!-- Horizont -->
+                            <Line X1="-400" Y1="0" X2="400" Y2="0" Stroke="White" StrokeThickness="2"/>
+                            <Canvas.RenderTransform>
+                                <TransformGroup>
+                                    <TranslateTransform X="0" Y="{Binding Value, ElementName=pitch_slider, Mode=OneWay, Converter={StaticResource PitchMapper}}"/>
+                                    <RotateTransform Angle="{Binding Value, ElementName=roll_slider, Mode=OneWay}" CenterX="0" CenterY="0"/>
+                                </TransformGroup>
+                            </Canvas.RenderTransform>
+                        </Canvas>
+                    </Canvas>
+
+                    <!-- Pitch markers -->
+                    <Canvas HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Canvas Canvas.Left="0" Canvas.Top="0">
+
+                            <!-- <Rectangle Canvas.Left="-200" Canvas.Top="-200" Width="400" Height="400" Fill="Blue"/>-->
+
+                            <!-- 5 deg markers -->
+                            <Line X1="-10" Y1="10" X2="10" Y2="10" Stroke="White" StrokeThickness="1"/>
+                            <Line X1="-10" Y1="-10" X2="10" Y2="-10" Stroke="White" StrokeThickness="1"/>
+
+                            <!-- 10 deg markers-->
+                            <Path Canvas.Left="0" Canvas.Top="-20" Data="M-25,5 L-25,0 25,0 25,5" Stroke="White" StrokeThickness="1"/>
+                            <Path Canvas.Left="0" Canvas.Top="20" Data="M-25,-5 L-25,0 25,0 25,-5" Stroke="White" StrokeThickness="1"/>
+                            <TextBlock Canvas.Left="-40" Canvas.Top="-25" Text="10" FontFamily="Lucida Sans Typewriter" FontSize="10" Foreground="White"/>
+                            <TextBlock Canvas.Left="27" Canvas.Top="-25" Text="10" FontFamily="Lucida Sans Typewriter" FontSize="10" Foreground="White"/>
+                            <TextBlock Canvas.Left="-40" Canvas.Top="15" Text="10" FontFamily="Lucida Sans Typewriter" FontSize="10" Foreground="White"/>
+                            <TextBlock Canvas.Left="27" Canvas.Top="15" Text="10" FontFamily="Lucida Sans Typewriter" FontSize="10" Foreground="White"/>
+
+                            <!-- 15 deg markers -->
+                            <Line X1="-10" Y1="30" X2="10" Y2="30" Stroke="White" StrokeThickness="1"/>
+                            <Line X1="-10" Y1="-30" X2="10" Y2="-30" Stroke="White" StrokeThickness="1"/>
+
+                            <!-- 20 deg markers-->
+                            <Path Canvas.Left="0" Canvas.Top="-40" Data="M-35,5 L-35,0 35,0 35,5" Stroke="White" StrokeThickness="1"/>
+                            <Path Canvas.Left="0" Canvas.Top="40" Data="M-35,-5 L-35,0 35,0 35,-5" Stroke="White" StrokeThickness="1"/>
+                            <TextBlock Canvas.Left="-50" Canvas.Top="-45" Text="20" FontFamily="Lucida Sans Typewriter" FontSize="10" Foreground="White"/>
+                            <TextBlock Canvas.Left="37" Canvas.Top="-45" Text="20" FontFamily="Lucida Sans Typewriter" FontSize="10" Foreground="White"/>
+                            <TextBlock Canvas.Left="-50" Canvas.Top="35" Text="20" FontFamily="Lucida Sans Typewriter" FontSize="10" Foreground="White"/>
+                            <TextBlock Canvas.Left="37" Canvas.Top="35" Text="20" FontFamily="Lucida Sans Typewriter" FontSize="10" Foreground="White"/>
+
+                            <!-- 25 deg markers -->
+                            <Line X1="-10" Y1="50" X2="10" Y2="50" Stroke="White" StrokeThickness="1"/>
+                            <Line X1="-10" Y1="-50" X2="10" Y2="-50" Stroke="White" StrokeThickness="1"/>
+
+                            <!-- 30 deg markers-->
+                            <Path Canvas.Left="0" Canvas.Top="-60" Data="M-45,5 L-45,0 45,0 45,5" Stroke="White" StrokeThickness="1"/>
+                            <Path Canvas.Left="0" Canvas.Top="60" Data="M-45,-5 L-45,0 45,0 45,-5" Stroke="White" StrokeThickness="1"/>
+                            <TextBlock Canvas.Left="-60" Canvas.Top="-65" Text="30" FontFamily="Lucida Sans Typewriter" FontSize="10" Foreground="White"/>
+                            <TextBlock Canvas.Left="47" Canvas.Top="-65" Text="30" FontFamily="Lucida Sans Typewriter" FontSize="10" Foreground="White"/>
+                            <TextBlock Canvas.Left="-60" Canvas.Top="55" Text="30" FontFamily="Lucida Sans Typewriter" FontSize="10" Foreground="White"/>
+                            <TextBlock Canvas.Left="47" Canvas.Top="55" Text="30" FontFamily="Lucida Sans Typewriter" FontSize="10" Foreground="White"/>
+
+                            <!-- 35 deg markers -->
+                            <Line X1="-10" Y1="70" X2="10" Y2="70" Stroke="White" StrokeThickness="1"/>
+                            <Line X1="-10" Y1="-70" X2="10" Y2="-70" Stroke="White" StrokeThickness="1"/>
+
+                            <!-- Sky arrows -->
+                            <Path Canvas.Left="0" Canvas.Top="-180" Stroke="DarkRed" StrokeThickness="1" Fill="Red"  Data="M0,0 L40,-40 30,-40 0,-20 -30,-40 -40,-40 z" />
+                            <Path Canvas.Left="0" Canvas.Top="-270" Stroke="DarkRed" StrokeThickness="1" Fill="Red"  Data="M0,0 L40,-40 30,-40 0,-20 -30,-40 -40,-40 z" />
+
+                            <!-- Ground arrows -->
+                            <Path Canvas.Left="0" Canvas.Top="180" Stroke="DarkRed" StrokeThickness="1" Fill="Red" Data="M0,0 L40,40 30,40 0,20 -30,40 -40,40 z" />
+                            <Path Canvas.Left="0" Canvas.Top="270" Stroke="DarkRed" StrokeThickness="1" Fill="Red" Data="M0,0 L40,40 30,40 0,20 -30,40 -40,40 z" />
+
+                            <Canvas.RenderTransform>
+                                <TransformGroup>
+                                    <TranslateTransform X="0" Y="{Binding Value, ElementName=pitch_slider, Mode=OneWay, Converter={StaticResource PitchMapper}}"/>
+                                    <RotateTransform Angle="{Binding Value, ElementName=roll_slider, Mode=OneWay}" CenterX="0" CenterY="0"/>
+                                </TransformGroup>
+                            </Canvas.RenderTransform>
+                        </Canvas>
+                        <Canvas.Clip>
+                            <PathGeometry>
+                                <PathFigure StartPoint="-80,-0">
+                                    <PathFigure.Segments>
+                                        <ArcSegment Point="80,-0" SweepDirection="Clockwise" Size="80,80"/>
+                                        <LineSegment Point="80,90"/>
+                                        <LineSegment Point="-80,90"/>
+                                    </PathFigure.Segments>
+                                </PathFigure>
+                            </PathGeometry>
+                        </Canvas.Clip>
+                    </Canvas>
+
+                    <!-- Roll indicator -->
+                    <Canvas HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Path Canvas.Left="0"	Canvas.Top="-91" Data="M-5,-5 L5,-5 0,0 z" Stroke="White" StrokeThickness="1"/>
+                        <Path Canvas.Left="0" Canvas.Top="0" Data="M-87,-50 L -78,-45 A 90,90 120 0 1 78,-45 L 87,-50" Stroke="White" StrokeThickness="1"/>
+                        <Line X1="-16" Y1="-89" X2="-17" Y2="-95" Stroke="White" StrokeThickness="1"/>
+                        <!-- 10 -->
+                        <Line X1="16" Y1="-89" X2="17" Y2="-95" Stroke="White" StrokeThickness="1"/>
+                        <!-- -10 -->
+                        <Line X1="-31" Y1="-85" X2="-33" Y2="-90" Stroke="White" StrokeThickness="1"/>
+                        <!-- 20 -->
+                        <Line X1="31" Y1="-85" X2="33" Y2="-90" Stroke="White" StrokeThickness="1"/>
+                        <!-- -20 -->
+                        <Line X1="-45" Y1="-78" X2="-50" Y2="-86" Stroke="White" StrokeThickness="1"/>
+                        <!-- 30 -->
+                        <Line X1="45" Y1="-78" X2="50" Y2="-86" Stroke="White" StrokeThickness="1"/>
+                        <!-- -30 -->
+                        <Line X1="-64" Y1="-64" X2="-68" Y2="-68" Stroke="White" StrokeThickness="1"/>
+                        <!-- 45 -->
+                        <Line X1="64" Y1="-64" X2="68" Y2="-68" Stroke="White" StrokeThickness="1"/>
+                        <!-- -45 -->
+                        <Canvas.RenderTransform>
+                            <RotateTransform Angle="{Binding Value, ElementName=roll_slider, Mode=OneWay}" CenterX="0" CenterY="0"/>
+                        </Canvas.RenderTransform>
+                    </Canvas>
+
+                    <!-- Orientation markers -->
+                    <Canvas HorizontalAlignment="Center" VerticalAlignment="Center" >
+                        <!-- center marker -->
+                        <Path Canvas.Left="0" Canvas.Top="0" Stroke="#a0a000" StrokeThickness="1" Data="M0,0 L30,15 0,10 -30,15 z" Fill="#a0a000"  />
+                        <Path Canvas.Left="0" Canvas.Top="0" Data="M0,0 L30,15 0,6 -30,15 z" Fill="Yellow"  />
+
+                        <!-- Right marker -->
+                        <Path Canvas.Left="50" Canvas.Top="0" Stroke="#a0a000" StrokeThickness="1" Data="M0,0 L5,3 30,3 30,-3 5,-3 z" Fill="#a0a000"  />
+                        <Path Canvas.Left="50" Canvas.Top="0" Data="M0,0 L5,-3 30,-3 30,0 z" Fill="Yellow"  />
+
+                        <!-- Right marker -->
+                        <Path Canvas.Left="-50" Canvas.Top="0" Stroke="#a0a000" StrokeThickness="1" Data="M0,0 L-5,3 -30,3 -30,-3 -5,-3 z" Fill="#a0a000"  />
+                        <Path Canvas.Left="-50" Canvas.Top="0" Data="M0,0 L-5,-3 -30,-3 -30,0 z" Fill="Yellow"  />
+
+                        <!-- Roll marker -->
+                        <Path Canvas.Left="0" Canvas.Top="-89" Data="M0,0 L6,6 -6,6 z" Fill="White"/>
+                    </Canvas>
+
+                    <!-- Heading indicator -->
+                    <Canvas HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Rectangle Canvas.Left="-150" Canvas.Top="-145" Width="300" Height="30" Fill="#40000000"/>
+                        <Border Canvas.Left="-148" Canvas.Top="-143" Width="296"	Height="26"	BorderBrush="White" BorderThickness="1"/>
+                        <c:LinearScale Canvas.Left="-147" Canvas.Top="-140" Width="294" Height="20" ScaleMin="0" ScaleMax="360" VisibleRange="120" ScaleOffset="60" LoopedScale="True" MinorTickColor="White" MinorTickThickness="1" MinorTickCount="2" MinorTickLength="5" Orientation="Horizontal" ScalePosition="BottomOrRight" ScaleLineThickness="1" Font="Lucida Sans Typewriter" FontColor="White" FontHeight="8" MajorTickCount="12" MajorTickColor="White" MajorTickThickness="1" MajorTickLength="8" MajorTickLabelGap="5" Value="{Binding Value, ElementName=heading_slider}">
+                            <c:LinearScale.Labels>
+                                <c:MajorTickLabel Value="0" Label="N" FontColor="Yellow" FontHeight="12"/>
+                                <c:MajorTickLabel Value="90" Label="E" FontColor="Yellow" FontHeight="12"/>
+                                <c:MajorTickLabel Value="180" Label="S" FontColor="Yellow" FontHeight="12"/>
+                                <c:MajorTickLabel Value="270" Label="W" FontColor="Yellow" FontHeight="12"/>
+                                <c:MajorTickLabel Value="360" Label="N" FontColor="Yellow" FontHeight="12"/>
+                            </c:LinearScale.Labels>
+
+                        </c:LinearScale>
+                        <Path Canvas.Left="0" Canvas.Top="-120" Data="M -5,0 0,-4 5,0 20,0 20,15 -20,15 -20,0 z" Fill="Black" Stroke="White" StrokeThickness="1"/>
+                        <TextBlock Canvas.Left="-15" Canvas.Top="-119" Width="30" FontFamily="Lucida Sans Typewriter" FontSize="12" TextAlignment="Center" Text="{Binding Value, ElementName=heading_slider, Converter={StaticResource NumberFormatter}, ConverterParameter={}{0:0°}}"/>
+                    </Canvas>
+
+                    <!-- Airspeed indicator -->
+                    <Canvas HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Rectangle Canvas.Left="-175" Canvas.Top="-100" Width="52" Height="200" Fill="#40000000"/>
+                        <Border Canvas.Left="-173" Canvas.Top="-98" Width="48"	Height="196"	BorderBrush="White" BorderThickness="1"/>
+                        <c:LinearScale Canvas.Left="-168" Canvas.Top="-97" Width="35" Height="194" ScaleMin="0" ScaleMax="200" VisibleRange="60" MajorTickCount="20" MajorTickColor="White" ScalePosition="BottomOrRight" ScaleLineThickness="1" MajorTickThickness="1" MajorTickLength="8" ScaleOffset="30" Font="Lucida Sans Typewriter" FontHeight="10" FontColor="White" Value="{Binding Value, ElementName=airspeed_slider}"/>
+                        <Path Canvas.Left="-170" Canvas.Top="0" Data="M 0,-10 30,-10 30,-4 34,0 30,4 30,10 0,10 z" Fill="Black" Stroke="White" StrokeThickness="1"/>
+                        <TextBlock Canvas.Left="-168" Canvas.Top="-7" Width="25" FontFamily="Lucida Sans Typewriter" FontSize="12" TextAlignment="Right" Text="{Binding Value, ElementName=airspeed_slider, Converter={StaticResource NumberFormatter}, ConverterParameter={}{0:0}}"/>
+                    </Canvas>
+
+                    <!-- Altitude indicator -->
+                    <Canvas HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Rectangle Canvas.Left="120" Canvas.Top="-100" Width="55" Height="200" Fill="#40000000"/>
+                        <Border Canvas.Left="122" Canvas.Top="-98" Width="51"	Height="196"	BorderBrush="White" BorderThickness="1"/>
+                        <c:LinearScale Canvas.Left="125" Canvas.Top="-97" Width="43" Height="194" ScaleMin="0" ScaleMax="15000" VisibleRange="50" MajorTickCount="3000" MajorTickColor="White" ScaleLineThickness="1" ScaleOffset="25" MajorTickThickness="1" MajorTickLength="8" Font="Lucida Sans Typewriter" FontHeight="10" FontColor="White" Value="{Binding Value, ElementName=altitude_slider}"/>
+                        <Path Canvas.Left="170" Canvas.Top="0" Data="M 0,-10 -40,-10 -40,-4 -44,0 -40,4 -40,10 0,10 z" Fill="Black" Stroke="White" StrokeThickness="1"/>
+                        <TextBlock Canvas.Left="132" Canvas.Top="-7" Width="36" FontFamily="Lucida Sans Typewriter" TextAlignment="Right" FontSize="12" Text="{Binding Value, ElementName=altitude_slider, Converter={StaticResource NumberFormatter}, ConverterParameter={}{0:0}}"/>
+                    </Canvas>
+
+
+                    <!-- Vertical speed indicator -->
+                    <Canvas HorizontalAlignment="Center"  VerticalAlignment="Center">
+                        <Canvas Canvas.Left="177" Canvas.Top="0">
+                            <Rectangle Canvas.Left="0" Canvas.Top="-77" Width="29" Height="154" Fill="#40000000"/>
+                            <Rectangle Canvas.Left="2" Canvas.Top="-75" Width="25" Height="150" Stroke="White" StrokeThickness="1"/>
+
+                            <!-- needle -->
+                            <Line X1="22" Y1="0" X2="22" Y2="{Binding Value, ElementName=vertical_speed_slider, Mode=OneWay, Converter={StaticResource VerticalSpeedMapper}}" StrokeThickness="8">
+                                <Line.Style>
+                                    <Style TargetType="Line">
+                                        <Setter Property="Stroke" Value="LightGreen"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Value, ElementName=vertical_speed_slider, Mode=OneWay, Converter={x:Static c:IsLessThanConverter.Instance}, ConverterParameter=0}" Value="True">
+                                                <Setter Property="Stroke" Value="Red"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Line.Style>
+                            </Line>
+
+                            <!-- scale line -->
+                            <Line X1="17" Y1="-66" X2="17" Y2="66" Stroke="White" StrokeThickness="1"/>
+
+                            <!-- marker 6 -->
+                            <TextBlock Canvas.Left="3" Canvas.Top="-72" Text="6" TextAlignment="Right" Width="13" FontFamily="Lucida Sans Typewriter" FontSize="10" Foreground="White"/>
+                            <Line X1="17" Y1="-66" X2="23" Y2="-66" Stroke="White" StrokeThickness="1"/>
+                            <Line X1="17" Y1="-58" X2="21" Y2="-58" Stroke="White" StrokeThickness="1"/>
+
+                            <!-- Marker 2 -->
+                            <TextBlock Canvas.Left="3" Canvas.Top="-56" Text="2" TextAlignment="Right" Width="13" FontFamily="Lucida Sans Typewriter" FontSize="10" Foreground="White"/>
+                            <Line X1="17" Y1="-50" X2="23" Y2="-50" Stroke="White" StrokeThickness="1"/>
+                            <Line X1="17" Y1="-40" X2="21" Y2="-40" Stroke="White" StrokeThickness="1"/>
+
+                            <!-- marker 1 -->
+                            <TextBlock Canvas.Left="3" Canvas.Top="-36" Text="1" TextAlignment="Right" Width="13" FontFamily="Lucida Sans Typewriter" FontSize="10" Foreground="White"/>
+                            <Line X1="17" Y1="-30" X2="23" Y2="-30" Stroke="White" StrokeThickness="1"/>
+                            <Line X1="17" Y1="-15" X2="21" Y2="-15" Stroke="White" StrokeThickness="1"/>
+                            <Line X1="17" Y1="-7" X2="19" Y2="-7" Stroke="White" StrokeThickness="1"/>
+                            <Line X1="17" Y1="-22" X2="19" Y2="-22" Stroke="White" StrokeThickness="1"/>
+
+                            <!-- marker 0 -->
+                            <Line X1="17" Y1="0" X2="23" Y2="0" Stroke="White" StrokeThickness="1"/>
+                            <TextBlock Canvas.Left="3" Canvas.Top="-6" Text="0" TextAlignment="Right" Width="13" FontFamily="Lucida Sans Typewriter" FontSize="10" Foreground="White"/>
+
+                            <!-- marker -1 -->
+                            <TextBlock Canvas.Left="3" Canvas.Top="24" Text="-1" TextAlignment="Right" Width="13" FontFamily="Lucida Sans Typewriter" FontSize="10" Foreground="White"/>
+                            <Line X1="17" Y1="30" X2="23" Y2="30" Stroke="White" StrokeThickness="1"/>
+                            <Line X1="17" Y1="15" X2="21" Y2="15" Stroke="White" StrokeThickness="1"/>
+                            <Line X1="17" Y1="7" X2="19" Y2="7" Stroke="White" StrokeThickness="1"/>
+                            <Line X1="17" Y1="22" X2="19" Y2="22" Stroke="White" StrokeThickness="1"/>
+
+                            <!-- Marker -2 -->
+                            <TextBlock Canvas.Left="3" Canvas.Top="44" Text="-2" TextAlignment="Right" Width="13" FontFamily="Lucida Sans Typewriter" FontSize="10" Foreground="White"/>
+                            <Line X1="17" Y1="50" X2="23" Y2="50" Stroke="White" StrokeThickness="1"/>
+                            <Line X1="17" Y1="40" X2="21" Y2="40" Stroke="White" StrokeThickness="1"/>
+
+                            <!-- marker -6 -->
+                            <TextBlock Canvas.Left="3" Canvas.Top="60" Text="-6" TextAlignment="Right" Width="13" FontFamily="Lucida Sans Typewriter" FontSize="10" Foreground="White"/>
+                            <Line X1="17" Y1="66" X2="23" Y2="66" Stroke="White" StrokeThickness="1"/>
+                            <Line X1="17" Y1="58" X2="21" Y2="58" Stroke="White" StrokeThickness="1"/>
+
+                        </Canvas>
+                    </Canvas>
+
+                    <!-- Slide indicator -->
+                    <Canvas HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Path Canvas.Left="0" Canvas.Top="-82" Data="M -7,0 L-10,3 10,3 7,0 z" Fill="White"/>
+                        <Canvas.RenderTransform>
+                            <TranslateTransform X="{Binding Value, ElementName=balance_slider, Mode=OneWay}" Y="0"/>
+                        </Canvas.RenderTransform>
+                    </Canvas>
+                </Grid>
+            </Border>
+
+        </Grid>
+        <!-- Sliders -->
+        <StackPanel Orientation="Horizontal" Grid.Row="1" Grid.Column="0">
+            <!-- AIRSPEED Slider -->
+            <StackPanel>
+                <TextBlock Text="Airspeed" Foreground="White" Margin="2,0,2,0"/>
+                <Slider x:Name="airspeed_slider" Orientation="Vertical" HorizontalAlignment="Center" Minimum="0" Maximum="200" Height="140" Margin="0,16,0,0"/>
+                <TextBlock Text="{Binding Value, ElementName=airspeed_slider, Converter={StaticResource NumberFormatter}, ConverterParameter={}{0:N}}" Foreground="White" HorizontalAlignment="Center" />
+            </StackPanel>
+
+            <!-- VERTICAL SPEED Slider -->
+            <StackPanel>
+                <TextBlock Text="Vertical" Foreground="White" HorizontalAlignment="Center" Margin="2,0,2,0"/>
+                <TextBlock Text="Speed" Foreground="White" HorizontalAlignment="Center"/>
+                <Slider x:Name="vertical_speed_slider" Orientation="Vertical" HorizontalAlignment="Center" Minimum="-6" Maximum="6" Height="140" />
+                <TextBlock Text="{Binding Value, ElementName=vertical_speed_slider, Converter={StaticResource NumberFormatter}, ConverterParameter={}{0:N}}" Foreground="White" HorizontalAlignment="Center" />
+            </StackPanel>
+
+            <!-- HEADING Slider -->
+            <StackPanel>
+                <TextBlock Text="Heading" Foreground="White" HorizontalAlignment="Center" Margin="2,0,2,0"/>
+                <Slider x:Name="heading_slider" Orientation="Vertical" HorizontalAlignment="Center" Minimum="0" Maximum="360" Height="140" Margin="0,16,0,0"/>
+                <TextBlock Text="{Binding Value, ElementName=heading_slider, Converter={StaticResource NumberFormatter}, ConverterParameter={}{0:N}}" Foreground="White" HorizontalAlignment="Center" />
+            </StackPanel>
+
+            <!-- ALTITUDE Slider -->
+            <StackPanel>
+                <TextBlock Text="Altitude" Foreground="White" HorizontalAlignment="Center" Margin="2,0,2,0"/>
+                <Slider x:Name="altitude_slider" Orientation="Vertical" HorizontalAlignment="Center" Minimum="0" Maximum="15000" Height="140" Margin="0,16,0,0"/>
+                <TextBlock Text="{Binding Value, ElementName=altitude_slider, Converter={StaticResource NumberFormatter}, ConverterParameter={}{0:0}}" Foreground="White" HorizontalAlignment="Center" />
+            </StackPanel>
+
+            <!-- TURN RATE Slider -->
+            <StackPanel>
+                <TextBlock Text="Turn" Foreground="White" HorizontalAlignment="Center" Margin="2,0,2,0"/>
+                <TextBlock Text="Rate" Foreground="White" HorizontalAlignment="Center" Margin="2,0,2,0"/>
+                <Slider x:Name="turn_rate_slider" Orientation="Vertical" HorizontalAlignment="Center" Minimum="-40" Maximum="40" Height="140" Margin="0,0,0,0"/>
+                <TextBlock Text="{Binding Value, ElementName=turn_rate_slider, Converter={StaticResource NumberFormatter}, ConverterParameter={}{0:0}}" Foreground="White" HorizontalAlignment="Center" />
+            </StackPanel>
+
+            <!-- BALANCE Slider -->
+            <StackPanel>
+                <TextBlock Text="Balance" Foreground="White" HorizontalAlignment="Center" Margin="2,0,2,0"/>
+                <Slider x:Name="balance_slider" Orientation="Vertical" HorizontalAlignment="Center" Minimum="-15" Maximum="15" Height="140" Margin="0,16,0,0"/>
+                <TextBlock Text="{Binding Value, ElementName=balance_slider, Converter={StaticResource NumberFormatter}, ConverterParameter={}{0:0}}" Foreground="White" HorizontalAlignment="Center" />
+            </StackPanel>
+
+            <!-- Roll Slider -->
+            <StackPanel>
+                <TextBlock Text="Roll" Foreground="White" HorizontalAlignment="Center" Margin="2,0,2,0"/>
+                <Slider x:Name="roll_slider" Orientation="Vertical" HorizontalAlignment="Center" Minimum="-180" Maximum="180" Height="140" Margin="0,16,0,0"/>
+                <TextBlock Text="{Binding Value, ElementName=roll_slider, Converter={StaticResource NumberFormatter}, ConverterParameter={}{0:0}}" Foreground="White" HorizontalAlignment="Center" />
+            </StackPanel>
+
+            <!-- Pitch Slider -->
+            <StackPanel>
+                <TextBlock Text="Pitch" Foreground="White" HorizontalAlignment="Center" Margin="2,0,2,0"/>
+                <Slider x:Name="pitch_slider" Orientation="Vertical" HorizontalAlignment="Center" Minimum="-180" Maximum="180" Height="140" Margin="0,16,0,0"/>
+                <TextBlock Text="{Binding Value, ElementName=pitch_slider, Converter={StaticResource NumberFormatter}, ConverterParameter={}{0:0}}" Foreground="White" HorizontalAlignment="Center" />
+            </StackPanel>
+
+			<!-- VBat Slider -->
+			<StackPanel>
+				<TextBlock Text="VBat" Foreground="White" HorizontalAlignment="Center" Margin="2,0,2,0"/>
+				<Slider x:Name="vbat_slider" Orientation="Vertical" HorizontalAlignment="Center" Minimum="0" Maximum="100" Height="140" Margin="0,16,0,0"/>
+				<TextBlock Text="{Binding Value, ElementName=vbat_slider, StringFormat={}{0:N1}}" Foreground="White" HorizontalAlignment="Center" />
+			</StackPanel>
+
+			<!-- IBat Slider -->
+			<StackPanel>
+				<TextBlock Text="IBat" Foreground="White" HorizontalAlignment="Center" Margin="2,0,2,0"/>
+				<Slider x:Name="ibat_slider" Orientation="Vertical" HorizontalAlignment="Center" Minimum="0" Maximum="10" Height="140" Margin="0,16,0,0"/>
+				<TextBlock Text="{Binding Value, ElementName=ibat_slider, StringFormat={}{0:N1}}" Foreground="White" HorizontalAlignment="Center" />
+			</StackPanel>
+
+			<StackPanel>
+				<Border BorderThickness="1" Margin="3" BorderBrush="{DynamicResource BorderBrushNormal}">
+					<Grid Margin="2" DataContext="{StaticResource DeviceCommunicationStateProvider}" >
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="50" />
+							<ColumnDefinition Width="130" />
+						</Grid.ColumnDefinitions>
+						<Grid.RowDefinitions>
+							<RowDefinition />
+							<RowDefinition />
+							<RowDefinition />
+							<RowDefinition />
+							<RowDefinition />
+						</Grid.RowDefinitions>
+						<TextBlock Grid.Row="0" Grid.Column="0"  Text="Communication" Grid.ColumnSpan="2" HorizontalAlignment="Stretch" TextAlignment="Center" Background="{DynamicResource LightBackground}"/>
+
+						<!-- Communication state -->
+						<TextBlock Grid.Row="1" Grid.Column="0"  Text="State" VerticalAlignment="Center"/>
+						<Border Grid.Row="1" Grid.Column="1" BorderBrush="Gray" BorderThickness="1" Margin="2" Height="18" SnapsToDevicePixels="True">
+							<Border.Style>
+								<Style TargetType="{x:Type Border}">
+									<Setter Property="Background" Value="Transparent"/>
+									<Style.Triggers>
+										<DataTrigger Binding="{Binding DeviceConnected}" Value="1">
+											<Setter Property="Background" Value="Green" />
+										</DataTrigger>
+									</Style.Triggers>
+								</Style>
+							</Border.Style>
+
+							<TextBlock Text="{Binding DeviceName}" TextAlignment="Center" VerticalAlignment="Top"/>
+						</Border>
+
+						<!-- UDP state -->
+						<TextBlock Grid.Row="2" Grid.Column="0" Text="UDP"/>
+						<StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" >
+							<TextBlock Width="30" Text="{Binding UDPUpStream, ConverterParameter=\{0:0;0;----\}, Converter={StaticResource NumberFormatter}}"  TextAlignment="Right"/>
+							<TextBlock Text="B/s"/>
+							<Path Width="10" Height="10" Fill="Red" Data="M5,1 L9,9 1,9 Z" Margin="0,3,0,0"/>
+							<TextBlock Width="30" Text="{Binding UDPDownStream, ConverterParameter=\{0:0;0;----\}, Converter={StaticResource NumberFormatter}}" TextAlignment="Right"/>
+							<TextBlock Text="B/s"/>
+							<Path Width="10" Height="10" Fill="LightGreen" Data="M5,9 L9,1 1,1 Z" Margin="0,3,0,0"/>
+						</StackPanel>
+
+						<!-- UART state -->
+						<TextBlock Grid.Row="3" Grid.Column="0" Text="UART"/>
+						<StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal" >
+							<TextBlock Width="30" Text="{Binding UARTUpStream, ConverterParameter=\{0:0;0;----\}, Converter={StaticResource NumberFormatter}}"  TextAlignment="Right"/>
+							<TextBlock Text="B/s"/>
+							<Path Width="10" Height="10" Fill="Red" Data="M5,1 L9,9 1,9 Z" Margin="0,3,0,0"/>
+							<TextBlock Width="30" Text="{Binding UARTDownStream, ConverterParameter=\{0:0;0;----\}, Converter={StaticResource NumberFormatter}}" TextAlignment="Right"/>
+							<TextBlock Text="B/s"/>
+							<Path Width="10" Height="10" Fill="LightGreen" Data="M5,9 L9,1 1,1 Z" Margin="0,3,0,0"/>
+						</StackPanel>
+
+						<!-- USB state -->
+						<TextBlock Grid.Row="4" Grid.Column="0" Text="USB"/>
+						<StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal" >
+							<TextBlock Width="30" Text="{Binding USBUpStream, ConverterParameter=\{0:0;0;----\}, Converter={StaticResource NumberFormatter}}"  TextAlignment="Right"/>
+							<TextBlock Text="B/s"/>
+							<Path Width="10" Height="10" Fill="Red" Data="M5,1 L9,9 1,9 Z" Margin="0,3,0,0"/>
+							<TextBlock Width="30" Text="{Binding USBDownStream, ConverterParameter=\{0:0;0;----\}, Converter={StaticResource NumberFormatter}}" TextAlignment="Right"/>
+							<TextBlock Text="B/s"/>
+							<Path Width="10" Height="10" Fill="LightGreen" Data="M5,9 L9,1 1,1 Z" Margin="0,3,0,0"/>
+						</StackPanel>
+					</Grid>
+				</Border>
+				<Border BorderThickness="1" Margin="3" BorderBrush="{DynamicResource BorderBrushNormal}">
+					<Grid Margin="2" DataContext="{StaticResource DeviceHeartBeatProvider}" >
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="50" />
+							<ColumnDefinition Width="130" />
+						</Grid.ColumnDefinitions>
+						<Grid.RowDefinitions>
+							<RowDefinition />
+							<RowDefinition />
+						</Grid.RowDefinitions>
+						<TextBlock Grid.Row="0" Grid.Column="0"  Text="CPU" Grid.ColumnSpan="2" HorizontalAlignment="Stretch" TextAlignment="Center" Background="{DynamicResource LightBackground}"/>
+
+						<!-- CPU Load -->
+						<TextBlock Grid.Row="1" Grid.Column="0"  Text="Load" VerticalAlignment="Center"/>
+						<Grid Grid.Row="1" Grid.Column="1">
+							<Grid.ColumnDefinitions>
+								<ColumnDefinition Width="50"/>
+								<ColumnDefinition Width="12"/>
+								<ColumnDefinition/>
+							</Grid.ColumnDefinitions>
+					<TextBlock Grid.Column="0" Text="{Binding CPULoad}" TextAlignment="Right" VerticalAlignment="Top"/>
+							<TextBlock Grid.Column="1" Text="%" VerticalAlignment="Top"/>
+							<ProgressBar Grid.Column="2" Value="{Binding CPULoad, Converter={x:Static c:IntegerToDoubleValueConverter.Instance}}" Minimum="0" Maximum="100" Height="6" />
+						</Grid>
+					</Grid>
+				</Border>
+				
+				<!-- Energy monitoring -->
+				<Border BorderThickness="1" Margin="3" BorderBrush="{DynamicResource BorderBrushNormal}">
+					<Grid Margin="2" DataContext="{StaticResource DeviceHeartBeatProvider}" >
+					<Grid.RowDefinitions>
+						<RowDefinition />
+						<RowDefinition />
+					</Grid.RowDefinitions>
+					<TextBlock Grid.Row="0" Grid.Column="0"  Text="Energy monitoring" Grid.ColumnSpan="2" HorizontalAlignment="Stretch" TextAlignment="Center" Background="{DynamicResource LightBackground}"/>
+					<Canvas Grid.Row="1" Height="100" Width="100">
+						<!-- <Path Canvas.Left="30" Canvas.Top="25" Data="m0,0 l0,40 30,0 0,-40 -10,0 0,-5 -10,0 0,5 Z" Stroke="White" StrokeThickness="3" SnapsToDevicePixels="True" StrokeLineJoin="Round"/> -->
+							<Path Canvas.Left="50" Canvas.Top="50" Data="M-40,5 A 10,10 0 0 0 40,5 L 30,5 A 10,10 0 0 1 -30,5 Z" Stroke="LightGray" StrokeThickness="2"/>
+							<Path Canvas.Left="50" Canvas.Top="50" Data="M-40,-5 A 10,10 0 0 1 40,-5 L 30,-5 A 10,10 0 0 0 -30,-5 Z" Stroke="LightGray" StrokeThickness="2"/>
+							<Path Canvas.Left="5" Canvas.Top="95" Data="M0,0 L8,-8 0,-8 8,-16" Fill="White" StrokeLineJoin="Round" Stroke="White" StrokeThickness="1"/>
+							<Path Canvas.Left="5" Canvas.Top="5" Data="m0,0 l0,8 6,0 0,-8 -2,0 0,-2 -2,0 0,2 Z" Fill="White" StrokeLineJoin="Round" Stroke="White" StrokeThickness="1"/>
+							<TextBlock Canvas.Left="30" Canvas.Top="25" Width="40" TextAlignment="Center" FontWeight="Bold" Text="{Binding Value, ElementName=vbat_slider, StringFormat={}{0:N0}%}" />
+							<TextBlock Canvas.Left="30" Canvas.Top="55" Width="40" TextAlignment="Center" FontWeight="Bold" Text="{Binding Value, ElementName=ibat_slider, StringFormat={}{0:N1}A}" />
+							<Path StrokeThickness="7" Stroke="Green" HorizontalAlignment="Left" VerticalAlignment="Top" Canvas.Left="50" Canvas.Top="50" >
+							<Path.Data>
+								<PathGeometry>
+									<PathGeometry.Figures>
+										<PathFigureCollection>
+											<PathFigure x:Name="pathFigure" StartPoint="-35,-6">
+												<PathFigure.Segments>
+													<PathSegmentCollection>
+															<ArcSegment x:Name="arcSegment" SweepDirection="Clockwise" Size="35,34" Point="{Binding Value, ElementName=vbat_slider, Mode=OneWay, Converter={StaticResource BatteryVoltageConverter}}" />
+														</PathSegmentCollection>
+												</PathFigure.Segments>
+											</PathFigure>
+										</PathFigureCollection>
+									</PathGeometry.Figures>
+								</PathGeometry>
+							</Path.Data>
+							</Path>
+							<Path StrokeThickness="7" Stroke="Green" HorizontalAlignment="Left" VerticalAlignment="Top" Canvas.Left="50" Canvas.Top="50" >
+								<Path.Data>
+									<PathGeometry>
+										<PathGeometry.Figures>
+											<PathFigureCollection>
+												<PathFigure StartPoint="-35,6">
+													<PathFigure.Segments>
+														<PathSegmentCollection>
+															<ArcSegment SweepDirection="Counterclockwise" Size="35,34" Point="{Binding Value, ElementName=ibat_slider, Mode=OneWay, Converter={StaticResource BatteryCurrentConverter}}"/>
+														</PathSegmentCollection>
+													</PathFigure.Segments>
+												</PathFigure>
+											</PathFigureCollection>
+										</PathGeometry.Figures>
+									</PathGeometry>
+								</Path.Data>
+							</Path>
+						</Canvas>
+						<Grid Grid.Column="1" Grid.Row="1" >
+										</Grid>
+	</Grid>
+	</Border>
+			</StackPanel>
+		</StackPanel>
+
+    </Grid>
+</UserControl>

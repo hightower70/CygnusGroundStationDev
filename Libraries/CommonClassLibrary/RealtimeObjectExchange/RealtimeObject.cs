@@ -20,8 +20,10 @@
 // ----------------
 // Realtime object description
 ///////////////////////////////////////////////////////////////////////////////
+using CommonClassLibrary.DeviceCommunication;
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 
 namespace CommonClassLibrary.RealtimeObjectExchange
 {
@@ -57,6 +59,14 @@ namespace CommonClassLibrary.RealtimeObjectExchange
 			m_write_storage_index = -1;
 			m_member_values = null;
 			m_update_notifiers = new List<IRealtimeObjectUpdateNotifier>();
+		}
+
+		/// <summary>
+		/// Creates object from parsed realtime object
+		/// </summary>
+		/// <param name="in_parser_object"></param>
+		public RealtimeObject(ParserRealtimeObject in_parser_object) : this(in_parser_object.Name)
+		{
 		}
 		#endregion
 
@@ -154,6 +164,20 @@ namespace CommonClassLibrary.RealtimeObjectExchange
 		}
 
 		/// <summary>
+		/// Add all member from the parsed realtime object
+		/// </summary>
+		/// <param name="in_object"></param>
+		public void CopyParsedMember(ParserRealtimeObject in_object)
+		{
+			foreach(ParserRealtimeObjectMember parsed_member in in_object.Members)
+			{
+				RealtimeObjectMember member = new RealtimeObjectMember(parsed_member);
+
+				MemberAdd(member);
+			}
+		}
+
+		/// <summary>
 		/// Adds a new member to the object
 		/// </summary>
 		/// <param name="in_member"></param>
@@ -197,9 +221,33 @@ namespace CommonClassLibrary.RealtimeObjectExchange
 
 			return member_list;
 		}
+
+
 		#endregion
 
 		#region · Object/member update ·
+
+		/// <summary>
+		/// Updates member value from binary packet data
+		/// </summary>
+		/// <param name="in_packet"></param>
+		/// <param name="in_packet_length"></param>
+		/// <param name="in_interface"></param>
+		/// <param name="in_timestamp"></param>
+		internal void Update(byte[] in_packet, byte in_packet_length, byte in_interface, DateTime in_timestamp)
+		{
+			int offset = Marshal.SizeOf(typeof(PacketBase));
+
+			UpdateBegin();
+
+			for(int i=0;i< m_members.Count;i++)
+			{
+				m_member_values[m_write_storage_index, i] = m_members[i].GetMemberValueFromBinaryData(in_packet, offset);
+				offset += m_members[i].BinaryLength;
+			}
+
+			UpdateEnd();
+		}
 
 		/// <summary>
 		/// Starts object update operation

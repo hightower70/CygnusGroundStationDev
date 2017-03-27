@@ -20,7 +20,9 @@
 // ----------------
 // Storage class for all realtime objects
 ///////////////////////////////////////////////////////////////////////////////
+using CommonClassLibrary.DeviceCommunication;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace CommonClassLibrary.RealtimeObjectExchange
 {
@@ -35,6 +37,8 @@ namespace CommonClassLibrary.RealtimeObjectExchange
 		private List<RealtimeObject> m_objects;
 		private Dictionary<string, int> m_object_lookup;
 
+		private List<RealtimeObject> m_packet_id_lookup;
+
 		#endregion
 
 		#region · Constructor ·
@@ -46,6 +50,9 @@ namespace CommonClassLibrary.RealtimeObjectExchange
 		{
 			m_objects = new List<RealtimeObject>();
 			m_object_lookup = new Dictionary<string, int>();
+			m_packet_id_lookup = new List<RealtimeObject>(PacketConstants.MaxRealtimePacketCount);
+			for (int i = 0; i < PacketConstants.MaxRealtimePacketCount; i++)
+				m_packet_id_lookup.Add(null);
 		}
 		#endregion
 
@@ -120,6 +127,16 @@ namespace CommonClassLibrary.RealtimeObjectExchange
 			}
 		}
 
+		/// <summary>
+		/// Gets realtime object by packet ID
+		/// </summary>
+		/// <param name="in_packet_id">Packet ID</param>
+		/// <returns>RealtimeObject related to the given packet ID</returns>
+		public RealtimeObject GetObjectByPacketID(byte in_packet_id)
+		{
+			return m_packet_id_lookup[in_packet_id];
+		}
+
 		#endregion
 
 		#region · Realtime object generation from code ·
@@ -169,6 +186,29 @@ namespace CommonClassLibrary.RealtimeObjectExchange
 			in_realtime_object.SetObjectIndex(index);
 		}
 
+		#endregion
+
+		#region · Realtime object generation from parser object ·
+
+		/// <summary>
+		/// Copes all obejcts from parsed realtime objects
+		/// </summary>
+		/// <param name="in_parsed_objects"></param>
+		public void CopyParsedObjects(List<ParserRealtimeObject> in_parsed_objects)
+		{
+			foreach(ParserRealtimeObject parsed_object in in_parsed_objects)
+			{
+				RealtimeObject realtime_object = new RealtimeObject(parsed_object);
+
+				ObjectAdd(realtime_object);
+
+				realtime_object.CopyParsedMember(parsed_object);
+
+				realtime_object.ObjectCreateEnd();
+
+				m_packet_id_lookup[parsed_object.PacketID] = realtime_object;
+			}
+		}
 		#endregion
 	}
 }

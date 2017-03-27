@@ -49,27 +49,35 @@
     <CodeAnalysisRuleSet>ManagedMinimumRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
+    <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Console\CommandLineParser.cs" />
+    <Compile Include="DeviceCommunication\FileTransferManager.cs" />
     <Compile Include="DeviceCommunication\UARTCommunicator.cs" />
     <Compile Include="DeviceCommunication\UARTEnumerator.cs" />
+    <Compile Include="DeviceCommunication\USBCommunicator.cs" />
+    <Compile Include="DeviceCommunication\USBNativeMethods.cs" />
     <Compile Include="DeviceSettings\DeviceSettingsBinaryData.cs" />
     <Compile Include="DeviceSettings\IParserDeviceSettingsBase.cs" />
+    <Compile Include="DeviceSettings\ParserConfig.cs" />
     <Compile Include="DeviceSettings\ParserDeviceSettingsEnumDefs.cs" />
     <Compile Include="DeviceSettings\ParserDeviceSettingsEnumValue.cs" />
     <Compile Include="DeviceSettings\ParserDeviceSettingsRoot.cs" />
     <Compile Include="Helpers\RawBinarySerialization.cs" />
     <Compile Include="DeviceCommunication\CommunicationManager.cs" />
     <Compile Include="DeviceCommunication\DeviceFileCache.cs" />
-    <Compile Include="DeviceCommunication\ICommunicationInterface.cs" />
+    <Compile Include="DeviceCommunication\ICommunicator.cs" />
     <Compile Include="DeviceCommunication\PacketQueue.cs" />
     <Compile Include="DeviceCommunication\SLIP.cs" />
     <Compile Include="DeviceCommunication\SystemPacketDefinitons.cs" />
@@ -94,9 +102,15 @@
     <Compile Include="RealtimeObjectExchange\LinearConverter.cs" />
     <Compile Include="RealtimeObjectExchange\ParserRealtimeObject.cs" />
     <Compile Include="RealtimeObjectExchange\ParserRealtimeObjectCollection.cs" />
-    <Compile Include="RealtimeObjectExchange\ParserRealtimeObjectDescription.cs" />
+    <Compile Include="RealtimeObjectExchange\ParserRealtimeObjectExchange.cs" />
     <Compile Include="RealtimeObjectExchange\ParserRealtimeObjectStringConstants.cs" />
     <Compile Include="RealtimeObjectExchange\ParserRealtimeObjectMember.cs" />
+    <Compile Include="RealtimeObjectExchange\RealtimeObjectTypedefs.cs" />
+    <Compile Include="Settings\FrameworkSettingsFile.cs" />
+    <Compile Include="Settings\ISettingsDataProvider.cs" />
+    <Compile Include="Settings\SettingsBase.cs" />
+    <Compile Include="Settings\SettingsFileBase.cs" />
+    <Compile Include="Settings\WindowPosSettings.cs" />
     <Compile Include="XMLParser\XMLAttributeParser.cs" />
     <Compile Include="XMLParser\XMLParserBase.cs" />
     <Compile Include="XMLParser\XMLParserException.cs" />

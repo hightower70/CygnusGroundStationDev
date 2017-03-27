@@ -20,7 +20,7 @@
 // ----------------
 // String constants used by parser (English)
 ///////////////////////////////////////////////////////////////////////////////
-namespace CommonClassLibrary
+namespace CommonClassLibrary.XMLParser
 {
   public class XMLParserStringConstants
   {

@@ -20,21 +20,25 @@
 // ----------------
 // FlightGear Module interface class
 ///////////////////////////////////////////////////////////////////////////////
-using System.Windows;
+using CygnusControls;
 using CygnusGroundStation;
 
 namespace FlightGearInterface
 {
 	public class ModuleInterface : ModuleBase
 	{
-		ModuleSettingsInfo[] m_module_settings_info;
+		#region · Data members ·
+		private ModuleSettingsInfo[] m_module_settings_info;
+		private FlightGearThread m_thread;
+		#endregion
 
 		public ModuleInterface()
 		{
 			ModuleName = GetDisplayName();
 			m_module_settings_info = new ModuleSettingsInfo[]
 			{
-				new ModuleSettingsInfo("Settings", new SetupSettings(), null),
+				new ModuleSettingsInfo("Connection", new SetupConnection(), null),
+				new ModuleSettingsInfo("Config file", new SetupConfigFile(), null),
 				new ModuleSettingsInfo("About", new SetupAbout(), null)
 			};
 		}
@@ -52,6 +56,26 @@ namespace FlightGearInterface
 		public override string GetSettingsName()
 		{
 			return "FlightGear";
+		}
+
+		public override void Start()
+		{
+			FlightGearSettings settings;
+
+			m_thread = new FlightGearThread();
+
+			settings = ModuleSettings.GetSettings<FlightGearSettings>();
+			m_thread.Configure(settings);
+			m_thread.Open();
+		}
+
+		public override void Stop()
+		{
+			if (m_thread != null)
+			{
+				m_thread.Close();
+				m_thread = null;
+			}
 		}
 	}
 }

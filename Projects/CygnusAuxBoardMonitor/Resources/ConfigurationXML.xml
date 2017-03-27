@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<Settings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:noNamespaceSchemaLocation="ConfigurationXML.xsd">
+
+  <!-- Ultrasonic distance sensor -->
+  <Group ID="USD" Name ="Ultrasonic Distance Sensor">
+    <UInt8 ID="SensorCount" Name="Number of sensors" Min="0" Max="4">0</UInt8>
+    <Int16Fixed ID="SpeedOfSound" Name="Speed of sound" Min="250.0" Max="400.0" Multiplier="10" FractionalDigits="1">330.0</Int16Fixed>
+  </Group>
+
+  <!-- Temperature sensor -->
+  <Group ID="TEMP" Name ="Temperature Sensor">
+    <Int16Fixed ID="TemperatureLow" Name="Low temperature" Min="0.0" Max="50.0" Multiplier="10" FractionalDigits="1">0.0</Int16Fixed>
+    <UInt16 ID="ADCLow" Name="ADC Low Value">0</UInt16>
+    <Int16Fixed ID="TemperatureHigh" Name="High temperature" Min="0.0" Max="50.0" Multiplier="10" FractionalDigits="1">50.0</Int16Fixed>
+    <UInt16 ID="ADCHigh" Name="ADC High Value">1023</UInt16>
+  </Group>
+</Settings>

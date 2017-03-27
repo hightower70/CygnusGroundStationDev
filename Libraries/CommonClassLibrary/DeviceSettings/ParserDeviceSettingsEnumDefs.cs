@@ -20,6 +20,7 @@
 // ----------------
 // Parser routines for enumeration value definition
 ///////////////////////////////////////////////////////////////////////////////
+using CommonClassLibrary.XMLParser;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -113,16 +114,16 @@ namespace CommonClassLibrary.DeviceSettings
 		/// <param name="in_header_file"></param>
 		/// <param name="in_default_value_file"></param>
 		/// <param name="in_value_info_file"></param>
-		public void GenerateFiles(StringBuilder in_header_file, MemoryStream in_value_info_file, MemoryStream in_default_value_file)
+		public void GenerateFiles(ParserConfig in_parser_config)
 		{
 			for (int i = 0; i < m_values.Count; i++)
 			{
 				string declaration = "#define cfgENUM_" + m_id.ToUpper() + "_" +m_values[i].ID.ToUpper() + " " + i.ToString();
 
-				in_header_file.AppendLine(declaration);
+				in_parser_config.HeaderFile.AppendLine(declaration);
 			}
 
-			in_header_file.AppendLine();
+			in_parser_config.HeaderFile.AppendLine();
 		}
 
 		#endregion

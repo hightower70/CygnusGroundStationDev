@@ -25,7 +25,6 @@ using System.Text;
 
 namespace CommonClassLibrary.DeviceCommunication
 {
-
 	#region · Types ·
 
 	/// <summary>
@@ -38,6 +37,8 @@ namespace CommonClassLibrary.DeviceCommunication
 		public const int TypeOffset = 1;
 		public const int PacketMaxLength = 255;
 		public const int PacketCRCLength = 2;
+		public const int PacketClassMask = 0xf0;
+		public const int MaxRealtimePacketCount = 128;
 	}
 
 	/// <summary>
@@ -59,36 +60,34 @@ namespace CommonClassLibrary.DeviceCommunication
 		FlagRequest = (1 << 3),
 
 		// packet classes
-		ClassComm = (1 << 4),
-		ClassFile = (2 << 4),
-		ClassConfig = (3 << 4),
+		ClassComm = (1 << 4) | FlagSystem,
+		ClassFile = (2 << 4) | FlagSystem,
 
 		// communication class packets
-		CommDeviceHeartbeat = (FlagSystem + ClassComm + 1),
-		CommHostHeartbeat = (FlagSystem + ClassComm + 2),
-		CommDeviceInfo = (FlagSystem + ClassComm + 3),
-		CommHostInfo = (FlagSystem + ClassComm + 4),
-		CommDeviceNameRequest = (FlagSystem + ClassComm + FlagRequest + 5),
-		CommDeviceNameResponse = (FlagSystem + ClassComm + 5),
+		CommDeviceHeartbeat = (ClassComm + 1),
+		CommHostHeartbeat = (ClassComm + 2),
+		CommDeviceAnnounce = (ClassComm + 3),
+		CommHostAnnounce = (ClassComm + 4),
+		CommDeviceNameRequest = (ClassComm + FlagRequest + 5),
+		CommDeviceNameResponse = (ClassComm + 5),
 
 		// file class packets
-		FileInfo = (FlagSystem + ClassFile + 1),
+		FileInfo = (ClassFile + 1),
 		FileInfoRequest = (FileInfo + FlagRequest),
 		FileInfoResponse = (FileInfo),
 
-		FileDataRead = (FlagSystem + ClassFile + 2),
+		FileDataRead = (ClassFile + 2),
 		FileDataReadRequest = (FileDataRead + FlagRequest),
 		FileDataReadResponse = (FileDataRead),
 
-		FileDataWrite = (FlagSystem + ClassFile + 3),
+		FileDataWrite = (ClassFile + 3),
 		FileDataWriteRequest = (FileDataWrite + FlagRequest),
 		FileDataWriteResponse = (FileDataWrite),
 
-		FileOperationFinished = (FlagSystem + ClassFile + 4),
+		FileOperationFinished = (ClassFile + 4),
 		FileOperationFinishedRequest = (FileOperationFinished + FlagRequest),
 		FileOperationFinishedResponse = (FileOperationFinished)
 	}
-
 
 	/// <summary>
 	/// Base type of all packets
@@ -119,6 +118,11 @@ namespace CommonClassLibrary.DeviceCommunication
 		public PacketType PacketType
 		{
 			get { return m_packet_type; }
+		}
+
+		public PacketType PacketClass
+		{
+			get { return (PacketType)((int)m_packet_type &  PacketConstants.PacketClassMask); }
 		}
 
 		public byte PacketLength
@@ -162,10 +166,10 @@ namespace CommonClassLibrary.DeviceCommunication
 	#region · Communication packets ·
 
 	/// <summary>
-	/// Device information packet
+	/// Device announce packet
 	/// </summary>
 	[StructLayout(LayoutKind.Sequential, Pack = 1), Serializable]
-	public class PacketDeviceInfo : PacketBase
+	public class PacketDeviceAnnounce : PacketBase
 	{
 		[MarshalAs(UnmanagedType.ByValArray, SizeConst = PacketConstants.DeviceNameLength)]
 		private byte[] m_device_name;
@@ -176,8 +180,8 @@ namespace CommonClassLibrary.DeviceCommunication
 		/// <summary>
 		/// Default constructor
 		/// </summary>
-		public PacketDeviceInfo()
-			: base(PacketType.CommDeviceInfo)
+		public PacketDeviceAnnounce()
+			: base(PacketType.CommDeviceAnnounce)
 		{
 			m_device_name = new byte[PacketConstants.DeviceNameLength];
 			m_device_name[0] = 0;
@@ -226,7 +230,7 @@ namespace CommonClassLibrary.DeviceCommunication
 	/// Host information packet
 	/// </summary>
 	[StructLayout(LayoutKind.Sequential, Pack = 1), Serializable]
-	public class PacketHostInfo : PacketBase
+	public class PacketHostAnnounce : PacketBase
 	{
 		[MarshalAs(UnmanagedType.ByValArray, SizeConst = PacketConstants.DeviceNameLength)]
 		private byte[] m_host_name;
@@ -235,8 +239,8 @@ namespace CommonClassLibrary.DeviceCommunication
 		/// <summary>
 		/// Default constructor
 		/// </summary>
-		public PacketHostInfo()
-			: base(PacketType.CommHostInfo)
+		public PacketHostAnnounce()
+			: base(PacketType.CommHostAnnounce)
 		{
 			m_host_name = new byte[PacketConstants.DeviceNameLength];
 			m_host_name[0] = 0;
@@ -388,14 +392,74 @@ namespace CommonClassLibrary.DeviceCommunication
 	#region · File management packets ·
 
 	/// <summary>
+	/// Base class for file operation packets
+	/// </summary>
+	[StructLayout(LayoutKind.Sequential, Pack = 1), Serializable]
+	public class PacketFileOperationBase : PacketBase
+	{
+		private byte m_id;
+
+		/// <summary>
+		/// Deafult constructor
+		/// </summary>
+		public PacketFileOperationBase()
+		{
+		}
+
+		/// <summary>
+		/// Default constuctor
+		/// </summary>
+		/// <param name="in_type"></param>
+		public PacketFileOperationBase(PacketType in_type)
+			: base(in_type)
+		{
+		}
+
+		/// <summary>
+		/// Gets/sets unique file ID
+		/// </summary>
+		public byte ID
+		{
+			get { return m_id; }
+			set { m_id = value; }
+		}
+
+		/// <summary>
+		/// Generates file opoeration ID from file operation packet (either file name or file ID in string)
+		/// </summary>
+		/// <param name="in_packet">File operation paket to use to generate ID</param>
+		/// <returns>File operation ID</returns>
+		public string FileOperationID
+		{
+			get
+			{
+				switch (PacketType)
+				{
+					case PacketType.FileInfoRequest:
+						return ((PacketFileInfoRequest)this).FileName;
+
+					case PacketType.FileInfoResponse:
+						return ((PacketFileInfoResponse)this).FileName;
+
+					default:
+						return m_id.ToString();
+				}
+			}
+		}
+	};
+
+	/// <summary>
 	/// File information request packet
 	/// </summary>
 	[StructLayout(LayoutKind.Sequential, Pack = 1), Serializable]
-	public class PacketFileInfoRequest : PacketBase
+	public class PacketFileInfoRequest : PacketFileOperationBase
 	{
 		[MarshalAs(UnmanagedType.ByValArray, SizeConst = PacketConstants.FilenameLength)]
-		private byte[] m_filename;
+		private byte[] m_filename; // file name
 
+		/// <summary>
+		/// Deafult constructor
+		/// </summary>
 		public PacketFileInfoRequest()
 			: base(PacketType.FileInfoRequest)
 		{
@@ -429,47 +493,55 @@ namespace CommonClassLibrary.DeviceCommunication
 	/// File information response packet
 	/// </summary>
 	[StructLayout(LayoutKind.Sequential, Pack = 1), Serializable]
-	public class PacketFileInfoResponse : PacketBase
+	public class PacketFileInfoResponse : PacketFileOperationBase
 	{
-		private byte m_file_id;
-		private UInt32 m_file_length;
+		[MarshalAs(UnmanagedType.ByValArray, SizeConst = PacketConstants.FilenameLength)]
+		private byte[] m_filename; // file name
+
+		private UInt32 m_length; // Length of the file
 		[MarshalAs(UnmanagedType.ByValArray, SizeConst = MD5Hash.MD5HashLength)]
-		private byte[] m_file_hash;
+		private byte[] m_hash; // MD5 hash of the file
 
-
+		/// <summary>
+		/// Deafult constructor
+		/// </summary>
 		public PacketFileInfoResponse()
 		: base(PacketType.FileInfoResponse)
 		{
-			m_file_hash = new byte[MD5Hash.MD5HashLength];
+			m_hash = new byte[MD5Hash.MD5HashLength];
 		}
 
+
 		/// <summary>
-		/// Gets unique file ID
+		/// Gets internal file name
 		/// </summary>
-		public byte FileID
+		public string FileName
 		{
-			get { return m_file_id; }
+			get
+			{
+				return PacketBase.ConvertFromZeroTerminatedString(m_filename);
+			}
 		}
 
 		/// <summary>
 		/// Gets length of the file in bytes
 		/// </summary>
-		public UInt32 FileLength
+		public UInt32 Length
 		{
-			get { return m_file_length; }
+			get { return m_length; }
 		}
 
 		/// <summary>
 		/// Gets MD5 hash of the file
 		/// </summary>
-		public MD5Hash FileHash
+		public MD5Hash Hash
 		{
-			get { return new MD5Hash(m_file_hash); }
+			get { return new MD5Hash(m_hash); }
 		}
 
 		public override string ToString()
 		{
-			return "Length:" + m_file_length.ToString() + " FileID:" + m_file_id.ToString();
+			return "Length:" + m_length.ToString() + " ID:" + ID.ToString();
 		}
 	}
 
@@ -477,48 +549,40 @@ namespace CommonClassLibrary.DeviceCommunication
 	/// File Data Read Request Packet
 	/// </summary>
 	[StructLayout(LayoutKind.Sequential, Pack = 1), Serializable]
-	public class PacketFileDataReadRequest : PacketBase
+	public class PacketFileDataReadRequest : PacketFileOperationBase
 	{
-		private byte m_file_id;
-		private UInt32 m_file_pos;
-		private byte m_data_length;
+		private UInt32 m_pos; // Read start position
+		private UInt16 m_length; // Bytes to read
 
-
+		/// <summary>
+		/// Default constructor
+		/// </summary>
 		public PacketFileDataReadRequest()
 		: base(PacketType.FileDataReadRequest)
 		{
 		}
 
 		/// <summary>
-		/// Gets/sets unique file ID
-		/// </summary>
-		public byte FileID
-		{
-			get { return m_file_id; }
-			set { m_file_id = value; }
-		}
-
-		/// <summary>
 		/// Gets/sets file position
 		/// </summary>
-		public UInt32 FilePos
+		public UInt32 Pos
 		{
-			get { return m_file_pos; }
-			set { m_file_pos = value; }
+			get { return m_pos; }
+			set { m_pos = value; }
 		}
 
 		/// <summary>
 		/// Gets/sets data length of the packet
 		/// </summary>
-		public byte DataLength
+		public UInt16 Length
 		{
-			get { return m_data_length; }
-			set { m_data_length = value; }
+			get { return m_length; }
+			set { m_length = value; }
 		}
 
 		public override string ToString()
 		{
-			return base.ToString() + " ID:" + m_file_id + " Pos:" + m_file_pos;
+			return base.ToString() + " ID:" + ID + " Pos:" + m_pos;
 		}
 	}
 
@@ -526,32 +590,62 @@ namespace CommonClassLibrary.DeviceCommunication
 	/// File Data Read Response Packet
 	/// </summary>
 	[StructLayout(LayoutKind.Sequential, Pack = 1), Serializable]
-	public class PacketFileDataReadResponseHeader : PacketBase
+	public class PacketFileDataReadResponseHeader : PacketFileOperationBase
 	{
-		private byte m_file_id;
-		private UInt32 m_file_pos;
-
-		/// <summary>
-		/// Gets/sets unique file ID
-		/// </summary>
-		public byte FileID
-		{
-			get { return m_file_id; }
-			set { m_file_id = value; }
-		}
+		private UInt32 m_pos; // read position
+		private UInt16 m_length; // number of bytes returned
 
 		/// <summary>
 		/// Gets/sets file position
 		/// </summary>
-		public UInt32 FilePos
+		public UInt32 Pos
 		{
-			get { return m_file_pos; }
-			set { m_file_pos = value; }
+			get { return m_pos; }
+			set { m_pos = value; }
+		}
+
+		/// <summary>
+		/// Gets length of the data in the response
+		/// </summary>
+		public UInt16 Length
+		{
+			get { return m_length; }
 		}
 
 		public override string ToString()
 		{
-			return base.ToString() + " ID:" + m_file_id + " Pos:" + m_file_pos;
+			return base.ToString() + " ID:" + ID + " Pos:" + m_pos + " Length:" + Length;
+		}
+	}
+
+	public class PacketFileDataReadResponse : PacketFileOperationBase
+	{
+		private PacketFileDataReadResponseHeader m_header;
+		private byte[] m_data;
+
+		public PacketFileDataReadResponse(PacketFileDataReadResponseHeader in_response_header) : base(PacketType.FileDataReadResponse)
+		{
+			m_header = in_response_header;
+		}
+
+		public void SetData(byte[] in_source_data, int in_offset, int in_length)
+		{
+			m_data = new byte[in_length];
+			for (int index = 0; index < in_length; index++)
+			{
+				m_data[index] = in_source_data[index + in_offset];
+			}
+		}
+
+		public byte[] Data
+		{
+			get { return m_data; }
+		}
+
+
+		public override string ToString()
+		{
+			return base.ToString() + " ID:" + ID + " Pos:" + m_header.Pos + " Length: " + m_header.Length;
 		}
 	}
 
@@ -559,48 +653,38 @@ namespace CommonClassLibrary.DeviceCommunication
 	/// File Data Write Request Packet (paket header only)
 	/// </summary>
 	[StructLayout(LayoutKind.Sequential, Pack = 1), Serializable]
-	public class PacketFileDataWriteRequestHeader : PacketBase
+	public class PacketFileDataWriteRequestHeader : PacketFileOperationBase
 	{
-		private byte m_file_id;
-		private UInt32 m_file_pos;
-		private byte m_data_length;
+		private UInt32 m_pos; // write operation start position
+		private UInt16 m_length; // number of bytes to write
 
 		public PacketFileDataWriteRequestHeader(byte in_data_length)
 		: base(PacketType.FileDataWriteRequest)
 		{
 			m_packet_length = (byte)(Marshal.SizeOf(this.GetType()) + in_data_length + PacketConstants.PacketCRCLength);
-			m_data_length = in_data_length;
-		}
-
-		/// <summary>
-		/// Gets/sets unique file ID
-		/// </summary>
-		public byte FileID
-		{
-			get { return m_file_id; }
-			set { m_file_id = value; }
+			m_length = in_data_length;
 		}
 
 		/// <summary>
 		/// Gets/sets file position
 		/// </summary>
-		public UInt32 FilePos
+		public UInt32 Pos
 		{
-			get { return m_file_pos; }
-			set { m_file_pos = value; }
+			get { return m_pos; }
+			set { m_pos = value; }
 		}
 
 		/// <summary>
 		/// Gets/sets data length of the packet
 		/// </summary>
-		public byte DataLength
+		public UInt16 Length
 		{
-			get { return m_data_length; }
+			get { return m_length; }
 		}
 
 		public override string ToString()
 		{
-			return base.ToString() + " ID:" + m_file_id + " Pos:" + m_file_pos;
+			return base.ToString() + " ID:" + ID + " Pos:" + m_pos;
 		}
 	}
 
@@ -608,19 +692,9 @@ namespace CommonClassLibrary.DeviceCommunication
 	/// File Data Write Response Packet
 	/// </summary>
 	[StructLayout(LayoutKind.Sequential, Pack = 1), Serializable]
-	public class PacketFileDataWriteResponse : PacketBase
+	public class PacketFileDataWriteResponse : PacketFileOperationBase
 	{
-		private byte m_file_id;
 		private byte m_error;
-
-		/// <summary>
-		/// Gets/sets unique file ID
-		/// </summary>
-		public byte FileID
-		{
-			get { return m_file_id; }
-			set { m_file_id = value; }
-		}
 
 		/// <summary>
 		/// Gets/sets file position
@@ -633,7 +707,7 @@ namespace CommonClassLibrary.DeviceCommunication
 
 		public override string ToString()
 		{
-			return base.ToString() + " ID:" + m_file_id + " Error:" + m_error;
+			return base.ToString() + " ID:" + ID + " Error:" + m_error;
 		}
 	}
 
@@ -642,23 +716,13 @@ namespace CommonClassLibrary.DeviceCommunication
 	/// File Operation Finished Request Packet
 	/// </summary>
 	[StructLayout(LayoutKind.Sequential, Pack = 1), Serializable]
-	public class PacketFileOperationFinishedRequest : PacketBase
+	public class PacketFileOperationFinishedRequest : PacketFileOperationBase
 	{
-		private byte m_file_id;
 		private byte m_finish_mode;
 
 		public PacketFileOperationFinishedRequest()
 		: base(PacketType.FileOperationFinishedRequest)
 		{
-		}
-
-		/// <summary>
-		/// Gets/sets unique file ID
-		/// </summary>
-		public byte FileID
-		{
-			get { return m_file_id; }
-			set { m_file_id = value; }
 		}
 
 		/// <summary>
@@ -672,7 +736,7 @@ namespace CommonClassLibrary.DeviceCommunication
 
 		public override string ToString()
 		{
-			return base.ToString() + " ID:" + m_file_id + " Mode:" + m_finish_mode;
+			return base.ToString() + " ID:" + ID + " Mode:" + m_finish_mode;
 		}
 	}
 
@@ -680,25 +744,16 @@ namespace CommonClassLibrary.DeviceCommunication
 	/// File Operation Finished Response Packet
 	/// </summary>
 	[StructLayout(LayoutKind.Sequential, Pack = 1), Serializable]
-	public class PacketFileOperationFinishedResponse : PacketBase
+	public class PacketFileOperationFinishedResponse : PacketFileOperationBase
 	{
 		public const byte NoError = 0;
 
-		private byte m_file_id;
 		private byte m_finish_mode;
 		private byte m_error;
 
 		public PacketFileOperationFinishedResponse()
 		: base(PacketType.FileOperationFinishedResponse)
 		{
-		}
-
-		/// <summary>
-		/// Gets unique file ID
-		/// </summary>
-		public byte FileID
-		{
-			get { return m_file_id; }
 		}
 
 		/// <summary>
@@ -719,7 +774,7 @@ namespace CommonClassLibrary.DeviceCommunication
 
 		public override string ToString()
 		{
-			return base.ToString() + " ID:" + m_file_id + " Mode:" + m_finish_mode + " Error:" + m_error;
+			return base.ToString() + " ID:" + ID + " Mode:" + m_finish_mode + " Error:" + m_error;
 		}
 	}
 
