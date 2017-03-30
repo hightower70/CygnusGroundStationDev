@@ -21,8 +21,10 @@
 // Parser for realtime object descriptor XML
 ///////////////////////////////////////////////////////////////////////////////
 using CommonClassLibrary.DeviceCommunication;
+using CommonClassLibrary.Helpers;
 using CommonClassLibrary.XMLParser;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Xml.XPath;
 
@@ -43,6 +45,7 @@ namespace CommonClassLibrary.RealtimeObjectExchange
 			public RealtimeObjectTypedefs Typedefs;
 			public TextWriter HeaderFile;
 			public string DefaultPacketEnableFileName;
+			public string TypeInfoFileName;
 
 			public ParserParameters()
 			{
@@ -139,7 +142,7 @@ namespace CommonClassLibrary.RealtimeObjectExchange
 
 		#endregion
 
-		#region · Header file creation ·
+		#region · File creation ·
 
 		/// <summary>
 		/// Creates C type header declaration for this realtime object file
@@ -193,12 +196,8 @@ namespace CommonClassLibrary.RealtimeObjectExchange
 			in_parser_parameters.HeaderFile.Close();
 		}
 
-		#endregion
-
-		#region · Header file creation ·
-
 		/// <summary>
-		/// Creates C type header declaration for this realtime object file
+		/// Creates default values for packet enable array
 		/// </summary>
 		/// <param name="in_parser_parameters"></param>
 		public void CreateDefaultPacketEnabledFile(ParserRealtimeObjectExchange.ParserParameters in_parser_parameters)
@@ -237,6 +236,51 @@ namespace CommonClassLibrary.RealtimeObjectExchange
 			file.Close();
 		}
 
+		/// <summary>
+		/// Creates type information file 
+		/// </summary>
+		/// <param name="in_parser_parameters"></param>
+		public void CreateTypeInfoFile(ParserRealtimeObjectExchange.ParserParameters in_parser_parameters)
+		{
+			// check file name
+			if (string.IsNullOrEmpty(in_parser_parameters.TypeInfoFileName))
+				return;
+
+			List<int> type_offset = new List<int>();
+			MemoryStream type_array = new MemoryStream();
+			int i;
+
+			// process packet type defines
+			type_offset.Add(0); // there is no zero indentifier object
+			for (i = 0; i < ((ParserRealtimeObjectCollection)m_root_class).Objects.Count; i++)
+			{
+				type_offset.Add((int)type_array.Position);
+				((ParserRealtimeObjectCollection)m_root_class).Objects[i].CreateTypeInformation(type_array);
+			}
+
+
+			// store type info data
+			HexTextFileWriter file = new HexTextFileWriter(in_parser_parameters.TypeInfoFileName);
+
+			// write packet count
+			file.WriteHexByte((byte)type_offset.Count);
+
+			// write offset
+			for (i = 0; i < type_offset.Count; i++)
+			{
+				file.WriteHexByte((byte)(type_offset[i] & 0xff));
+				file.WriteHexByte((byte)(type_offset[i] >> 8));
+			}
+
+			// write type info
+			type_array.Seek(0, SeekOrigin.Begin);
+			for (i = 0; i < type_array.Length; i++)
+			{
+				file.WriteHexByte((byte)type_array.ReadByte());
+			}
+
+			file.Close();
+		}
 		#endregion
 	}
 }

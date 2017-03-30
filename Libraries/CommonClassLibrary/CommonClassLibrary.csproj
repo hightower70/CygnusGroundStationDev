@@ -74,6 +74,7 @@
     <Compile Include="DeviceSettings\ParserDeviceSettingsEnumDefs.cs" />
     <Compile Include="DeviceSettings\ParserDeviceSettingsEnumValue.cs" />
     <Compile Include="DeviceSettings\ParserDeviceSettingsRoot.cs" />
+    <Compile Include="Helpers\HexTextFileWriter.cs" />
     <Compile Include="Helpers\RawBinarySerialization.cs" />
     <Compile Include="DeviceCommunication\CommunicationManager.cs" />
     <Compile Include="DeviceCommunication\DeviceFileCache.cs" />

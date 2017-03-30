@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using CommonClassLibrary.Console;
+﻿using CommonClassLibrary.Console;
 using CommonClassLibrary.RealtimeObjectExchange;
+using System;
 using System.IO;
 
 namespace ROXParser
@@ -36,6 +32,11 @@ namespace ROXParser
 
 					case "defaultpacketenable":
 						m_parser_parameters.DefaultPacketEnableFileName = in_command_line.Parameters[i].Parameter;
+						in_command_line.Parameters[i].Used = true;
+						break;
+
+					case "typeinfo":
+						m_parser_parameters.TypeInfoFileName = in_command_line.Parameters[i].Parameter;
 						in_command_line.Parameters[i].Used = true;
 						break;
 				}
@@ -88,8 +89,12 @@ namespace ROXParser
 					m_parser_parameters.HeaderFileName = config_file_name_without_extension + ".h";
 			}
 
-
 			if (string.IsNullOrEmpty(parser.ErrorMessage))
+			{
+				parser.CreateTypeInfoFile(m_parser_parameters);
+			}
+
+				if (string.IsNullOrEmpty(parser.ErrorMessage))
 			{
 				parser.CreateHeaderFiles(m_parser_parameters);
 			}

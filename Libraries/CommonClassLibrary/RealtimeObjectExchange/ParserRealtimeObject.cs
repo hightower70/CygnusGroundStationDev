@@ -104,6 +104,7 @@ namespace CommonClassLibrary.RealtimeObjectExchange
 			else
 				return null;
 		}
+
 		#endregion
 
 		#region · Parser function ·
@@ -143,7 +144,7 @@ namespace CommonClassLibrary.RealtimeObjectExchange
 
 		#endregion
 
-		#region · Header file generation ·
+		#region · File generation ·
 
 		/// <summary>
 		/// Creates C type declaration header for this object
@@ -169,6 +170,14 @@ namespace CommonClassLibrary.RealtimeObjectExchange
 			// declaration end
 			in_parameters.HeaderFile.WriteLine("} rox" + m_name + ";");
 			in_parameters.HeaderFile.WriteLine();
+		}
+
+		public void CreateTypeInformation(MemoryStream in_stream)
+		{
+			foreach (ParserRealtimeObjectMember member in m_members)
+			{
+				member.CreateTypeInformation(in_stream);
+			}
 		}
 
 		#endregion

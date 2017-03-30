@@ -21,6 +21,7 @@
 // Class for realtime value
 ///////////////////////////////////////////////////////////////////////////////
 using CommonClassLibrary.XMLParser;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Xml.XPath;
@@ -33,7 +34,7 @@ namespace CommonClassLibrary.RealtimeObjectExchange
 		private RealtimeObjectMember.MemberType m_member_type;
 		private string m_name;
 		private Dictionary<string, string> m_attributes = new Dictionary<string, string>();
-		private int m_fixed_multiplier;
+		private Int32 m_fixed_multiplier;
 		#endregion
 
 		#region · Constructor ·
@@ -202,7 +203,7 @@ namespace CommonClassLibrary.RealtimeObjectExchange
 
 		#endregion
 
-		#region · Header file generation ·
+		#region · File generation ·
 
 		/// <summary>
 		/// Creates C type header declaration of this member
@@ -213,6 +214,23 @@ namespace CommonClassLibrary.RealtimeObjectExchange
 			string typestring = in_parameters.Typedefs[m_member_type];
 
 			in_parameters.HeaderFile.WriteLine("  " + typestring + " " + m_name + ";");
+		}
+
+		public void CreateTypeInformation(MemoryStream in_stream)
+		{
+			in_stream.WriteByte((byte)m_member_type);
+
+			switch(m_member_type)
+			{
+				case RealtimeObjectMember.MemberType.Int16Fixed:
+				case RealtimeObjectMember.MemberType.Int32Fixed:
+				case RealtimeObjectMember.MemberType.Int8Fixed:
+				case RealtimeObjectMember.MemberType.UInt16Fixed:
+				case RealtimeObjectMember.MemberType.UInt32Fixed:
+				case RealtimeObjectMember.MemberType.UInt8Fixed:
+					in_stream.Write(BitConverter.GetBytes(m_fixed_multiplier), 0, sizeof(Int32));
+					break;
+			}
 		}
 
 		#endregion

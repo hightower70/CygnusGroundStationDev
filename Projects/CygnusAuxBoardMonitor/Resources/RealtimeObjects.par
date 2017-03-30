@@ -2,3 +2,4 @@
 -typedefs:RealtimeObjectsTypedefs.xml
 -cdecl:roxPackets.h
 -defaultpacketenable:roxDefaultPacketEnable.inl
+-typeinfo:roxPacketTypeInfo.inl
